@@ -31,7 +31,7 @@ const props = withDefaults(defineProps<{
 }>(), {
   loading: false,
   error: "",
-  height: "calc(100vh - 220px)",
+  height: "calc(100vh - 125px)",
   page: 1,
   pageSize: 10,
   totalPages: 1,

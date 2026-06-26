@@ -1,30 +1,54 @@
 <template>
-  <div class="flex flex-col">
-    <!-- Filter row -->
-    <div class="filter-row">
-      <div class="filter-left">
-        <span class="text-xl filter-label">កាលបរិច្ឆេទ</span>
-        <v-text-field v-model="filterDate" type="date" density="compact" hide-details variant="outlined"
-          style="max-width: 180px" class="slate-input" @update:model-value="handleDateChange" />
-      </div>
-      <div class="filter-right">
-        <PeriodFilterButtons
-          :active-period="activePeriod"
-          @update:active-period="setQuickPeriod"
-        />
+  <div class="coin-page">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Statements</h1>
       </div>
     </div>
 
-    <!-- AppTable -->
-    <AppTable :columns="columns" :items="reportData" :loading="isLoading" :error="errorMessage" :page="currentPage"
-      :page-size="itemsPerPage" :total-pages="totalPages" :subtotals="subtotalsRow" :grand-totals="grandTotalsRow"
-      @update:page="currentPage = $event">
-      <template #cell-is_kill="{ item }">
-        <span :style="{ color: item.is_kill ? '#1E9C07' : '#EF4444', fontWeight: 700 }">
-          {{ item.is_kill ? 'Yes' : 'No' }}
-        </span>
-      </template>
-    </AppTable>
+    <div class="content-wepper flex flex-col gap-2">
+      <div class="filter-row">
+        <div class="filter-left">
+          <span class="filter-label">កាលបរិច្ឆេទ</span>
+          <v-text-field
+            v-model="filterDate"
+            type="date"
+            density="compact"
+            hide-details
+            variant="outlined"
+            style="max-width: 180px"
+            class="slate-input"
+            @update:model-value="handleDateChange"
+          />
+        </div>
+
+        <div class="filter-right">
+          <PeriodFilterButtons
+            :active-period="activePeriod"
+            @update:active-period="setQuickPeriod"
+          />
+        </div>
+      </div>
+
+      <AppTable
+        :columns="columns"
+        :items="reportData"
+        :loading="isLoading"
+        :error="errorMessage"
+        :page="currentPage"
+        :page-size="itemsPerPage"
+        :total-pages="totalPages"
+        :subtotals="subtotalsRow"
+        :grand-totals="grandTotalsRow"
+        @update:page="currentPage = $event"
+      >
+        <template #cell-is_kill="{ item }">
+          <span :style="{ color: item.is_kill ? '#1E9C07' : '#EF4444', fontWeight: 700 }">
+            {{ item.is_kill ? 'Yes' : 'No' }}
+          </span>
+        </template>
+      </AppTable>
+    </div>
   </div>
 </template>
 
@@ -302,12 +326,30 @@ defineExpose({
 </script>
 
 <style scoped>
+.coin-page {
+  display: flex;
+  flex-direction: column;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.page-title {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: #111827;
+}
+
 .filter-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  margin-bottom: 15px;
 }
 
 .filter-left {
@@ -325,25 +367,14 @@ defineExpose({
 .filter-label {
   color: #111827 !important;
   font-weight: 600;
-}
-
-.filter-btn {
-  border: 1.5px solid #1F2937 !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.5px;
-  box-shadow: 0 2px 10px rgba(31, 41, 55, 0.2) !important;
-  text-transform: none !important;
-}
-
-.filter-btn:hover {
-  background: #374151 !important;
-  box-shadow: 0 4px 14px rgba(31, 41, 55, 0.28) !important;
+  font-size: 13px;
 }
 
 .slate-input :deep(.v-field) {
   background: #FFFFFF !important;
   color: #111827 !important;
-  border-radius: 10px !important;
+  border-radius: 8px !important;
+  font-size: 12px !important;
 }
 
 .slate-input :deep(.v-field__outline) {
@@ -356,6 +387,8 @@ defineExpose({
 
 .slate-input :deep(input) {
   color: #111827 !important;
+  font-size: 12px !important;
+  padding: 2px 6px !important;
 }
 
 :deep(td.positive) {

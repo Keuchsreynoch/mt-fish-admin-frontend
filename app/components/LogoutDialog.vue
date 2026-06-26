@@ -1,5 +1,5 @@
 <template>
-    <v-dialog v-model="model" max-width="360" persistent>
+    <v-dialog v-model="model" max-width="360" >
         <v-card class="logout-card" rounded="xl">
             <div class="logout-icon-wrap">
                 <v-icon size="24" color="#D97706">mdi-logout</v-icon>

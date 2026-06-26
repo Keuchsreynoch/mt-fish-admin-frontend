@@ -1,60 +1,68 @@
 <template>
-  <div class="users-page">
-    <div class="toolbar">
-      <v-text-field
-        v-model="userSearch"
-        placeholder="ឈ្មោះអ្នកប្រើប្រាស់"
-        prepend-inner-icon="mdi-magnify"
-        density="compact"
-        variant="outlined"
-        hide-details
-        class="search-field"
-        clearable
-      />
-
-      <v-btn class="btn-primary" prepend-icon="mdi-plus" @click="openCreateUserDialog">
-        Add User
-      </v-btn>
+  <div class="coin-page">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Users</h1>
+      </div>
     </div>
 
-    <AppTable
-      :columns="userColumns"
-      :items="filteredUsers"
-      :loading="userLoading"
-      :error="userError"
-      :page="userPage"
-      :page-size="userPageSize"
-      :total-pages="userTotalPages"
-      @update:page="userPage = $event"
-    >
-      <template #cell-username="{ item }">
-        <div class="user-cell">
-          <div class="avatar">{{ getInitials(item.username) }}</div>
-          <div>
-            <div class="user-name">{{ item.username }}</div>
-            <div class="user-email">{{ item.email }}</div>
-          </div>
-        </div>
-      </template>
-
-      <template #cell-role="{ item }">
-        <span class="role-badge">{{ item.role }}</span>
-      </template>
-
-      <template #cell-actions="{ item }">
-        <v-btn
-          size="small"
+    <div class="content-wepper">
+      <div class="toolbar">
+        <!-- <v-text-field
+          v-model="userSearch"
+          placeholder="ឈ្មោះអ្នកប្រើប្រាស់"
+          prepend-inner-icon="mdi-magnify"
+          density="compact"
           variant="outlined"
-          prepend-icon="mdi-key-variant"
-          @click="openAssignDialog(item)"
-        >
-          Assign Menus
+          hide-details
+          class="search-field"
+          clearable
+        /> -->
+
+        <v-btn class="btn-primary" prepend-icon="mdi-plus" @click="openCreateUserDialog">
+          Add User
         </v-btn>
-      </template>
-    </AppTable>
+      </div>
+
+      <AppTable
+        :columns="userColumns"
+        :items="filteredUsers"
+        :loading="userLoading"
+        :error="userError"
+        :page="userPage"
+        :page-size="userPageSize"
+        :total-pages="userTotalPages"
+        @update:page="userPage = $event"
+      >
+        <template #cell-username="{ item }">
+          <div class="user-cell">
+            <div class="avatar">{{ getInitials(item.username) }}</div>
+            <div>
+              <div class="user-name">{{ item.username }}</div>
+              <div class="user-email">{{ item.email }}</div>
+            </div>
+          </div>
+        </template>
+
+        <template #cell-role="{ item }">
+          <span class="role-badge">{{ item.role }}</span>
+        </template>
+
+        <template #cell-actions="{ item }">
+          <v-btn
+            size="small"
+            variant="outlined"
+            prepend-icon="mdi-key-variant"
+            @click="openAssignDialog(item)"
+          >
+            Assign Menus
+          </v-btn>
+        </template>
+      </AppTable>
+    </div>
 
     <!-- CREATE USER -->
-    <v-dialog v-model="createUserDialog" max-width="560" persistent>
+    <v-dialog v-model="createUserDialog" max-width="560" >
       <v-card class="dialog-card">
         <div class="dialog-header">
           <div class="dialog-title-row">
@@ -191,7 +199,7 @@
     </v-dialog>
 
     <!-- ASSIGN USER MENUS -->
-    <v-dialog v-model="assignDialog" max-width="560" persistent>
+    <v-dialog v-model="assignDialog" max-width="560" >
       <v-card class="dialog-card">
         <div class="dialog-header">
           <div class="dialog-title-row">
@@ -229,7 +237,7 @@
                 </v-icon>
 
                 <span class="assign-menu-name">{{ menu.name }}</span>
-                <span class="path-pill small">{{ menu.path }}</span>
+                <!-- <span class="path-pill small">{{ menu.path }}</span> -->
               </div>
 
               <v-icon size="18" :color="isMenuAssigned(menu.id) ? '#1F2937' : '#D1D5DB'">
@@ -500,22 +508,37 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.users-page {
-  padding: 24px;
+.coin-page {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 8px;
 }
 
-.title-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  background: #F3F4F6;
-  border: 1px solid rgba(31, 41, 55, 0.1);
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.page-title {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: #111827;
+  margin: 0;
+}
+
+.header-chips {
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 12px;
+}
+
+.content-wepper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .btn-primary {
@@ -528,8 +551,9 @@ onMounted(() => {
 
 .toolbar {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
+  gap: 12px;
 }
 
 .search-field {

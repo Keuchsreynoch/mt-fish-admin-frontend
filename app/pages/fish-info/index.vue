@@ -1,129 +1,129 @@
 <template>
-  <div fluid class="pa-2">
-    <AppTable
-      :columns="columns"
-      :items="fishTypes"
-      :loading="isLoading"
-      :error="errorMessage"
-      :page="currentPage"
-      :page-size="itemsPerPage"
-      :total-pages="1"
-      height="calc(100vh - 110px)"
-    >
-      <!-- boss chip -->
-      <template #cell-is_boss="{ item }">
-        <v-chip v-if="item.is_boss" color="warning" size="small" variant="flat">Boss</v-chip>
-        <span v-else class="text-secondary">-</span>
-      </template>
+  <div class="coin-page">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Fish Info</h1>
+      </div>
+    </div>
 
-      <!-- miss reward chip -->
-      <template #cell-miss_reward_enabled="{ item }">
-        <v-chip
-          :color="item.miss_reward_enabled ? 'success' : 'default'"
-          size="small"
-          variant="flat"
-        >
-          {{ item.miss_reward_enabled ? 'Yes' : 'No' }}
-        </v-chip>
-      </template>
+    <div class="content-wepper">
+      <AppTable
+        :columns="columns"
+        :items="fishTypes"
+        :loading="isLoading"
+        :error="errorMessage"
+        :page="currentPage"
+        :page-size="itemsPerPage"
+        :total-pages="1"
+      >
+        <template #cell-is_boss="{ item }">
+          <v-chip v-if="item.is_boss" color="warning" size="small" variant="flat">Boss</v-chip>
+          <span v-else class="text-secondary">-</span>
+        </template>
 
-      <!-- min_kill_odd — editable -->
-      <template #cell-min_kill_odd="{ item, index }">
-        <v-text-field
-          v-if="editingIndex === index"
-          :model-value="editBuffer.min_kill_odd"
-          type="text"
-          inputmode="decimal"
-          autocomplete="off"
-          density="compact"
-          hide-details
-          variant="outlined"
-          class="edit-input"
-          @keydown="blockNonDecimalKeys"
-          @paste="handleDecimalPaste"
-          @update:model-value="editBuffer.min_kill_odd = sanitizeDecimalInput($event)"
-        />
-        <span v-else>{{ item.min_kill_odd ?? '-' }}</span>
-      </template>
+        <template #cell-miss_reward_enabled="{ item }">
+          <v-chip
+            :color="item.miss_reward_enabled ? 'success' : 'default'"
+            size="small"
+            variant="flat"
+          >
+            {{ item.miss_reward_enabled ? 'Yes' : 'No' }}
+          </v-chip>
+        </template>
 
-      <!-- max_kill_odd — editable -->
-      <template #cell-max_kill_odd="{ item, index }">
-        <v-text-field
-          v-if="editingIndex === index"
-          :model-value="editBuffer.max_kill_odd"
-          type="text"
-          inputmode="decimal"
-          autocomplete="off"
-          density="compact"
-          hide-details
-          variant="outlined"
-          class="edit-input"
-          @keydown="blockNonDecimalKeys"
-          @paste="handleDecimalPaste"
-          @update:model-value="editBuffer.max_kill_odd = sanitizeDecimalInput($event)"
-        />
-        <span v-else>{{ item.max_kill_odd ?? '-' }}</span>
-      </template>
+        <template #cell-min_kill_odd="{ item, index }">
+          <v-text-field
+            v-if="editingIndex === index"
+            :model-value="editBuffer.min_kill_odd"
+            type="text"
+            inputmode="decimal"
+            autocomplete="off"
+            density="compact"
+            hide-details
+            variant="outlined"
+            class="edit-input"
+            @keydown="blockNonDecimalKeys"
+            @paste="handleDecimalPaste"
+            @update:model-value="editBuffer.min_kill_odd = sanitizeDecimalInput($event)"
+          />
+          <span v-else>{{ item.min_kill_odd ?? '-' }}</span>
+        </template>
 
-      <!-- min_miss_reward_odd — editable -->
-      <template #cell-min_miss_reward_odd="{ item, index }">
-        <v-text-field
-          v-if="editingIndex === index"
-          :model-value="editBuffer.min_miss_reward_odd"
-          type="text"
-          inputmode="decimal"
-          autocomplete="off"
-          density="compact"
-          hide-details
-          variant="outlined"
-          class="edit-input"
-          :disabled="!item.miss_reward_enabled"
-          @keydown="blockNonDecimalKeys"
-          @paste="handleDecimalPaste"
-          @update:model-value="editBuffer.min_miss_reward_odd = sanitizeDecimalInput($event)"
-        />
-        <span v-else>{{ item.min_miss_reward_odd ?? '-' }}</span>
-      </template>
+        <template #cell-max_kill_odd="{ item, index }">
+          <v-text-field
+            v-if="editingIndex === index"
+            :model-value="editBuffer.max_kill_odd"
+            type="text"
+            inputmode="decimal"
+            autocomplete="off"
+            density="compact"
+            hide-details
+            variant="outlined"
+            class="edit-input"
+            @keydown="blockNonDecimalKeys"
+            @paste="handleDecimalPaste"
+            @update:model-value="editBuffer.max_kill_odd = sanitizeDecimalInput($event)"
+          />
+          <span v-else>{{ item.max_kill_odd ?? '-' }}</span>
+        </template>
 
-      <!-- max_miss_reward_odd — editable -->
-      <template #cell-max_miss_reward_odd="{ item, index }">
-        <v-text-field
-          v-if="editingIndex === index"
-          :model-value="editBuffer.max_miss_reward_odd"
-          type="text"
-          inputmode="decimal"
-          autocomplete="off"
-          density="compact"
-          hide-details
-          variant="outlined"
-          class="edit-input"
-          :disabled="!item.miss_reward_enabled"
-          @keydown="blockNonDecimalKeys"
-          @paste="handleDecimalPaste"
-          @update:model-value="editBuffer.max_miss_reward_odd = sanitizeDecimalInput($event)"
-        />
-        <span v-else>{{ item.max_miss_reward_odd ?? '-' }}</span>
-      </template>
+        <template #cell-min_miss_reward_odd="{ item, index }">
+          <v-text-field
+            v-if="editingIndex === index"
+            :model-value="editBuffer.min_miss_reward_odd"
+            type="text"
+            inputmode="decimal"
+            autocomplete="off"
+            density="compact"
+            hide-details
+            variant="outlined"
+            class="edit-input"
+            :disabled="!item.miss_reward_enabled"
+            @keydown="blockNonDecimalKeys"
+            @paste="handleDecimalPaste"
+            @update:model-value="editBuffer.min_miss_reward_odd = sanitizeDecimalInput($event)"
+          />
+          <span v-else>{{ item.min_miss_reward_odd ?? '-' }}</span>
+        </template>
 
-      <!-- action buttons -->
-      <template #cell-action="{ item, index }">
-        <div class="action-btns">
-          <template v-if="editingIndex === index">
-            <v-btn icon size="small" color="success" variant="flat" @click="saveEdit(index)">
-              <v-icon size="18">mdi-check</v-icon>
-            </v-btn>
-            <v-btn icon size="small" color="error" variant="flat" @click="cancelEdit">
-              <v-icon size="18">mdi-close</v-icon>
-            </v-btn>
-          </template>
-          <template v-else>
-            <v-btn icon size="small" color="primary" variant="flat" @click="startEdit(index, item)">
-              <v-icon size="18">mdi-pencil</v-icon>
-            </v-btn>
-          </template>
-        </div>
-      </template>
-    </AppTable>
+        <template #cell-max_miss_reward_odd="{ item, index }">
+          <v-text-field
+            v-if="editingIndex === index"
+            :model-value="editBuffer.max_miss_reward_odd"
+            type="text"
+            inputmode="decimal"
+            autocomplete="off"
+            density="compact"
+            hide-details
+            variant="outlined"
+            class="edit-input"
+            :disabled="!item.miss_reward_enabled"
+            @keydown="blockNonDecimalKeys"
+            @paste="handleDecimalPaste"
+            @update:model-value="editBuffer.max_miss_reward_odd = sanitizeDecimalInput($event)"
+          />
+          <span v-else>{{ item.max_miss_reward_odd ?? '-' }}</span>
+        </template>
+
+        <template #cell-action="{ item, index }">
+          <div class="action-btns">
+            <template v-if="editingIndex === index">
+              <v-btn icon size="small" color="success" variant="flat" @click="saveEdit(index)">
+                <v-icon size="18">mdi-check</v-icon>
+              </v-btn>
+              <v-btn icon size="small" color="error" variant="flat" @click="cancelEdit">
+                <v-icon size="18">mdi-close</v-icon>
+              </v-btn>
+            </template>
+            <template v-else>
+              <v-btn icon size="small" color="primary" variant="flat" @click="startEdit(index, item)">
+                <v-icon size="18">mdi-pencil</v-icon>
+              </v-btn>
+            </template>
+          </div>
+        </template>
+      </AppTable>
+    </div>
   </div>
 </template>
 
@@ -262,6 +262,31 @@ onMounted(() => fetchFishTypes())
 </script>
 
 <style scoped>
+.coin-page {
+  display: flex;
+  flex-direction: column;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.page-title {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: #111827;
+}
+
+.content-wepper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 :deep(tbody td.fish-name) {
   font-weight: 600 !important;
   color: #1F2937 !important;

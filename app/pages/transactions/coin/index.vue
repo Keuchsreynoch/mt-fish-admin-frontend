@@ -1,51 +1,36 @@
 <template>
   <div class="coin-page">
-    <!-- Filter row -->
-    <div class="filter-row">
-      <div class="filter-left">
-        <span class="text-xl filter-label">កាលបរិច្ឆេទ</span>
-        <v-text-field
-          v-model="filterDate"
-          type="date"
-          density="compact"
-          hide-details
-          variant="outlined"
-          style="max-width: 180px"
-          class="slate-input"
-          @update:model-value="handleDateChange"
-        />
-      </div>
-
-      <div class="filter-right">
-        <PeriodFilterButtons
-          :active-period="activePeriod"
-          @update:active-period="setQuickPeriod"
-        />
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Transition Coin</h1>
+        <!-- <p class="page-subtitle">Edit RTP and jackpot settings for the active game.</p> -->
       </div>
     </div>
+    <!-- Filter row -->
+    <div class="content-wepper flex flex-col gap-2">
+      <div class="filter-row">
+        <div class="filter-left">
+          <span class="filter-label">កាលបរិច្ឆេទ</span>
+          <v-text-field v-model="filterDate" type="date" density="compact" hide-details variant="outlined"
+            style="max-width: 150px" class="slate-input" @update:model-value="handleDateChange" />
+        </div>
 
-    <!-- AppTable -->
-    <AppTable
-      :columns="columns"
-      :items="reportData"
-      :loading="isLoading"
-      :error="errorMessage"
-      :page="currentPage"
-      :page-size="itemsPerPage"
-      :total-pages="totalPages"
-      @update:page="currentPage = $event"
-    >
-      <!-- status badge -->
-      <template #cell-status_id="{ item }">
-        <v-chip
-          :color="Number(item.status_id) === 1 ? 'success' : 'error'"
-          variant="outlined"
-          size="small"
-        >
-          {{ item.status_id }}
-        </v-chip>
-      </template>
-    </AppTable>
+        <div class="filter-right">
+          <PeriodFilterButtons :active-period="activePeriod" @update:active-period="setQuickPeriod" />
+        </div>
+      </div>
+
+      <!-- AppTable -->
+      <AppTable :columns="columns" :items="reportData" :loading="isLoading" :error="errorMessage" :page="currentPage"
+        :page-size="itemsPerPage" :total-pages="totalPages" @update:page="currentPage = $event">
+        <!-- status badge -->
+        <template #cell-status_id="{ item }">
+          <v-chip :color="Number(item.status_id) === 1 ? 'success' : 'error'" variant="outlined" size="small">
+            {{ item.status_id }}
+          </v-chip>
+        </template>
+      </AppTable>
+    </div>
   </div>
 </template>
 
@@ -60,14 +45,14 @@ import PeriodFilterButtons from '~/components/PeriodFilterButtons.vue'
 const route = useRoute()
 const router = useRouter()
 
-const filterDate    = ref(formatDateForInput(new Date()))
-const currentPage   = ref(1)
-const itemsPerPage  = 10
-const totalItems    = ref(0)
-const reportData    = ref<CoinTransactionItem[]>([])
-const isLoading     = ref(false)
-const errorMessage  = ref('')
-const activePeriod  = ref<'custom' | 'today' | 'yesterday' | 'this_week'>('today')
+const filterDate = ref(formatDateForInput(new Date()))
+const currentPage = ref(1)
+const itemsPerPage = 20
+const totalItems = ref(0)
+const reportData = ref<CoinTransactionItem[]>([])
+const isLoading = ref(false)
+const errorMessage = ref('')
+const activePeriod = ref<'custom' | 'today' | 'yesterday' | 'this_week'>('today')
 const isRouteSynced = ref(false)
 
 const validPeriods = ['custom', 'today', 'yesterday', 'this_week'] as const
@@ -77,8 +62,8 @@ const totalPages = computed(() => Math.max(1, Math.ceil(totalItems.value / items
 // ── Columns ───────────────────────────────────────────────────────────────────
 
 const columns: TableColumn<CoinTransactionItem>[] = [
-  { key: 'index',      label: 'លេខ',        type: 'index' },
-  { key: 'username',   label: 'Username',   align: 'left' },
+  { key: 'index', label: 'លេខ', type: 'index' },
+  { key: 'username', label: 'Username', align: 'left' },
   {
     key: 'before_coin',
     label: 'Before Coin',
@@ -91,9 +76,9 @@ const columns: TableColumn<CoinTransactionItem>[] = [
     format: (v: string) => formatAmount(parseAmount(v)),
     cellClass: (item: CoinTransactionItem) => getAmountClass(item.amount),
   },
-  { key: 'reference',  label: 'Reference',  align: 'left', format: (v: string) => v || '-' },
-  { key: 'status_id',  label: 'Status' },
-  { key: 'order',      label: 'Order' },
+  { key: 'reference', label: 'Reference', align: 'left', format: (v: string) => v || '-' },
+  { key: 'status_id', label: 'Status' },
+  { key: 'order', label: 'Order' },
   { key: 'created_at', label: 'Created At', format: (v: string) => formatDateTime(v) },
 ]
 
@@ -121,17 +106,17 @@ function formatDateForInput(date: Date): string {
   return `${y}-${m}-${d}`
 }
 
-function getTodayDate()        { return formatDateForInput(new Date()) }
-function getYesterdayDate()    { const d = new Date(); d.setDate(d.getDate() - 1); return formatDateForInput(d) }
+function getTodayDate() { return formatDateForInput(new Date()) }
+function getYesterdayDate() { const d = new Date(); d.setDate(d.getDate() - 1); return formatDateForInput(d) }
 function getSevenDaysAgoDate() { const d = new Date(); d.setDate(d.getDate() - 6); return formatDateForInput(d) }
 
 function getCurrentRange(period = activePeriod.value) {
   const today = getTodayDate()
   switch (period) {
-    case 'today':     return { period, start: today,                 end: today }
+    case 'today': return { period, start: today, end: today }
     case 'yesterday': { const y = getYesterdayDate(); return { period, start: y, end: y } }
     case 'this_week': return { period, start: getSevenDaysAgoDate(), end: today }
-    default:          return { period: 'custom', start: filterDate.value, end: filterDate.value }
+    default: return { period: 'custom', start: filterDate.value, end: filterDate.value }
   }
 }
 
@@ -157,21 +142,21 @@ function isValidPeriod(value: string): value is (typeof validPeriods)[number] {
 function syncRouteQuery() {
   const range = getCurrentRange()
   const next = { period: range.period, start: range.start, end: range.end, page: `${currentPage.value}` }
-  const cur  = {
+  const cur = {
     period: normalizeQueryValue(route.query.period),
-    start:  normalizeQueryValue(route.query.start),
-    end:    normalizeQueryValue(route.query.end),
-    page:   normalizeQueryValue(route.query.page),
+    start: normalizeQueryValue(route.query.start),
+    end: normalizeQueryValue(route.query.end),
+    page: normalizeQueryValue(route.query.page),
   }
   if (cur.period === next.period && cur.start === next.start && cur.end === next.end && cur.page === next.page) return
   router.replace({ path: route.path, query: next })
 }
 
 function syncStateFromRoute() {
-  const routePage   = Number.parseInt(normalizeQueryValue(route.query.page), 10)
-  const routeStart  = normalizeQueryValue(route.query.start)
+  const routePage = Number.parseInt(normalizeQueryValue(route.query.page), 10)
+  const routeStart = normalizeQueryValue(route.query.start)
   const routePeriod = normalizeQueryValue(route.query.period)
-  const routeEnd    = normalizeQueryValue(route.query.end)
+  const routeEnd = normalizeQueryValue(route.query.end)
 
   if (!Number.isNaN(routePage) && routePage > 0) currentPage.value = routePage
   activePeriod.value = isValidPeriod(routePeriod) ? routePeriod : 'today'
@@ -193,12 +178,12 @@ function syncStateFromRoute() {
 // ── Data fetching ─────────────────────────────────────────────────────────────
 
 async function fetchCoinTransactions() {
-  isLoading.value    = true
+  isLoading.value = true
   errorMessage.value = ''
   try {
-    const range    = getCurrentRange()
+    const range = getCurrentRange()
     const response = await getCoinTransactions(currentPage.value, itemsPerPage, range.start, range.end)
-    const payload  = response?.data.value
+    const payload = response?.data.value
     reportData.value = payload?.data?.transactions ?? []
     totalItems.value = payload?.total ?? reportData.value.length
   } catch (error: unknown) {
@@ -218,8 +203,8 @@ function handleDateChange() { activePeriod.value = 'custom'; currentPage.value =
 
 function setQuickPeriod(period: 'today' | 'yesterday' | 'this_week') {
   activePeriod.value = period
-  filterDate.value   = getCurrentRange(period).start
-  currentPage.value  = 1
+  filterDate.value = getCurrentRange(period).start
+  currentPage.value = 1
 }
 
 onMounted(async () => {
@@ -238,6 +223,27 @@ watch([filterDate, currentPage, activePeriod], () => {
 </script>
 
 <style scoped>
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.header-chips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.page-title {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: #111827;
+}
+
 .coin-page {
   display: flex;
   flex-direction: column;
@@ -248,22 +254,58 @@ watch([filterDate, currentPage, activePeriod], () => {
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  margin-bottom: 15px;
 }
-
-.filter-left  { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.filter-right { display: flex; gap: 10px; }
 
 .filter-label {
   color: #111827 !important;
   font-weight: 600;
+  font-size: 13px;   /* ចុះពី text-xl */
 }
 
-.slate-input :deep(.v-field)                            { background: #FFFFFF !important; color: #111827 !important; border-radius: 10px !important; }
-.slate-input :deep(.v-field__outline)                   { color: rgba(31, 41, 55, 0.3) !important; }
-.slate-input :deep(.v-field--focused .v-field__outline) { color: #1F2937 !important; }
-.slate-input :deep(input)                               { color: #111827 !important; }
+.filter-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
 
-:deep(td.positive) { color: #1E9C07 !important; font-weight: 700 !important; }
-:deep(td.negative) { color: #EF4444 !important; font-weight: 700 !important; }
+.filter-right {
+  display: flex;
+  gap: 10px;
+}
+
+.slate-input :deep(.v-field) {
+  background: #FFFFFF !important;
+  color: #111827 !important;
+  border-radius: 8px !important;
+  font-size: 12px !important;
+}
+
+.slate-input :deep(input) {
+  color: #111827 !important;
+  font-size: 12px !important;
+  padding: 2px 6px !important;
+}
+
+.slate-input :deep(.v-field__outline) {
+  color: rgba(31, 41, 55, 0.3) !important;
+}
+
+.slate-input :deep(.v-field--focused .v-field__outline) {
+  color: #1F2937 !important;
+}
+
+/* .slate-input :deep(input) {
+  color: #111827 !important;
+} */
+
+:deep(td.positive) {
+  color: #1E9C07 !important;
+  font-weight: 700 !important;
+}
+
+:deep(td.negative) {
+  color: #EF4444 !important;
+  font-weight: 700 !important;
+}
 </style>

@@ -1,43 +1,44 @@
 <template>
-  <div class="members-page">
-
-    <!-- ── Page Header ───────────────────────────────────────── -->
+  <div class="coin-page">
     <div class="page-header">
-      <!-- <div class="page-header__left">
-        <v-text-field v-model="searchQuery" placeholder="Search by name" prepend-inner-icon="mdi-magnify"
-          variant="outlined" density="compact" hide-details clearable style="min-width: 280px;"
-          @update:model-value="onSearchChange" />
-      </div>
-      <div class="page-header__right">
+      <div>
         <h1 class="page-title">Members</h1>
-        <span class="page-subtitle">{{ totalItems }} total</span>
-      </div> -->
-      
-
+      </div>
+      <div class="header-chips">
+        <v-chip size="small" variant="tonal">
+          {{ totalItems }} total
+        </v-chip>
+      </div>
     </div>
 
-    <!-- ── Table ─────────────────────────────────────────────── -->
-    <div class="table-card">
-      <AppTable :columns="columns" :items="filteredMembers" :loading="isLoading" :error="errorMessage"
-        :page="currentPage" :page-size="itemsPerPage" :total-pages="totalPages" height="calc(100vh - 200px)"
-        @update:page="currentPage = $event">
-
-        <!-- Member column -->
+    <div class="content-wepper flex flex-col gap-2">
+      <AppTable
+        :columns="columns"
+        :items="filteredMembers"
+        :loading="isLoading"
+        :error="errorMessage"
+        :page="currentPage"
+        :page-size="itemsPerPage"
+        :total-pages="totalPages"
+        @update:page="currentPage = $event"
+      >
         <template #cell-user_name="{ item }">
           <div class="member-cell">
             <div class="member-name">{{ item.user_name }}</div>
           </div>
         </template>
 
-        <!-- Status column -->
         <template #cell-is_online="{ item }">
-          <v-chip :color="item.is_online ? 'success' : undefined" :variant="item.is_online ? 'tonal' : 'outlined'"
-            size="small" style="font-weight: 600;">
+          <v-chip
+            :color="item.is_online ? 'success' : undefined"
+            :variant="item.is_online ? 'tonal' : 'outlined'"
+            size="small"
+            style="font-weight: 600;"
+          >
             {{ item.is_online ? 'Online' : 'Offline' }}
           </v-chip>
         </template>
 
-        <!-- Balance column -->
         <template #cell-balances="{ item }">
           <v-menu :close-on-content-click="true" location="bottom center" :offset="4">
             <template #activator="{ props: menuProps, isActive }">
@@ -52,9 +53,13 @@
             </template>
 
             <div class="balance-menu">
-              <div v-for="b in item.balances" :key="b.currency_id" class="balance-menu__item"
+              <div
+                v-for="b in item.balances"
+                :key="b.currency_id"
+                class="balance-menu__item"
                 :class="{ 'balance-menu__item--active': getSelectedCurrencyId(item.id) === b.currency_id }"
-                @click="selectCurrency(item.id, b.currency_id)">
+                @click="selectCurrency(item.id, b.currency_id)"
+              >
                 <span class="balance-menu__amount">{{ formatBalance(b.balance) }}</span>
                 <span class="balance-menu__symbol">{{ b.currency_symbol }}</span>
                 <v-icon v-if="getSelectedCurrencyId(item.id) === b.currency_id" size="13" class="balance-menu__check">
@@ -64,7 +69,6 @@
             </div>
           </v-menu>
         </template>
-
       </AppTable>
     </div>
   </div>
@@ -75,7 +79,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import AppTable, { type TableColumn } from '~/components/DynamicTableStyle.vue'
 import { getMembers, type MemberItem } from '~/composables/service/membersApi'
 
-const itemsPerPage = ref(10)
+const itemsPerPage = ref(20)
 const currentPage = ref(1)
 const totalItems = ref(0)
 const members = ref<MemberItem[]>([])
@@ -177,30 +181,24 @@ onMounted(fetchMembers)
 </script>
 
 <style scoped>
-.members-page {
-  padding: 0;
+.coin-page {
+  display: flex;
+  flex-direction: column;
 }
 
 .page-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  padding: 20px 24px 16px;
-  gap: 16px;
-}
-
-.page-header__left {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .page-title {
-  font-size: 20px;
-  font-weight: 600;
-  color: rgb(var(--v-theme-on-background));
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: #111827;
   margin: 0;
-  line-height: 1;
 }
 
 .page-subtitle {
@@ -208,28 +206,28 @@ onMounted(fetchMembers)
   color: rgba(var(--v-theme-on-surface), 0.45);
 }
 
-.page-header__right {
+.header-chips {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.table-card {
-  background: rgb(var(--v-theme-background)) !important;
-  color: rgb(var(--v-theme-on-background)) !important;
-  overflow: hidden;
+.content-wepper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .member-cell {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 10px;
 }
 
 .member-name {
   font-weight: 600;
-  font-size: 13.5px;
+  font-size: 13px;
+  color: #111827;
 }
 
 .balance-trigger {

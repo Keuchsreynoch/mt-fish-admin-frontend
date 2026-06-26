@@ -1,58 +1,62 @@
 <template>
-  <div fluid class="pa-2">
-    <div class="filter-row mb-4">
-      <div class="filter-left">
-        <span class="text-xl filter-label">កាលបរិច្ឆេទ</span>
-        <v-text-field
-          v-model="filterDate"
-          type="date"
-          density="compact"
-          hide-details
-          variant="outlined"
-          style="max-width: 180px"
-          class="ocean-input"
-          @update:model-value="handleDateChange"
-        />
-      </div>
-
-      <div class="filter-right">
-        <PeriodFilterButtons
-          :active-period="activePeriod"
-          @update:active-period="setQuickPeriod"
-        />
+  <div class="coin-page">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Member Bonus</h1>
       </div>
     </div>
 
-    <AppTable
-      :columns="columns"
-      :items="bonusData"
-      :loading="isLoading"
-      :error="errorMessage"
-      :page="currentPage"
-      :page-size="itemsPerPage"
-      :total-pages="totalPages"
-      @update:page="currentPage = $event"
-    >
-      <!-- amount — green -->
-      <template #cell-amount="{ item }">
-        <span class="positive">{{ formatAmount(parseAmount(item.amount)) }}</span>
-      </template>
+    <div class="content-wepper flex flex-col gap-2">
+      <div class="filter-row">
+        <div class="filter-left">
+          <span class="filter-label">កាលបរិច្ឆេទ</span>
+          <v-text-field
+            v-model="filterDate"
+            type="date"
+            density="compact"
+            hide-details
+            variant="outlined"
+            style="max-width: 180px"
+            class="slate-input"
+            @update:model-value="handleDateChange"
+          />
+        </div>
 
-      <!-- note — fallback dash -->
-      <template #cell-note="{ item }">
-        {{ item.note || '-' }}
-      </template>
+        <div class="filter-right">
+          <PeriodFilterButtons
+            :active-period="activePeriod"
+            @update:active-period="setQuickPeriod"
+          />
+        </div>
+      </div>
 
-      <!-- status -->
-      <template #cell-status_id="{ item }">
-        {{ getStatusLabel(item.status_id) }}
-      </template>
+      <AppTable
+        :columns="columns"
+        :items="bonusData"
+        :loading="isLoading"
+        :error="errorMessage"
+        :page="currentPage"
+        :page-size="itemsPerPage"
+        :total-pages="totalPages"
+        @update:page="currentPage = $event"
+      >
+        <template #cell-amount="{ item }">
+          <span class="positive">{{ formatAmount(parseAmount(item.amount)) }}</span>
+        </template>
 
-      <!-- created_at -->
-      <template #cell-created_at="{ item }">
-        {{ formatDateTime(item.created_at) }}
-      </template>
-    </AppTable>
+        <template #cell-note="{ item }">
+          {{ item.note || '-' }}
+        </template>
+
+        <template #cell-status_id="{ item }">
+          {{ getStatusLabel(item.status_id) }}
+        </template>
+
+        <template #cell-created_at="{ item }">
+          {{ formatDateTime(item.created_at) }}
+        </template>
+      </AppTable>
+    </div>
 
     <!-- FAB -->
     <v-btn
@@ -66,7 +70,7 @@
     />
 
     <!-- Create dialog -->
-    <v-dialog v-model="createDialog" max-width="560" persistent>
+    <v-dialog v-model="createDialog" max-width="560" >
       <v-card class="create-dialog-card">
         <div class="dialog-header">
           <div class="dialog-title-row">
@@ -446,12 +450,30 @@ watch([filterDate, currentPage], () => {
 </script>
 
 <style scoped>
+.coin-page {
+  display: flex;
+  flex-direction: column;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.page-title {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: #111827;
+}
+
 .filter-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 10px;
 }
 
 .filter-left {
@@ -467,27 +489,30 @@ watch([filterDate, currentPage], () => {
 }
 
 .filter-label {
-  color: rgb(var(--v-theme-primary));
+  color: #111827 !important;
+  font-weight: 600;
+  font-size: 13px;
 }
 
-.filter-btn {
-  border-width: 1.5px !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.5px;
-  color: white !important;
+.slate-input :deep(.v-field) {
+  background: #FFFFFF !important;
+  color: #111827 !important;
+  border-radius: 8px !important;
+  font-size: 12px !important;
 }
 
-.ocean-input :deep(.v-field) {
-  background: rgb(var(--v-theme-surface)) !important;
-  color: rgb(var(--v-theme-on-surface)) !important;
+.slate-input :deep(.v-field__outline) {
+  color: rgba(31, 41, 55, 0.3) !important;
 }
 
-.ocean-input :deep(.v-field__outline) {
-  color: rgb(var(--v-theme-secondary)) !important;
+.slate-input :deep(.v-field--focused .v-field__outline) {
+  color: #1F2937 !important;
 }
 
-.ocean-input :deep(input) {
-  color: rgb(var(--v-theme-on-surface)) !important;
+.slate-input :deep(input) {
+  color: #111827 !important;
+  font-size: 12px !important;
+  padding: 2px 6px !important;
 }
 
 .positive {

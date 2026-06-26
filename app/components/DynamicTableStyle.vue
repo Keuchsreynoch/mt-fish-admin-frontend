@@ -150,7 +150,7 @@ const props = withDefaults(defineProps<{
 }>(), {
   loading:    false,
   error:      '',
-  height:     'calc(100vh - 220px)',
+  height:     'calc(100vh - 125px)',
   page:       1,
   pageSize:   10,
   totalPages: 1,
@@ -342,7 +342,7 @@ function getBadgeClass(col: TableColumn<T>, item: T): string {
 .pagination {
   display: flex;
   justify-content: center;
-  margin-top: 12px;
+  /* margin-top: 12px; */
 }
 
 .pagination :deep(.v-pagination__item button),

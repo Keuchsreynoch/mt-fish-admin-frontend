@@ -27,8 +27,6 @@
                             size="x-small" class="collapse-toggle-btn" @click="toggleCollapse" />
                     </div>
 
-
-
                     <!-- Main nav (from API menus) -->
                     <div class="nav-section">
                         <div v-if="!collapsed" class="nav-label">OPERATIONS</div>
@@ -119,55 +117,6 @@
             </div>
         </v-navigation-drawer>
 
-        <!-- ───────── App Bar ───────── -->
-        <v-app-bar flat height="60" :order="1" class="omagi-appbar">
-            <div class="appbar-inner">
-
-                <div class="appbar-left">
-                    <v-btn v-if="isMobile" icon="mdi-menu" variant="text" @click="drawer = !drawer" />
-                    <div class="page-breadcrumb">
-                        <span class="breadcrumb-icon">🐟</span>
-                        <span class="breadcrumb-text">{{ currentPageLabel }}</span>
-                    </div>
-                </div>
-
-                <div class="appbar-center">
-                    <!-- <div class="search-bar">
-                        <v-icon size="15" color="rgba(31,41,55,0.4)">mdi-magnify</v-icon>
-                        <input placeholder="Search players, tables, transactions..." class="search-input" />
-                        <kbd class="search-kbd">⌘K</kbd>
-                    </div> -->
-                </div>
-
-                <div class="appbar-right">
-                    <div class="divider-v" />
-                    <!-- <v-btn icon variant="text" size="small" color="rgba(31,41,55,0.6)">
-                        <v-badge content="7" color="error" floating>
-                            <v-icon size="20">mdi-bell-outline</v-icon>
-                        </v-badge>
-                    </v-btn> -->
-                    <v-menu>
-                        <template #activator="{ props }">
-                            <v-avatar size="32" style="border: 1.5px solid rgba(31,41,55,0.25); cursor:pointer;"
-                                v-bind="props">
-                                <img src="https://i.pinimg.com/1200x/60/7f/3e/607f3e590acd7cbb41507ed8acb3b353.jpg"
-                                    alt="Admin" />
-                            </v-avatar>
-                        </template>
-                        <!-- <v-list density="compact" min-width="160">
-                            <v-list-item @click="showLogoutDialog = true">
-                                <template #prepend>
-                                    <v-icon size="18" color="rgba(31,41,55,0.5)">mdi-logout</v-icon>
-                                </template>
-                                <v-list-item-title style="font-size: 13px;">Log out</v-list-item-title>
-                            </v-list-item>
-                        </v-list> -->
-                    </v-menu>
-                </div>
-
-            </div>
-        </v-app-bar>
-
         <!-- ───────── Main Content ───────── -->
         <v-main class="omagi-main">
             <div class="content-wrap">
@@ -229,8 +178,6 @@ function toggleCollapse() {
     collapsed.value = !collapsed.value
 }
 
-
-
 interface NavItem {
     menu_uuid: string
     title: string
@@ -240,7 +187,6 @@ interface NavItem {
     children?: NavItem[]
 }
 
-// Static fallback children for menus that don't (yet) return children from the API
 const staticChildren: Record<string, NavItem[]> = {
     '/transactions': [
         { menu_uuid: 'static-coin', title: 'Coin', icon: 'mdi-bitcoin', to: '/transactions/coin' },
@@ -250,8 +196,6 @@ const staticChildren: Record<string, NavItem[]> = {
 
 const mainNav = computed<NavItem[]>(() => {
     const all = menus.value ?? []
-
-    // top-level menus (parent_id === 0)
     const topLevel = all.filter(m => m.parent_id === 0)
 
     return topLevel.map(m => {
@@ -271,35 +215,9 @@ const mainNav = computed<NavItem[]>(() => {
             title: m.name,
             icon: m.icon,
             to: m.path,
-            // badge: badgeMap[m.path],
             children: children?.length ? children : undefined,
         }
     })
-})
-
-// ── System nav (static, not from API) ─────────────────
-// const systemNav = [
-//     { title: 'Game Config', icon: 'mdi-tune',               to: '/game-config' },
-//     { title: 'Agents',      icon: 'mdi-account-tie-outline', to: '/agents' },
-//     { title: 'Settings',    icon: 'mdi-cog-outline',        to: '/settings' },
-// ]
-
-const currentPageLabel = computed(() => {
-    // flatten mainNav (incl. children) + systemNav for matching
-    const flat: { title: string; to: string }[] = []
-    for (const item of mainNav.value) {
-        flat.push({ title: item.title, to: item.to })
-        if (item.children) {
-            for (const c of item.children) flat.push({ title: c.title, to: c.to })
-        }
-    }
-    // flat.push(...systemNav)
-
-    const match = flat.find(item => {
-        if (item.to === '/') return route.path === '/'
-        return route.path.startsWith(item.to)
-    })
-    return match?.title ?? 'Dashboard'
 })
 
 const displayUserName = computed(() => currentUser.value?.user_name || currentUser.value?.login_id)
@@ -311,7 +229,6 @@ const displayUserRole = computed(() => currentUser.value?.role_name)
     position: fixed;
     inset: 0;
     pointer-events: none;
-    /* z-index: 0; */
     overflow: hidden;
     background:
         radial-gradient(ellipse at 20% 80%, rgba(31, 41, 55, 0.05) 0%, transparent 60%),
@@ -320,7 +237,6 @@ const displayUserRole = computed(() => currentUser.value?.role_name)
 }
 
 .omagi-sidebar {
-    /* z-index: 100 !important; */
     overflow: visible !important;
     background: #FFFFFF !important;
     border-right: 1px solid rgba(31, 41, 55, 0.1) !important;
@@ -385,7 +301,6 @@ const displayUserRole = computed(() => currentUser.value?.role_name)
     letter-spacing: 1px;
     font-weight: 500;
 }
-
 
 .nav-section {
     padding: 4px 8px 0;
@@ -504,7 +419,6 @@ const displayUserRole = computed(() => currentUser.value?.role_name)
     text-overflow: ellipsis;
 }
 
-/* ── Nav children ── */
 .nav-children {
     display: flex;
     flex-direction: column;
@@ -550,7 +464,6 @@ const displayUserRole = computed(() => currentUser.value?.role_name)
     font-weight: 600;
 }
 
-/* ── Sidebar footer ── */
 .sidebar-footer {
     flex-shrink: 0;
     padding: 10px 10px 12px;
@@ -595,109 +508,6 @@ const displayUserRole = computed(() => currentUser.value?.role_name)
     overflow: hidden;
 }
 
-/* ══ App Bar ══ */
-.omagi-appbar {
-    z-index: 99 !important;
-    background: #FFFFFF !important;
-    border-bottom: 1px solid rgba(31, 41, 55, 0.1) !important;
-    box-shadow: 0 2px 16px rgba(31, 41, 55, 0.05) !important;
-}
-
-.appbar-inner {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    padding: 0 16px;
-    gap: 12px;
-    height: 100%;
-}
-
-.appbar-left {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-shrink: 0;
-}
-
-.appbar-right {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-shrink: 0;
-}
-
-.appbar-center {
-    flex: 1;
-    min-width: 0;
-    max-width: 420px;
-    margin: 0 auto;
-}
-
-.page-breadcrumb {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-}
-
-.breadcrumb-icon {
-    font-size: 16px;
-}
-
-.breadcrumb-text {
-    font-size: 14px;
-    font-weight: 600;
-    color: #111827;
-}
-
-.search-bar {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    border-radius: 10px;
-    padding: 7px 12px;
-    background: rgba(31, 41, 55, 0.04);
-    border: 1px solid rgba(31, 41, 55, 0.1);
-    transition: all 0.2s;
-}
-
-.search-bar:focus-within {
-    border-color: rgba(31, 41, 55, 0.28);
-    background: #FFFFFF;
-}
-
-.search-input {
-    flex: 1;
-    min-width: 0;
-    background: none;
-    border: none;
-    outline: none;
-    font-size: 13px;
-    color: #111827;
-}
-
-.search-input::placeholder {
-    color: rgba(31, 41, 55, 0.35);
-}
-
-.search-kbd {
-    font-size: 9.5px;
-    border-radius: 4px;
-    padding: 1px 5px;
-    white-space: nowrap;
-    flex-shrink: 0;
-    color: rgba(31, 41, 55, 0.38);
-    background: rgba(31, 41, 55, 0.05);
-    border: 1px solid rgba(31, 41, 55, 0.1);
-}
-
-.divider-v {
-    width: 1px;
-    height: 22px;
-    flex-shrink: 0;
-    background: rgba(31, 41, 55, 0.1);
-}
-
-/* ══ Main ══ */
 .omagi-main {
     background: transparent !important;
     position: relative;
@@ -705,7 +515,7 @@ const displayUserRole = computed(() => currentUser.value?.role_name)
 }
 
 .content-wrap {
-    padding: 24px;
+    padding: 2px 24px;
     min-height: 100%;
 }
 </style>
