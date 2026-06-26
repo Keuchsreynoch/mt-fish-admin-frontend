@@ -15,7 +15,6 @@ body {
   color: var(--aa-text);
   font-family: "Poppins", "Battambang", sans-serif;
   background: #030a11;
-  overflow: hidden;
 }
 
 a {
@@ -37,3 +36,10 @@ input {
   overflow: hidden;
   background: #030a11;
 }
+
+
+html, body { overflow: hidden !important; height: 100% !important; }
+.v-application { overflow: hidden !important; height: 100vh !important; }
+.v-application__wrap { overflow: hidden !important; height: 100vh !important; }
+.v-main { overflow-y: auto !important; height: 100% !important; }
+.v-main__wrap { overflow-y: auto !important; min-height: 100% !important; }

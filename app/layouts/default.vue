@@ -1,108 +1,711 @@
+<!-- layouts/default.vue -->
 <template>
-  <div class="app-main-layout">
-    <!-- <LanguageSwitcher /> -->
+    <v-app theme="slateLight">
 
-    <div v-if="showOrientationOverlay" class="app-orientation-overlay" role="dialog" aria-modal="true"
-      :aria-label="t('layout.rotateDevice')">
-      <div class="app-orientation-overlay__content">
-        <img class="app-orientation-overlay__image"
-          src="https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExYm01aGdqZTV5MzJlOTlnYWFidm0zcTU1dGllZGU5ZGkzZGw2eHBpZSZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/1DtYcLp3GDlY2RsVXd/giphy.webp"
-          alt="">
-        <p class="app-orientation-overlay__text">{{ t('layout.rotateDevice') }}</p>
-      </div>
-    </div>
+        <!-- Background -->
+        <div class="omagi-bg" aria-hidden="true" />
 
-    <slot />
-  </div>
+        <!-- ───────── Sidebar ───────── -->
+        <v-navigation-drawer v-model="drawer" :permanent="!isMobile" :temporary="isMobile" :rail="collapsed"
+            :width="252" :rail-width="64" :order="0" elevation="0"  class="omagi-sidebar">
+            <div class="sidebar-layout">
+
+                <!-- Scrollable top area -->
+                <div class="sidebar-scroll">
+
+                    <!-- Brand -->
+                    <div class="brand-area" :class="{ 'brand-area--collapsed': collapsed }">
+                        <div class="brand-logo"></div>
+                        <template v-if="!collapsed">
+                            <div class="brand-text">
+                                <div class="brand-name">FishBlast</div>
+                                <div class="brand-sub">Admin Console</div>
+                            </div>
+                        </template>
+                        <!-- Collapse toggle -->
+                        <v-btn :icon="collapsed ? 'mdi-chevron-right' : 'mdi-chevron-left'" variant="text"
+                            size="x-small" class="collapse-toggle-btn" @click="toggleCollapse" />
+                    </div>
+
+
+
+                    <!-- Main nav (from API menus) -->
+                    <div class="nav-section">
+                        <div v-if="!collapsed" class="nav-label">OPERATIONS</div>
+
+                        <template v-for="item in mainNav" :key="item.menu_uuid">
+
+                            <!-- Item HAS children → toggle -->
+                            <div v-if="item.children && item.children.length" class="nav-item" :class="[
+                                { 'nav-item--active': route.path.startsWith(item.to) },
+                                { 'nav-item--collapsed': collapsed }
+                            ]" @click="toggleMenu(item.menu_uuid)">
+                                <div class="nav-icon-wrap">
+                                    <v-icon size="20">{{ item.icon }}</v-icon>
+                                    <span v-if="item.badge" class="nav-badge">{{ item.badge }}</span>
+                                </div>
+                                <template v-if="!collapsed">
+                                    <div class="nav-info">
+                                        <span class="nav-title">{{ item.title }}</span>
+                                    </div>
+                                    <v-icon size="16" style="margin-left:auto"
+                                        :style="openMenus.has(item.menu_uuid) ? 'transform:rotate(180deg)' : ''">
+                                        mdi-chevron-down
+                                    </v-icon>
+                                </template>
+                            </div>
+
+                            <!-- Children -->
+                            <div v-if="item.children && item.children.length && !collapsed && openMenus.has(item.menu_uuid)"
+                                class="nav-children">
+                                <NuxtLink v-for="child in item.children" :key="child.menu_uuid" :to="child.to" custom
+                                    v-slot="{ navigate, isActive }">
+                                    <div class="nav-child-item" :class="{ 'nav-child-item--active': isActive }"
+                                        @click="navigate(); if (isMobile) drawer = false">
+                                        <div class="nav-child-line" />
+                                        <v-icon size="16">{{ child.icon }}</v-icon>
+                                        <span class="nav-child-title" :class="{ 'nav-child-title--active': isActive }">
+                                            {{ child.title }}
+                                        </span>
+                                    </div>
+                                </NuxtLink>
+                            </div>
+
+                            <!-- Item has NO children → normal NuxtLink -->
+                            <NuxtLink v-else-if="!item.children || !item.children.length" :to="item.to" custom
+                                v-slot="{ navigate, isActive }">
+                                <div class="nav-item" :class="[
+                                    { 'nav-item--active': isActive },
+                                    { 'nav-item--collapsed': collapsed }
+                                ]" @click="navigate(); if (isMobile) drawer = false">
+                                    <div class="nav-icon-wrap">
+                                        <v-icon size="20">{{ item.icon }}</v-icon>
+                                        <span v-if="item.badge" class="nav-badge">{{ item.badge }}</span>
+                                    </div>
+                                    <template v-if="!collapsed">
+                                        <div class="nav-info">
+                                            <span class="nav-title" :style="isActive ? 'font-weight:600' : ''">
+                                                {{ item.title }}
+                                            </span>
+                                        </div>
+                                    </template>
+                                </div>
+                            </NuxtLink>
+
+                        </template>
+                    </div>
+
+                </div>
+
+                <!-- Pinned footer -->
+                <div class="sidebar-footer">
+                    <div class="user-card" :class="{ 'user-card--collapsed': collapsed }">
+                        <v-avatar size="34" class="user-avatar">
+                            <img src="https://i.pinimg.com/736x/61/4a/14/614a1425c0dd8f30fd5d030bba584715.jpg"
+                                alt="Admin" />
+                        </v-avatar>
+                        <template v-if="!collapsed">
+                            <div class="user-info">
+                                <div class="user-name">{{ displayUserName }}</div>
+                                <div class="user-role">{{ displayUserRole }}</div>
+                            </div>
+                            <v-btn icon="mdi-logout" variant="text" size="x-small"
+                                style="margin-left: auto; color: rgba(31,41,55,0.4);"
+                                @click="showLogoutDialog = true" />
+                        </template>
+                    </div>
+                </div>
+
+            </div>
+        </v-navigation-drawer>
+
+        <!-- ───────── App Bar ───────── -->
+        <v-app-bar flat height="60" :order="1" class="omagi-appbar">
+            <div class="appbar-inner">
+
+                <div class="appbar-left">
+                    <v-btn v-if="isMobile" icon="mdi-menu" variant="text" @click="drawer = !drawer" />
+                    <div class="page-breadcrumb">
+                        <span class="breadcrumb-icon">🐟</span>
+                        <span class="breadcrumb-text">{{ currentPageLabel }}</span>
+                    </div>
+                </div>
+
+                <div class="appbar-center">
+                    <!-- <div class="search-bar">
+                        <v-icon size="15" color="rgba(31,41,55,0.4)">mdi-magnify</v-icon>
+                        <input placeholder="Search players, tables, transactions..." class="search-input" />
+                        <kbd class="search-kbd">⌘K</kbd>
+                    </div> -->
+                </div>
+
+                <div class="appbar-right">
+                    <div class="divider-v" />
+                    <!-- <v-btn icon variant="text" size="small" color="rgba(31,41,55,0.6)">
+                        <v-badge content="7" color="error" floating>
+                            <v-icon size="20">mdi-bell-outline</v-icon>
+                        </v-badge>
+                    </v-btn> -->
+                    <v-menu>
+                        <template #activator="{ props }">
+                            <v-avatar size="32" style="border: 1.5px solid rgba(31,41,55,0.25); cursor:pointer;"
+                                v-bind="props">
+                                <img src="https://i.pinimg.com/1200x/60/7f/3e/607f3e590acd7cbb41507ed8acb3b353.jpg"
+                                    alt="Admin" />
+                            </v-avatar>
+                        </template>
+                        <!-- <v-list density="compact" min-width="160">
+                            <v-list-item @click="showLogoutDialog = true">
+                                <template #prepend>
+                                    <v-icon size="18" color="rgba(31,41,55,0.5)">mdi-logout</v-icon>
+                                </template>
+                                <v-list-item-title style="font-size: 13px;">Log out</v-list-item-title>
+                            </v-list-item>
+                        </v-list> -->
+                    </v-menu>
+                </div>
+
+            </div>
+        </v-app-bar>
+
+        <!-- ───────── Main Content ───────── -->
+        <v-main class="omagi-main">
+            <div class="content-wrap">
+                <slot />
+            </div>
+        </v-main>
+
+        <!-- ───────── Logout Dialog ───────── -->
+        <LogoutDialog v-model="showLogoutDialog" />
+
+    </v-app>
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useRoute } from 'vue-router'
+import { useAuthStore } from '~/stores/authStore'
+import LogoutDialog from '~/components/LogoutDialog.vue'
 
-const { t } = useFrontendI18n();
-const isMobileDevice = ref(false);
-const isPortraitMode = ref(false);
-const broadcastStore = useBroadcastStore()
-const showOrientationOverlay = computed(
-  () => isMobileDevice.value && isPortraitMode.value,
-);
+const route = useRoute()
+const authStore = useAuthStore()
+const { currentUser, menus } = storeToRefs(authStore)
 
-let portraitMediaQuery: MediaQueryList | null = null;
+// ── Logout dialog ──────────────────────────────────────
+const showLogoutDialog = ref(false)
 
-function detectMobileDevice() {
-  if (typeof window === "undefined") return false;
+// ── Responsive ────────────────────────────────────────
+const isMobile = ref(false)
 
-  const ua = navigator.userAgent || navigator.vendor || "";
-  const isTouchDevice =
-    navigator.maxTouchPoints > 0 || window.matchMedia("(pointer: coarse)").matches;
-  const isSmallViewport = window.innerWidth <= 1024;
-  const isMobileUserAgent =
-    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
-
-  return isMobileUserAgent || (isTouchDevice && isSmallViewport);
+function syncViewport() {
+    isMobile.value = window.innerWidth < 960
+    drawer.value = !isMobile.value
+    if (isMobile.value) collapsed.value = false
 }
 
-function updateOrientationState() {
-  if (typeof window === "undefined") return;
+onMounted(() => {
+    syncViewport()
+    window.addEventListener('resize', syncViewport)
+})
+onUnmounted(() => {
+    window.removeEventListener('resize', syncViewport)
+})
 
-  isMobileDevice.value = detectMobileDevice();
-  isPortraitMode.value =
-    window.matchMedia("(orientation: portrait)").matches ||
-    window.innerHeight > window.innerWidth;
+// ── Drawer & collapse ─────────────────────────────────
+const drawer = ref(true)
+const collapsed = ref(false)
+const openMenus = ref<Set<string>>(new Set())
+
+function toggleMenu(key: string) {
+    if (openMenus.value.has(key)) {
+        openMenus.value.delete(key)
+    } else {
+        openMenus.value.add(key)
+    }
 }
 
-onMounted(async () => {
-  portraitMediaQuery = window.matchMedia("(orientation: portrait)");
-  portraitMediaQuery.addEventListener("change", updateOrientationState);
-  window.addEventListener("resize", updateOrientationState);
-  updateOrientationState();
-  await broadcastStore.connectWebSocket()
-});
+function toggleCollapse() {
+    collapsed.value = !collapsed.value
+}
 
-onBeforeUnmount(() => {
-  portraitMediaQuery?.removeEventListener("change", updateOrientationState);
-  window.removeEventListener("resize", updateOrientationState);
-});
+
+
+interface NavItem {
+    menu_uuid: string
+    title: string
+    icon: string
+    to: string
+    badge?: string
+    children?: NavItem[]
+}
+
+// Static fallback children for menus that don't (yet) return children from the API
+const staticChildren: Record<string, NavItem[]> = {
+    '/transactions': [
+        { menu_uuid: 'static-coin', title: 'Coin', icon: 'mdi-bitcoin', to: '/transactions/coin' },
+        { menu_uuid: 'static-balance', title: 'Balance', icon: 'mdi-wallet-outline', to: '/transactions/balance' },
+    ],
+}
+
+const mainNav = computed<NavItem[]>(() => {
+    const all = menus.value ?? []
+
+    // top-level menus (parent_id === 0)
+    const topLevel = all.filter(m => m.parent_id === 0)
+
+    return topLevel.map(m => {
+        const apiChildren = all
+            .filter(c => c.parent_id === m.id)
+            .map(c => ({
+                menu_uuid: c.menu_uuid,
+                title: c.name,
+                icon: c.icon,
+                to: c.path,
+            }))
+
+        const children = apiChildren.length ? apiChildren : staticChildren[m.path]
+
+        return {
+            menu_uuid: m.menu_uuid,
+            title: m.name,
+            icon: m.icon,
+            to: m.path,
+            // badge: badgeMap[m.path],
+            children: children?.length ? children : undefined,
+        }
+    })
+})
+
+// ── System nav (static, not from API) ─────────────────
+// const systemNav = [
+//     { title: 'Game Config', icon: 'mdi-tune',               to: '/game-config' },
+//     { title: 'Agents',      icon: 'mdi-account-tie-outline', to: '/agents' },
+//     { title: 'Settings',    icon: 'mdi-cog-outline',        to: '/settings' },
+// ]
+
+const currentPageLabel = computed(() => {
+    // flatten mainNav (incl. children) + systemNav for matching
+    const flat: { title: string; to: string }[] = []
+    for (const item of mainNav.value) {
+        flat.push({ title: item.title, to: item.to })
+        if (item.children) {
+            for (const c of item.children) flat.push({ title: c.title, to: c.to })
+        }
+    }
+    // flat.push(...systemNav)
+
+    const match = flat.find(item => {
+        if (item.to === '/') return route.path === '/'
+        return route.path.startsWith(item.to)
+    })
+    return match?.title ?? 'Dashboard'
+})
+
+const displayUserName = computed(() => currentUser.value?.user_name || currentUser.value?.login_id)
+const displayUserRole = computed(() => currentUser.value?.role_name)
 </script>
 
-<style scoped>
-.app-main-layout {
-  min-height: 100dvh;
-  overflow: auto;
+<style scoped lang="css">
+.omagi-bg {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    /* z-index: 0; */
+    overflow: hidden;
+    background:
+        radial-gradient(ellipse at 20% 80%, rgba(31, 41, 55, 0.05) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 20%, rgba(31, 41, 55, 0.03) 0%, transparent 55%),
+        linear-gradient(180deg, #F9FAFB 0%, #F3F4F6 100%);
 }
 
-.app-orientation-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 100000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  background:
-    radial-gradient(circle at center, rgba(87, 194, 248, 0.18), transparent 40%),
-    rgba(3, 10, 17, 0.96);
+.omagi-sidebar {
+    /* z-index: 100 !important; */
+    overflow: visible !important;
+    background: #FFFFFF !important;
+    border-right: 1px solid rgba(31, 41, 55, 0.1) !important;
+    box-shadow: 4px 0 24px rgba(31, 41, 55, 0.06) !important;
 }
 
-.app-orientation-overlay__content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 18px;
-  text-align: center;
+.sidebar-layout {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    position: relative;
 }
 
-.app-orientation-overlay__image {
-  width: min(52vw, 220px);
-  max-width: 100%;
-  height: auto;
+.sidebar-scroll {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
 }
 
-.app-orientation-overlay__text {
-  margin: 0;
-  font-size: clamp(1.25rem, 5vw, 1.75rem);
-  font-weight: 700;
-  color: #eef8ff;
+.sidebar-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+.brand-area {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 12px 13px;
+    flex-shrink: 0;
+    border-bottom: 1px solid rgba(31, 41, 55, 0.08);
+}
+
+.brand-area--collapsed {
+    justify-content: center;
+    padding: 14px 8px 13px;
+}
+
+.brand-logo {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+
+.brand-name {
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+    color: #111827;
+}
+
+.brand-sub {
+    font-size: 9px;
+    color: rgba(31, 41, 55, 0.4);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 500;
+}
+
+
+.nav-section {
+    padding: 4px 8px 0;
+}
+
+.nav-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: rgba(31, 41, 55, 0.3);
+    padding: 10px 8px 3px;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 8px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+    position: relative;
+    margin-bottom: 2px;
+    border: 1px solid transparent;
+    min-height: 42px;
+}
+
+.nav-item--collapsed {
+    justify-content: center;
+    padding: 10px 8px;
+}
+
+.nav-item:hover {
+    background: rgba(31, 41, 55, 0.05);
+}
+
+.nav-item--active {
+    background: rgba(31, 41, 55, 0.07) !important;
+    border-color: rgba(31, 41, 55, 0.14) !important;
+}
+
+.nav-item--active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 18%;
+    height: 64%;
+    width: 3px;
+    background: #111827;
+    border-radius: 0 3px 3px 0;
+}
+
+.nav-icon-wrap {
+    position: relative;
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-icon-wrap :deep(.v-icon) {
+    color: rgba(31, 41, 55, 0.4) !important;
+}
+
+.nav-item--active .nav-icon-wrap :deep(.v-icon) {
+    color: #111827 !important;
+}
+
+.nav-badge {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    background: #374151;
+    color: #FFFFFF;
+    font-size: 8px;
+    font-weight: 700;
+    min-width: 15px;
+    height: 15px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 3px;
+}
+
+.nav-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
+}
+
+.nav-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(31, 41, 55, 0.7);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.nav-item--active .nav-title {
+    color: #111827;
+    font-weight: 600;
+}
+
+.nav-sub {
+    font-size: 10px;
+    color: rgba(31, 41, 55, 0.38);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ── Nav children ── */
+.nav-children {
+    display: flex;
+    flex-direction: column;
+    padding: 2px 0 4px 0;
+}
+
+.nav-child-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px 7px 28px;
+    cursor: pointer;
+    border-radius: 8px;
+    margin: 1px 8px;
+    transition: background 0.15s;
+    position: relative;
+}
+
+.nav-child-item:hover {
+    background: rgba(31, 41, 55, 0.05);
+}
+
+.nav-child-item--active {
+    background: rgba(31, 41, 55, 0.07);
+}
+
+.nav-child-line {
+    position: absolute;
+    left: 20px;
+    top: 0;
+    bottom: 0;
+    width: 1.5px;
+    background: rgba(31, 41, 55, 0.15);
+}
+
+.nav-child-title {
+    font-size: 13px;
+    color: rgba(31, 41, 55, 0.55);
+}
+
+.nav-child-title--active {
+    color: #111827;
+    font-weight: 600;
+}
+
+/* ── Sidebar footer ── */
+.sidebar-footer {
+    flex-shrink: 0;
+    padding: 10px 10px 12px;
+    border-top: 1px solid rgba(31, 41, 55, 0.08);
+    background: #FFFFFF;
+}
+
+.user-card {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 9px 8px;
+    border-radius: 10px;
+    background: rgba(31, 41, 55, 0.04);
+    border: 1px solid rgba(31, 41, 55, 0.1);
+}
+
+.user-card--collapsed {
+    justify-content: center;
+}
+
+.user-avatar {
+    border: 1.5px solid rgba(31, 41, 55, 0.2);
+    flex-shrink: 0;
+}
+
+.user-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: #111827;
+    line-height: 1.2;
+}
+
+.user-role {
+    font-size: 9.5px;
+    color: rgba(31, 41, 55, 0.45);
+}
+
+.user-info {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+
+/* ══ App Bar ══ */
+.omagi-appbar {
+    z-index: 99 !important;
+    background: #FFFFFF !important;
+    border-bottom: 1px solid rgba(31, 41, 55, 0.1) !important;
+    box-shadow: 0 2px 16px rgba(31, 41, 55, 0.05) !important;
+}
+
+.appbar-inner {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 0 16px;
+    gap: 12px;
+    height: 100%;
+}
+
+.appbar-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.appbar-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.appbar-center {
+    flex: 1;
+    min-width: 0;
+    max-width: 420px;
+    margin: 0 auto;
+}
+
+.page-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.breadcrumb-icon {
+    font-size: 16px;
+}
+
+.breadcrumb-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.search-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 10px;
+    padding: 7px 12px;
+    background: rgba(31, 41, 55, 0.04);
+    border: 1px solid rgba(31, 41, 55, 0.1);
+    transition: all 0.2s;
+}
+
+.search-bar:focus-within {
+    border-color: rgba(31, 41, 55, 0.28);
+    background: #FFFFFF;
+}
+
+.search-input {
+    flex: 1;
+    min-width: 0;
+    background: none;
+    border: none;
+    outline: none;
+    font-size: 13px;
+    color: #111827;
+}
+
+.search-input::placeholder {
+    color: rgba(31, 41, 55, 0.35);
+}
+
+.search-kbd {
+    font-size: 9.5px;
+    border-radius: 4px;
+    padding: 1px 5px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    color: rgba(31, 41, 55, 0.38);
+    background: rgba(31, 41, 55, 0.05);
+    border: 1px solid rgba(31, 41, 55, 0.1);
+}
+
+.divider-v {
+    width: 1px;
+    height: 22px;
+    flex-shrink: 0;
+    background: rgba(31, 41, 55, 0.1);
+}
+
+/* ══ Main ══ */
+.omagi-main {
+    background: transparent !important;
+    position: relative;
+    z-index: 1;
+}
+
+.content-wrap {
+    padding: 24px;
+    min-height: 100%;
 }
 </style>

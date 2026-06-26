@@ -3,7 +3,7 @@
     <LanguageSwitcher />
     <div class="login-page__backdrop" />
 
-    <v-container class="fill-height d-flex align-center justify-center">
+    <div class="login-page__center">
       <v-sheet class="login-shell" rounded="xl" elevation="24">
         <div class="login-shell__glow" />
 
@@ -60,7 +60,7 @@
           </v-btn>
         </v-form>
       </v-sheet>
-    </v-container>
+    </div>
   </div>
 </template>
 
@@ -69,6 +69,7 @@ import { computed, ref } from "vue";
 import LanguageSwitcher from "~/components/LanguageSwitcher.vue";
 import { useAuthStore } from "~/stores/authStore";
 import { sonnerToast } from "~/utils/sonnerToast";
+import {useFrontendI18n} from "~/composables/i18n/index"
 
 type Errors = {
   user_name?: string;
@@ -181,7 +182,7 @@ async function handleLogin() {
   min-height: 100dvh;
   background:
     linear-gradient(rgba(2, 10, 18, 0.45), rgba(2, 10, 18, 0.72)),
-    url("/fish/fish-all-star/resources/background/login_bg.png") center / cover no-repeat;
+    url("/backgrounds/login_background.png") center / cover no-repeat;
 }
 
 .login-page__backdrop {
@@ -190,6 +191,18 @@ async function handleLogin() {
   background:
     radial-gradient(circle at top, rgba(248, 205, 93, 0.16), transparent 32%),
     radial-gradient(circle at bottom, rgba(61, 175, 226, 0.22), transparent 30%);
+}
+
+.login-page__center {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
 }
 
 .login-shell {

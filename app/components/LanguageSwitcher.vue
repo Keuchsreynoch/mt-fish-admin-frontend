@@ -20,6 +20,8 @@
 </template>
 
 <script setup lang="ts">
+import { useFrontendI18n } from "~/composables/i18n";
+
 const { locale, setLocale, t } = useFrontendI18n()
 </script>
 

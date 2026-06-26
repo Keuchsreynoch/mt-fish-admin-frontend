@@ -1,3 +1,4 @@
+import { ref } from "vue";
 import type { UseFetchOptions } from "nuxt/app";
 import { defu } from "defu";
 import { storeToRefs } from "pinia";
