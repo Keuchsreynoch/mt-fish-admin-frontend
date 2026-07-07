@@ -194,11 +194,15 @@ const staticChildren: Record<string, NavItem[]> = {
     ],
 }
 
+const staticTopLevel: NavItem[] = [
+    { menu_uuid: 'static-analytics', title: 'Analytics', icon: 'mdi-chart-line', to: '/analytics' },
+]
+
 const mainNav = computed<NavItem[]>(() => {
     const all = menus.value ?? []
     const topLevel = all.filter(m => m.parent_id === 0)
 
-    return topLevel.map(m => {
+    const mapped = topLevel.map(m => {
         const apiChildren = all
             .filter(c => c.parent_id === m.id)
             .map(c => ({
@@ -218,6 +222,10 @@ const mainNav = computed<NavItem[]>(() => {
             children: children?.length ? children : undefined,
         }
     })
+
+    return mapped.some(item => item.to === '/analytics')
+        ? mapped
+        : [...mapped, ...staticTopLevel]
 })
 
 const displayUserName = computed(() => currentUser.value?.user_name || currentUser.value?.login_id)

@@ -1,374 +1,557 @@
 <template>
-  <div fluid class="pa-2 game-config-page">
-    <div class="page-header mb-3">
-      <div>
-        <h1 class="page-title">Game Config</h1>
-        <p class="page-subtitle">Edit RTP and jackpot settings for the active game.</p>
-      </div>
-      <div class="header-chips">
-        <v-chip size="small" color="primary" variant="flat">
-          {{ configForm.game_name || "Loading..." }}
-        </v-chip>
-        <v-chip size="small" variant="tonal">
-          Status {{ configForm.status_id }}
-        </v-chip>
-      </div>
+  <div class="game-config flex flex-col gap-3">
+    <!-- Page header with Refresh -->
+    <div class="page-header">
+      <h1 class="page-title text-2xl font-semibold">Game Configuration</h1>
+      <v-btn
+        color="success"
+        variant="flat"
+        class="refresh-btn"
+        :loading="isLoading"
+        @click="fetchGameConfig"
+      >
+        <v-icon size="16" class="mr-1">mdi-refresh</v-icon>
+        Refresh
+      </v-btn>
     </div>
 
-    <v-alert
-      v-if="errorMessage"
-      type="error"
-      variant="tonal"
-      class="mb-4"
-      density="compact"
-    >
-      {{ errorMessage }}
-    </v-alert>
-
-    <v-alert
-      v-if="successMessage"
-      type="success"
-      variant="tonal"
-      class="mb-4"
-      density="compact"
-    >
-      {{ successMessage }}
-    </v-alert>
-
-    <div v-if="isLoading" class="loading-state">
-      <v-progress-circular indeterminate color="primary" />
-      <span>Loading game config...</span>
-    </div>
-
-    <v-card v-else class="config-card" elevation="0">
-      <div class="card-heading">
-        <div>
-          <div class="card-title">Current Game Config</div>
-          <div class="card-help">
-            Last updated by {{ configForm.updated_by_username || "—" }}
+    <!-- Top summary strip -->
+    <v-row dense class="summary-strip">
+      <v-col cols="6" md="3">
+        <div class="strip-card strip-card--amber">
+          <div class="strip-label">RTP Target</div>
+          <div class="strip-value">{{ formatAmount(poolData?.rtp_target) }}%</div>
+        </div>
+      </v-col>
+      <v-col cols="6" md="3">
+        <div class="strip-card strip-card--blue">
+          <div class="strip-label">Jackpot Rate</div>
+          <div class="strip-value">{{ formatAmount(poolData?.jackpot_rate) }}%</div>
+        </div>
+      </v-col>
+      <v-col cols="6" md="3">
+        <div class="strip-card strip-card--green">
+          <div class="strip-label">RTP Range</div>
+          <div class="strip-value">{{ formatAmount(poolData?.rtp_floor) }}% - {{ formatAmount(poolData?.rtp_ceiling) }}%</div>
+        </div>
+      </v-col>
+      <v-col cols="6" md="3">
+        <div class="strip-card strip-card--violet">
+          <div class="strip-label">Status</div>
+          <div class="strip-value flex items-center gap-2">
+            <span class="status-dot" :class="poolData?.status_id === 1 ? 'status-dot--active' : 'status-dot--inactive'"></span>
+            {{ poolData?.status_id === 1 ? 'Active' : 'Inactive' }}
           </div>
         </div>
-      </div>
+      </v-col>
+    </v-row>
 
-      <div class="config-grid">
-        <v-text-field
-          v-model="configForm.rtp_target"
-          label="RTP Target"
-          hint="Example: 0.9500"
-          persistent-hint
-          density="compact"
-          hide-details="auto"
-          variant="outlined"
-          class="ocean-input"
-        />
+    <!-- Tabs -->
+    <div class="game-config-tabs">
+      <v-tabs v-model="activeTab" density="compact" color="primary" class="game-config-tabs__bar">
+        <v-tab value="history" class="tab-item">
+          <v-icon size="16" class="mr-1">mdi-history</v-icon>
+          History
+        </v-tab>
+      </v-tabs>
 
-        <v-text-field
-          v-model="configForm.rtp_floor"
-          label="RTP Floor"
-          hint="Example: 0.8200"
-          persistent-hint
-          density="compact"
-          hide-details="auto"
-          variant="outlined"
-          class="ocean-input"
-        />
+      <v-window v-model="activeTab" class="game-config-tabs__window">
+        <!-- History tab -->
+        <v-window-item value="history">
+          <v-card class="history-card" elevation="0">
+            <div class="history-card__header">
+              <div>
+                <h2 class="history-card__title">Configuration History</h2>
+                <div class="history-card__subtitle">
+                  {{ historyData.length }} records
+                </div>
+              </div>
+            </div>
 
-        <v-text-field
-          v-model="configForm.rtp_ceiling"
-          label="RTP Ceiling"
-          hint="Example: 0.9800"
-          persistent-hint
-          density="compact"
-          hide-details="auto"
-          variant="outlined"
-          class="ocean-input"
-        />
+            <v-table class="history-table" density="comfortable">
+              <thead>
+                <tr>
+                  <th>Field</th>
+                  <th>Old Value</th>
+                  <th>New Value</th>
+                  <th>Updated At</th>
+                  <th>Updated By</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-if="!historyData.length">
+                  <td colspan="5" class="text-center py-8">
+                    <v-icon size="32" color="grey-lighten-1">mdi-history</v-icon>
+                    <div class="empty-title">No history records</div>
+                    <div class="empty-subtitle">Configuration changes will appear here.</div>
+                  </td>
+                </tr>
+                <tr v-for="row in historyData" :key="row.id">
+                  <td class="font-medium">{{ row.field }}</td>
+                  <td class="text-red-600 line-through">{{ row.old_value }}</td>
+                  <td class="text-emerald-600 font-semibold">{{ row.new_value }}</td>
+                  <td>{{ row.updated_at }}</td>
+                  <td>{{ row.updated_by }}</td>
+                </tr>
+              </tbody>
+            </v-table>
+          </v-card>
+        </v-window-item>
+      </v-window>
+    </div>
 
-        <v-text-field
-          v-model="configForm.jackpot_rate"
-          label="Jackpot Rate"
-          hint="Example: 0.020000"
-          persistent-hint
-          density="compact"
-          hide-details="auto"
-          variant="outlined"
-          class="ocean-input"
-        />
+    <!-- Settings Dialog -->
+    <GameConfigSettingsForm
+      v-model="showSettings"
+      :pool-data="poolData"
+      :update-loading="updateLoading"
+      @submit="onSettingsSubmit"
+      @cancel="showSettings = false"
+    />
 
-        <v-text-field
-          v-model.number="configForm.status_id"
-          type="number"
-          label="Status ID"
-          hint="Example: 1"
-          persistent-hint
-          density="compact"
-          hide-details="auto"
-          variant="outlined"
-          class="ocean-input"
-        />
-      </div>
-
-      <div class="actions-row">
-        <v-btn
-          color="primary"
-          variant="flat"
-          prepend-icon="mdi-content-save"
-          :loading="isSaving"
-          :disabled="!hasChanges"
-          @click="saveGameConfig"
-        >
-          Save Game Config
+    <!-- Snackbar for notifications -->
+    <v-snackbar
+      v-model="snackbar.show"
+      :color="snackbar.color"
+      :timeout="3000"
+      location="top right"
+    >
+      {{ snackbar.message }}
+      <template v-slot:actions>
+        <v-btn variant="text" @click="snackbar.show = false">
+          Close
         </v-btn>
-      </div>
-    </v-card>
+      </template>
+    </v-snackbar>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
 import {
   getGameConfig,
   updateGameConfig,
   type GameConfig,
-} from "~/composables/service/gameConfigApi"
+  type UpdateGameConfigBody,
+} from '~/composables/service/gameConfigApi'
 
-interface GameConfigState extends GameConfig {
-  updated_by_username?: string
-}
 
-const isLoading = ref(true)
-const isSaving = ref(false)
-const errorMessage = ref("")
-const successMessage = ref("")
-const configForm = ref<GameConfigState>({
-  game_name: "",
-  rtp_target: "",
-  rtp_floor: "",
-  rtp_ceiling: "",
-  jackpot_rate: "",
-  status_id: 1,
-  updated_by_username: "",
-})
-const originalConfig = ref<GameConfigState | null>(null)
+const isLoading = ref(false)
 
-const hasChanges = computed(() => {
-  if (!originalConfig.value) return false
+const activeTab = ref('settings')
+const showSettings = ref(false)
+const updateLoading = ref(false)
 
-  return (
-    configForm.value.rtp_target !== originalConfig.value.rtp_target ||
-    configForm.value.rtp_floor !== originalConfig.value.rtp_floor ||
-    configForm.value.rtp_ceiling !== originalConfig.value.rtp_ceiling ||
-    configForm.value.jackpot_rate !== originalConfig.value.jackpot_rate ||
-    Number(configForm.value.status_id) !== Number(originalConfig.value.status_id)
-  )
+const poolData = ref<GameConfig | null>(null)
+
+const snackbar = ref({
+  show: false,
+  message: '',
+  color: 'success'
 })
 
-function syncConfig(data: GameConfigState) {
-  configForm.value = {
-    ...data,
-    status_id: Number(data.status_id ?? 1),
-  }
-  originalConfig.value = {
-    ...configForm.value,
-  }
+// Ledger mock data
+const ledgerData = ref([
+  { id: 1, transaction_type: 'Top-up', amount: '5000.00', balance_before: '10000.00', balance_after: '15000.00', created_at: '2024-01-15 10:30:00', created_by: 'admin_john' },
+  { id: 2, transaction_type: 'Payout', amount: '-1250.00', balance_before: '15000.00', balance_after: '13750.00', created_at: '2024-01-15 11:45:00', created_by: 'admin_sarah' },
+  { id: 3, transaction_type: 'Adjustment', amount: '250.00', balance_before: '13750.00', balance_after: '14000.00', created_at: '2024-01-15 14:20:00', created_by: 'admin_john' },
+  { id: 4, transaction_type: 'Top-up', amount: '3000.00', balance_before: '14000.00', balance_after: '17000.00', created_at: '2024-01-16 09:15:00', created_by: 'admin_mike' }
+])
+const ledgerLoading = ref(false)
+const ledgerTotal = computed(() => ledgerData.value.length)
+const ledgerRangeStart = computed(() => ledgerTotal.value === 0 ? 0 : 1)
+const ledgerRangeEnd = computed(() => ledgerTotal.value)
+
+// History mock data
+const historyData = ref([
+  { id: 1, field: 'rtp_target', old_value: '94.00', new_value: '95.50', updated_at: '2024-01-15 10:30:00', updated_by: 'admin_john' },
+  { id: 2, field: 'jackpot_rate', old_value: '2.00', new_value: '2.50', updated_at: '2024-01-14 16:45:00', updated_by: 'admin_sarah' },
+  { id: 3, field: 'status_id', old_value: '0', new_value: '1', updated_at: '2024-01-13 11:20:00', updated_by: 'admin_john' },
+  { id: 4, field: 'rtp_ceiling', old_value: '97.00', new_value: '98.00', updated_at: '2024-01-12 14:30:00', updated_by: 'admin_mike' }
+])
+
+function parseAmount(value: string | number | null | undefined): number {
+  if (value === null || value === undefined || value === '') return 0
+  return parseFloat(String(value)) || 0
 }
 
-function showError(message: string) {
-  errorMessage.value = message
-  successMessage.value = ""
+function formatAmount(value: string | number | null | undefined): string {
+  const amount = parseAmount(value)
+  return new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(amount)
 }
 
-function showSuccess(message: string) {
-  successMessage.value = message
-  errorMessage.value = ""
-}
-
-async function loadGameConfig() {
+async function fetchGameConfig() {
   isLoading.value = true
   try {
-    const res = await getGameConfig()
-    const response = res?.data?.value
-    if (response?.success) {
-      syncConfig(response.data)
-      errorMessage.value = ""
-      successMessage.value = ""
-      return
-    }
-
-    showError(response?.message || "Failed to load game config")
+    const response = await getGameConfig()
+    const payload = response?.data.value
+    poolData.value = payload?.data ?? null
   } catch (error: any) {
-    showError(error?.message || "Failed to load game config")
+    console.error('[game-config] failed to load', error)
+    showSnackbar(error?.message || 'Failed to load game configuration', 'error')
   } finally {
     isLoading.value = false
   }
 }
 
-async function saveGameConfig() {
-  if (!configForm.value.rtp_target.trim()) {
-    showError("RTP target is required")
-    return
-  }
-  if (!configForm.value.rtp_floor.trim()) {
-    showError("RTP floor is required")
-    return
-  }
-  if (!configForm.value.rtp_ceiling.trim()) {
-    showError("RTP ceiling is required")
-    return
-  }
-  if (!configForm.value.jackpot_rate.trim()) {
-    showError("Jackpot rate is required")
-    return
-  }
-  if (!Number.isFinite(Number(configForm.value.status_id))) {
-    showError("Status ID is required")
-    return
-  }
+function openSettingsDialog() {
+  showSettings.value = true
+}
 
-  isSaving.value = true
+async function onSettingsSubmit(form: UpdateGameConfigBody) {
+  updateLoading.value = true
   try {
-    const res = await updateGameConfig({
-      rtp_target: configForm.value.rtp_target.trim(),
-      rtp_floor: configForm.value.rtp_floor.trim(),
-      rtp_ceiling: configForm.value.rtp_ceiling.trim(),
-      jackpot_rate: configForm.value.jackpot_rate.trim(),
-      status_id: Number(configForm.value.status_id),
-    })
-    const response = res?.data?.value
-    if (response?.success) {
-      syncConfig({
-        ...configForm.value,
-        ...response.data,
-      })
-      showSuccess(response.message)
-      return
+    const response = await updateGameConfig(form)
+    const payload = response?.data.value
+    if (payload?.success) {
+      // Update local data
+      if (poolData.value) {
+        poolData.value = {
+          ...poolData.value,
+          rtp_target: form.rtp_target,
+          rtp_floor: form.rtp_floor,
+          rtp_ceiling: form.rtp_ceiling,
+          jackpot_rate: form.jackpot_rate,
+          status_id: form.status_id,
+          updated_by_username: payload.data.updated_by_username
+        }
+      }
+      
+      // Add to history
+      const historyEntries = []
+      if (poolData.value?.rtp_target !== form.rtp_target) {
+        historyEntries.push({
+          id: historyData.value.length + 1,
+          field: 'rtp_target',
+          old_value: poolData.value?.rtp_target || '',
+          new_value: form.rtp_target,
+          updated_at: new Date().toISOString().replace('T', ' ').substring(0, 19),
+          updated_by: payload.data.updated_by_username
+        })
+      }
+      // Add more history entries for other changed fields...
+      
+      showSnackbar(payload.message || 'Game configuration updated successfully', 'success')
+      showSettings.value = false
     }
-
-    showError(response?.message || "Failed to update game config")
   } catch (error: any) {
-    showError(error?.message || "Failed to update game config")
+    console.error('[game-config] update failed', error)
+    showSnackbar(error?.message || 'Failed to update game configuration', 'error')
   } finally {
-    isSaving.value = false
+    updateLoading.value = false
   }
 }
 
-onMounted(loadGameConfig)
+function showSnackbar(message: string, color: 'success' | 'error' = 'success') {
+  snackbar.value = { show: true, message, color }
+}
+
+onMounted(() => {
+  fetchGameConfig()
+})
 </script>
 
 <style scoped>
-.game-config-page {
-  display: flex;
-  flex-direction: column;
-}
-
 .page-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
 }
 
-.header-chips {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+.refresh-btn {
+  text-transform: none;
 }
 
-.page-title {
-  font-size: 22px;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-  color: #111827;
+/* Summary Strip */
+.summary-strip {
+  margin: 0;
 }
 
-.page-subtitle {
-  margin-top: 6px;
-  color: rgba(17, 24, 39, 0.62);
-  font-size: 14px;
-}
-
-.loading-state {
-  min-height: 220px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  gap: 12px;
-  color: rgba(17, 24, 39, 0.6);
-}
-
-.config-card {
-  padding: 18px;
-  border: 1px solid rgba(31, 41, 55, 0.1);
-  border-radius: 14px;
+.strip-card {
+  padding: 10px 14px;
   background: #fff;
+  border: 1px solid #e5e7eb;
+  border-left-width: 4px;
+  border-radius: 8px;
+  height: 100%;
 }
 
-.card-heading {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 14px;
+.strip-label {
+  font-size: 12px;
+  color: #6b7280;
 }
 
-.card-title {
-  font-size: 14px;
+.strip-value {
+  font-size: 18px;
   font-weight: 700;
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.strip-card--amber {
+  border-left-color: #f59e0b;
+}
+
+.strip-card--amber .strip-value {
+  color: #b45309;
+}
+
+.strip-card--blue {
+  border-left-color: #3b82f6;
+}
+
+.strip-card--blue .strip-value {
+  color: #1d4ed8;
+}
+
+.strip-card--green {
+  border-left-color: #10b981;
+}
+
+.strip-card--green .strip-value {
+  color: #047857;
+}
+
+.strip-card--violet {
+  border-left-color: #8b5cf6;
+}
+
+.strip-card--violet .strip-value {
+  color: #6d28d9;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.status-dot--active {
+  background: #10b981;
+}
+
+.status-dot--inactive {
+  background: #ef4444;
+}
+
+/* Config Card */
+.config-card {
+  padding: 16px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+}
+
+.config-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.config-card__title {
+  font-size: 14px;
+  font-weight: 600;
   color: #111827;
 }
 
-.card-help {
-  margin-top: 3px;
-  font-size: 12px;
-  color: rgba(31, 41, 55, 0.5);
+.config-card__settings-btn {
+  background: #2563eb !important;
 }
 
 .config-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  margin: 0;
 }
 
-@media (max-width: 900px) {
-  .config-grid {
-    grid-template-columns: 1fr;
-  }
+/* Tiles */
+.tile {
+  border-radius: 8px;
+  padding: 10px 12px;
+  height: 100%;
 }
 
-.actions-row {
+.tile-label {
   display: flex;
-  justify-content: flex-end;
-  margin-top: 14px;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin-bottom: 4px;
+  opacity: 0.85;
 }
 
-:deep(.ocean-input .v-field) {
-  background: #FFFFFF !important;
-  border-radius: 6px;
+.tile-icon {
+  opacity: 0.9;
 }
 
-:deep(.ocean-input .v-field__input) {
-  min-height: 28px !important;
-  padding-top: 2px !important;
-  padding-bottom: 2px !important;
+.tile-value {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.tile--blue {
+  background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%);
+  color: #1d4ed8;
+}
+
+.tile--purple {
+  background: linear-gradient(135deg, #ede9fe 0%, #f5f3ff 100%);
+  color: #7c3aed;
+}
+
+.tile--amber {
+  background: linear-gradient(135deg, #fef3c7 0%, #fffbeb 100%);
+  color: #b45309;
+}
+
+.tile--green {
+  background: linear-gradient(135deg, #d1fae5 0%, #ecfdf5 100%);
+  color: #047857;
+}
+
+.tile--red {
+  background: linear-gradient(135deg, #fee2e2 0%, #fef2f2 100%);
+  color: #b91c1c;
+}
+
+.tile--indigo {
+  background: linear-gradient(135deg, #e0e7ff 0%, #eef2ff 100%);
+  color: #4338ca;
+}
+
+/* Status Card */
+.status-card {
+  padding: 16px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+}
+
+.status-card__header {
+  margin-bottom: 12px;
+}
+
+.status-card__title {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.status-card__content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-indicator__dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.status-indicator__dot--active {
+  background: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+.status-indicator__dot--inactive {
+  background: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+}
+
+.status-indicator__text {
+  font-size: 15px;
+  font-weight: 500;
+  color: #374151;
+}
+
+/* Tabs */
+.game-config-tabs__bar {
+  border-bottom: 1px solid #e5e7eb;
+  text-transform: capitalize !important;
+}
+
+.game-config-tabs__window {
+  padding-top: 12px;
+}
+
+.tab-item {
+  text-transform: capitalize !important;
+  font-weight: 600;
+}
+
+/* Ledger Card */
+.ledger-card,
+.history-card {
+  padding: 16px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+}
+
+.ledger-card__header,
+.history-card__header {
+  margin-bottom: 12px;
+}
+
+.ledger-card__title,
+.history-card__title {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.ledger-card__subtitle,
+.history-card__subtitle {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+.ledger-table,
+.history-table {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.ledger-table :deep(th),
+.history-table :deep(th) {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: #6b7280;
+  background: #f9fafb;
+}
+
+.empty-title {
   font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  margin-top: 8px;
 }
 
-:deep(.ocean-input input) {
-  font-size: 13px;
-  color: #111827 !important;
-}
-
-:deep(.ocean-input .v-field__outline) {
-  color: rgba(31, 41, 55, 0.18) !important;
-}
-
-:deep(.ocean-input .v-messages) {
-  min-height: 16px;
-}
-
-:deep(.v-btn) {
-  text-transform: none;
+.empty-subtitle {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 2px;
 }
 </style>

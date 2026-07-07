@@ -14,12 +14,14 @@ export interface ApiResponse<T> {
 export interface MemberBonusItem {
   id: number;
   member_id: number;
+  member_name: string;
   amount: string;
   note: string;
   order: number;
   status_id: number;
   created_at: string;
   created_by: number;
+  created_by_name: string;
 }
 
 export interface MemberBonusData {

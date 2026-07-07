@@ -19,21 +19,18 @@
           clearable
         /> -->
 
-        <v-btn class="btn-primary" prepend-icon="mdi-plus" @click="openCreateUserDialog">
+        <!-- <v-btn class="btn-primary" prepend-icon="mdi-plus" @click="openCreateUserDialog">
+          Add User
+        </v-btn> -->
+
+        <v-btn color="success" variant="flat" prepend-icon="mdi-plus" class="refresh-btn"  @click="openCreateUserDialog">
+          <!-- <v-icon size="16" class="mr-1">mdi-refresh</v-icon> -->
           Add User
         </v-btn>
       </div>
 
-      <AppTable
-        :columns="userColumns"
-        :items="filteredUsers"
-        :loading="userLoading"
-        :error="userError"
-        :page="userPage"
-        :page-size="userPageSize"
-        :total-pages="userTotalPages"
-        @update:page="userPage = $event"
-      >
+      <AppTable :columns="userColumns" :items="filteredUsers" :loading="userLoading" :error="userError" :page="userPage"
+        :page-size="userPageSize" :total-pages="userTotalPages" @update:page="userPage = $event">
         <template #cell-username="{ item }">
           <div class="user-cell">
             <div class="avatar">{{ getInitials(item.username) }}</div>
@@ -49,12 +46,7 @@
         </template>
 
         <template #cell-actions="{ item }">
-          <v-btn
-            size="small"
-            variant="outlined"
-            prepend-icon="mdi-key-variant"
-            @click="openAssignDialog(item)"
-          >
+          <v-btn size="small" variant="outlined" prepend-icon="mdi-key-variant" @click="openAssignDialog(item)">
             Assign Menus
           </v-btn>
         </template>
@@ -62,7 +54,7 @@
     </div>
 
     <!-- CREATE USER -->
-    <v-dialog v-model="createUserDialog" max-width="560" >
+    <v-dialog v-model="createUserDialog" max-width="560">
       <v-card class="dialog-card">
         <div class="dialog-header">
           <div class="dialog-title-row">
@@ -81,99 +73,57 @@
           <div class="form-grid">
             <div class="form-group half">
               <label class="form-label">Username <span class="required">*</span></label>
-              <v-text-field
-                v-model="userForm.user_name"
-                placeholder="e.g. ADMIN006"
-                density="compact"
-                variant="outlined"
-                hide-details="auto"
-              />
+              <v-text-field v-model="userForm.user_name" placeholder="e.g. ADMIN006" density="compact"
+                variant="outlined" hide-details="auto" />
             </div>
 
             <div class="form-group half">
               <label class="form-label">Login ID <span class="required">*</span></label>
-              <v-text-field
-                v-model="userForm.login_id"
-                placeholder="e.g. ADMIN006"
-                density="compact"
-                variant="outlined"
-                hide-details="auto"
-              />
+              <v-text-field v-model="userForm.login_id" placeholder="e.g. ADMIN006" density="compact" variant="outlined"
+                hide-details="auto" />
             </div>
 
             <div class="form-group half">
               <label class="form-label">Password <span class="required">*</span></label>
-              <v-text-field
-                v-model="userForm.password"
-                :type="showPassword ? 'text' : 'password'"
-                placeholder="••••••"
-                density="compact"
-                variant="outlined"
-                hide-details="auto"
+              <v-text-field v-model="userForm.password" :type="showPassword ? 'text' : 'password'" placeholder="••••••"
+                density="compact" variant="outlined" hide-details="auto"
                 :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
-                @click:append-inner="showPassword = !showPassword"
-              />
+                @click:append-inner="showPassword = !showPassword" />
             </div>
 
             <div class="form-group half">
               <label class="form-label">Email <span class="required">*</span></label>
-              <v-text-field
-                v-model="userForm.email"
-                placeholder="e.g. admin@example.com"
-                density="compact"
-                variant="outlined"
-                hide-details="auto"
-              />
+              <v-text-field v-model="userForm.email" placeholder="e.g. admin@example.com" density="compact"
+                variant="outlined" hide-details="auto" />
             </div>
 
             <div class="form-group half">
               <label class="form-label">Nickname</label>
-              <v-text-field
-                v-model="userForm.nickname"
-                placeholder="e.g. noch"
-                density="compact"
-                variant="outlined"
-                hide-details
-              />
+              <v-text-field v-model="userForm.nickname" placeholder="e.g. noch" density="compact" variant="outlined"
+                hide-details />
             </div>
 
             <div class="form-group half">
               <label class="form-label">Profile</label>
-              <v-text-field
-                v-model="userForm.profile"
-                placeholder="e.g. admin"
-                density="compact"
-                variant="outlined"
-                hide-details
-              />
+              <v-text-field v-model="userForm.profile" placeholder="e.g. admin" density="compact" variant="outlined"
+                hide-details />
             </div>
 
             <div class="form-group full">
               <label class="form-label">Assign Menus</label>
 
               <div class="assign-menu-grid" style="max-height: 220px;">
-                <div
-                  v-for="menu in allMenus"
-                  :key="menu.id"
-                  class="assign-menu-item"
-                  :class="{ selected: isCreateMenuSelected(menu.id) }"
-                  @click="toggleUserMenu(menu.id)"
-                >
+                <div v-for="menu in allMenus" :key="menu.id" class="assign-menu-item"
+                  :class="{ selected: isCreateMenuSelected(menu.id) }" @click="toggleUserMenu(menu.id)">
                   <div class="assign-menu-left">
-                    <v-icon
-                      size="18"
-                      :color="isCreateMenuSelected(menu.id) ? '#1F2937' : '#9CA3AF'"
-                    >
+                    <v-icon size="18" :color="isCreateMenuSelected(menu.id) ? '#1F2937' : '#9CA3AF'">
                       {{ menu.icon }}
                     </v-icon>
 
                     <span class="assign-menu-name">{{ menu.name }}</span>
                   </div>
 
-                  <v-icon
-                    size="18"
-                    :color="isCreateMenuSelected(menu.id) ? '#1F2937' : '#D1D5DB'"
-                  >
+                  <v-icon size="18" :color="isCreateMenuSelected(menu.id) ? '#1F2937' : '#D1D5DB'">
                     {{ isCreateMenuSelected(menu.id) ? 'mdi-checkbox-marked' : 'mdi-checkbox-blank-outline' }}
                   </v-icon>
                 </div>
@@ -199,7 +149,7 @@
     </v-dialog>
 
     <!-- ASSIGN USER MENUS -->
-    <v-dialog v-model="assignDialog" max-width="560" >
+    <v-dialog v-model="assignDialog" max-width="560">
       <v-card class="dialog-card">
         <div class="dialog-header">
           <div class="dialog-title-row">
@@ -224,13 +174,8 @@
           </div>
 
           <div v-else class="assign-menu-grid">
-            <div
-              v-for="menu in allMenus"
-              :key="menu.id"
-              class="assign-menu-item"
-              :class="{ selected: isMenuAssigned(menu.id) }"
-              @click="toggleMenu(menu.id)"
-            >
+            <div v-for="menu in allMenus" :key="menu.id" class="assign-menu-item"
+              :class="{ selected: isMenuAssigned(menu.id) }" @click="toggleMenu(menu.id)">
               <div class="assign-menu-left">
                 <v-icon size="18" :color="isMenuAssigned(menu.id) ? '#1F2937' : '#9CA3AF'">
                   {{ menu.icon }}

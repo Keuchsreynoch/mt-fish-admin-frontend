@@ -1,6 +1,6 @@
 <template>
   <div class="app-table-wrapper">
-    <v-table class="app-table" fixed-header :height="height">
+    <v-table class="app-table" fixed-header :height="tableHeight">
       <thead>
         <tr>
           <th v-for="col in columns" :key="col.key" :style="col.width ? `width: ${col.width}` : ''">
@@ -113,6 +113,8 @@
 </template>
 
 <script setup lang="ts" generic="T extends Record<string, any>">
+import { computed } from 'vue'
+
 // ── Types ──────────────────────────────────────────────
 export interface TableColumn<T = any> {
   key: string
@@ -147,6 +149,8 @@ const props = withDefaults(defineProps<{
   subtotals?:   TotalRow
   grandTotals?: TotalRow
   onRowClick?:  (item: T) => void
+  /** Below this many rows, the table sizes to content instead of stretching to fill `height`. */
+  minRowsForFixedHeight?: number
 }>(), {
   loading:    false,
   error:      '',
@@ -154,9 +158,21 @@ const props = withDefaults(defineProps<{
   page:       1,
   pageSize:   10,
   totalPages: 1,
+  minRowsForFixedHeight: 8,
 })
 
 defineEmits<{ 'update:page': [page: number] }>()
+
+// ── Computed ───────────────────────────────────────────
+
+// When there isn't enough data to need a scrollable, fixed-height table
+// (loading / error / empty / few rows), let the table size naturally to
+// its content instead of stretching to fill the viewport height.
+const tableHeight = computed(() => {
+  if (props.loading || props.error || !props.items.length) return 'auto'
+  if (props.items.length < props.minRowsForFixedHeight) return 'auto'
+  return props.height
+})
 
 // ── Helpers ────────────────────────────────────────────
 function formatCell(col: TableColumn<T>, item: T): string {
@@ -196,6 +212,13 @@ function getBadgeClass(col: TableColumn<T>, item: T): string {
   border-collapse: collapse;
   width: 100%;
   height: 100%;
+}
+
+/* Cap the scroll wrapper to the intended max height even when the table
+   itself is sized to 'auto' — prevents runaway growth if rows are added
+   dynamically, while still letting small tables shrink to fit content. */
+.app-table :deep(.v-table__wrapper) {
+  max-height: v-bind('height');
 }
 
 .app-table :deep(thead th) {
