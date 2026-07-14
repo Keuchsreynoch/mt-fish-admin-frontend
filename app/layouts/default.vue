@@ -15,21 +15,21 @@
 
                     <!-- Brand -->
                     <div class="brand-area" :class="{ 'brand-area--collapsed': collapsed }">
-                        <div class="brand-logo"></div>
+                        <!-- <div class="brand-logo"></div> -->
                         <template v-if="!collapsed">
                             <div class="brand-text">
-                                <div class="brand-name">FishBlast</div>
-                                <div class="brand-sub">Admin Console</div>
+                                <div class="brand-name">Fish Dashboard</div>
+                                <div class="brand-sub">{{ t('layout.adminConsole') }}</div>
                             </div>
                         </template>
                         <!-- Collapse toggle -->
-                        <v-btn :icon="collapsed ? 'mdi-chevron-right' : 'mdi-chevron-left'" variant="text"
-                            size="x-small" class="collapse-toggle-btn" @click="toggleCollapse" />
+                        <v-btn :icon="collapsed ? ' mdi-menu-open' : ' mdi-menu-open'" variant="text" 
+                            size="x-small" class="collapse-toggle-btn brand-logo" @click="toggleCollapse" />
                     </div>
 
                     <!-- Main nav (from API menus) -->
                     <div class="nav-section">
-                        <div v-if="!collapsed" class="nav-label">OPERATIONS</div>
+                        <div v-if="!collapsed" class="nav-label">{{ t('layout.operations') }}</div>
 
                         <template v-for="item in mainNav" :key="item.menu_uuid">
 
@@ -91,6 +91,21 @@
                             </NuxtLink>
 
                         </template>
+
+                        <div
+                            class="nav-item"
+                            :class="{ 'nav-item--collapsed': collapsed }"
+                            @click="showSettingsDialog = true"
+                        >
+                            <div class="nav-icon-wrap">
+                                <v-icon size="20">mdi-cog-outline</v-icon>
+                            </div>
+                            <template v-if="!collapsed">
+                                <div class="nav-info">
+                                    <span class="nav-title">{{ t('common.settings') }}</span>
+                                </div>
+                            </template>
+                        </div>
                     </div>
 
                 </div>
@@ -107,8 +122,8 @@
                                 <div class="user-name">{{ displayUserName }}</div>
                                 <div class="user-role">{{ displayUserRole }}</div>
                             </div>
-                            <v-btn icon="mdi-logout" variant="text" size="x-small"
-                                style="margin-left: auto; color: rgba(31,41,55,0.4);"
+                            <v-btn icon="mdi-logout" variant="text" size="x-small" color="close-btn"
+                                style="margin-left: auto;"
                                 @click="showLogoutDialog = true" />
                         </template>
                     </div>
@@ -116,6 +131,12 @@
 
             </div>
         </v-navigation-drawer>
+
+        <!-- ───────── Mobile Top Bar (mobile only, no header on desktop) ───────── -->
+        <v-app-bar v-if="isMobile" flat height="56" class="omagi-mobile-bar">
+            <v-app-bar-nav-icon @click="drawer = !drawer" />
+            <div class="brand-name">Fish Dashboard</div>
+        </v-app-bar>
 
         <!-- ───────── Main Content ───────── -->
         <v-main class="omagi-main">
@@ -126,6 +147,7 @@
 
         <!-- ───────── Logout Dialog ───────── -->
         <LogoutDialog v-model="showLogoutDialog" />
+        <SettingsDialog v-model="showSettingsDialog" />
 
     </v-app>
 </template>
@@ -136,13 +158,17 @@ import { storeToRefs } from 'pinia'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '~/stores/authStore'
 import LogoutDialog from '~/components/LogoutDialog.vue'
+import SettingsDialog from '~/components/SettingsDialog.vue'
+import { useFrontendI18n } from '~/composables/i18n'
 
 const route = useRoute()
 const authStore = useAuthStore()
 const { currentUser, menus } = storeToRefs(authStore)
+const { t } = useFrontendI18n()
 
 // ── Logout dialog ──────────────────────────────────────
 const showLogoutDialog = ref(false)
+const showSettingsDialog = ref(false)
 
 // ── Responsive ────────────────────────────────────────
 const isMobile = ref(false)
@@ -187,16 +213,12 @@ interface NavItem {
     children?: NavItem[]
 }
 
-const staticChildren: Record<string, NavItem[]> = {
-    '/transactions': [
-        { menu_uuid: 'static-coin', title: 'Coin', icon: 'mdi-bitcoin', to: '/transactions/coin' },
-        { menu_uuid: 'static-balance', title: 'Balance', icon: 'mdi-wallet-outline', to: '/transactions/balance' },
-    ],
-}
-
-const staticTopLevel: NavItem[] = [
-    { menu_uuid: 'static-analytics', title: 'Analytics', icon: 'mdi-chart-line', to: '/analytics' },
-]
+const staticChildren = computed<Record<string, NavItem[]>>(() => ({
+  '/transactions': [
+    { menu_uuid: 'static-coin', title: t('common.coin'), icon: 'mdi-bitcoin', to: '/transactions/coin' },
+    { menu_uuid: 'static-balance', title: t('common.balance'), icon: 'mdi-wallet-outline', to: '/transactions/balance' },
+  ],
+}))
 
 const mainNav = computed<NavItem[]>(() => {
     const all = menus.value ?? []
@@ -212,7 +234,7 @@ const mainNav = computed<NavItem[]>(() => {
                 to: c.path,
             }))
 
-        const children = apiChildren.length ? apiChildren : staticChildren[m.path]
+        const children = apiChildren.length ? apiChildren : staticChildren.value[m.path]
 
         return {
             menu_uuid: m.menu_uuid,
@@ -222,10 +244,7 @@ const mainNav = computed<NavItem[]>(() => {
             children: children?.length ? children : undefined,
         }
     })
-
-    return mapped.some(item => item.to === '/analytics')
-        ? mapped
-        : [...mapped, ...staticTopLevel]
+    return mapped
 })
 
 const displayUserName = computed(() => currentUser.value?.user_name || currentUser.value?.login_id)
@@ -239,16 +258,16 @@ const displayUserRole = computed(() => currentUser.value?.role_name)
     pointer-events: none;
     overflow: hidden;
     background:
-        radial-gradient(ellipse at 20% 80%, rgba(31, 41, 55, 0.05) 0%, transparent 60%),
-        radial-gradient(ellipse at 80% 20%, rgba(31, 41, 55, 0.03) 0%, transparent 55%),
-        linear-gradient(180deg, #F9FAFB 0%, #F3F4F6 100%);
+        radial-gradient(ellipse at 20% 80%, rgba(var(--v-theme-primary), 0.05) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 20%, rgba(var(--v-theme-secondary), 0.04) 0%, transparent 55%),
+        linear-gradient(180deg, rgb(var(--v-theme-background)) 0%, rgb(var(--v-theme-background)) 100%);
 }
 
 .omagi-sidebar {
     overflow: visible !important;
-    background: #FFFFFF !important;
-    border-right: 1px solid rgba(31, 41, 55, 0.1) !important;
-    box-shadow: 4px 0 24px rgba(31, 41, 55, 0.06) !important;
+    background: rgb(var(--v-theme-surface)) !important;
+    border-right: 1px solid rgba(var(--v-theme-on-surface), 0.1) !important;
+    box-shadow: 4px 0 24px rgba(var(--v-theme-primary), 0.06) !important;
 }
 
 .sidebar-layout {
@@ -276,7 +295,7 @@ const displayUserRole = computed(() => currentUser.value?.role_name)
     gap: 10px;
     padding: 14px 12px 13px;
     flex-shrink: 0;
-    border-bottom: 1px solid rgba(31, 41, 55, 0.08);
+    border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.08);
 }
 
 .brand-area--collapsed {
@@ -293,18 +312,19 @@ const displayUserRole = computed(() => currentUser.value?.role_name)
     align-items: center;
     justify-content: center;
     font-size: 20px;
+    /* background: rgb(var(--v-theme-primary)); */
 }
 
 .brand-name {
     font-size: 16px;
     font-weight: 800;
     letter-spacing: -0.3px;
-    color: #111827;
+    color: rgb(var(--v-theme-primary));
 }
 
 .brand-sub {
     font-size: 9px;
-    color: rgba(31, 41, 55, 0.4);
+    color: rgba(var(--v-theme-primary), 0.4);
     text-transform: uppercase;
     letter-spacing: 1px;
     font-weight: 500;
@@ -318,7 +338,7 @@ const displayUserRole = computed(() => currentUser.value?.role_name)
     font-size: 9px;
     font-weight: 700;
     letter-spacing: 1.5px;
-    color: rgba(31, 41, 55, 0.3);
+    color: rgba(var(--v-theme-on-surface), 0.3);
     padding: 10px 8px 3px;
 }
 
@@ -342,12 +362,12 @@ const displayUserRole = computed(() => currentUser.value?.role_name)
 }
 
 .nav-item:hover {
-    background: rgba(31, 41, 55, 0.05);
+    background: rgba(var(--v-theme-primary), 0.06);
 }
 
 .nav-item--active {
-    background: rgba(31, 41, 55, 0.07) !important;
-    border-color: rgba(31, 41, 55, 0.14) !important;
+    background: rgba(var(--v-theme-primary), 0.10) !important;
+    border-color: rgba(var(--v-theme-primary), 0.25) !important;
 }
 
 .nav-item--active::before {
@@ -357,7 +377,7 @@ const displayUserRole = computed(() => currentUser.value?.role_name)
     top: 18%;
     height: 64%;
     width: 3px;
-    background: #111827;
+    background: rgb(var(--v-theme-primary));
     border-radius: 0 3px 3px 0;
 }
 
@@ -372,19 +392,19 @@ const displayUserRole = computed(() => currentUser.value?.role_name)
 }
 
 .nav-icon-wrap :deep(.v-icon) {
-    color: rgba(31, 41, 55, 0.4) !important;
+    color: rgba(var(--v-theme-on-surface), 0.4) !important;
 }
 
 .nav-item--active .nav-icon-wrap :deep(.v-icon) {
-    color: #111827 !important;
+    color: rgb(var(--v-theme-primary)) !important;
 }
 
 .nav-badge {
     position: absolute;
     top: -2px;
     right: -2px;
-    background: #374151;
-    color: #FFFFFF;
+    background: rgb(var(--v-theme-primary));
+    color: rgb(var(--v-theme-on-primary));
     font-size: 8px;
     font-weight: 700;
     min-width: 15px;
@@ -408,20 +428,20 @@ const displayUserRole = computed(() => currentUser.value?.role_name)
 .nav-title {
     font-size: 13px;
     font-weight: 500;
-    color: rgba(31, 41, 55, 0.7);
+    color: rgba(var(--v-theme-on-surface), 0.7);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 .nav-item--active .nav-title {
-    color: #111827;
+    color: rgb(var(--v-theme-primary));
     font-weight: 600;
 }
 
 .nav-sub {
     font-size: 10px;
-    color: rgba(31, 41, 55, 0.38);
+    color: rgba(var(--v-theme-on-surface), 0.38);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -446,11 +466,11 @@ const displayUserRole = computed(() => currentUser.value?.role_name)
 }
 
 .nav-child-item:hover {
-    background: rgba(31, 41, 55, 0.05);
+    background: rgba(var(--v-theme-primary), 0.06);
 }
 
 .nav-child-item--active {
-    background: rgba(31, 41, 55, 0.07);
+    background: rgba(var(--v-theme-primary), 0.10);
 }
 
 .nav-child-line {
@@ -459,24 +479,24 @@ const displayUserRole = computed(() => currentUser.value?.role_name)
     top: 0;
     bottom: 0;
     width: 1.5px;
-    background: rgba(31, 41, 55, 0.15);
+    background: rgba(var(--v-theme-primary), 0.25);
 }
 
 .nav-child-title {
     font-size: 13px;
-    color: rgba(31, 41, 55, 0.55);
+    color: rgba(var(--v-theme-on-surface), 0.55);
 }
 
 .nav-child-title--active {
-    color: #111827;
+    color: rgb(var(--v-theme-primary));
     font-weight: 600;
 }
 
 .sidebar-footer {
     flex-shrink: 0;
     padding: 10px 10px 12px;
-    border-top: 1px solid rgba(31, 41, 55, 0.08);
-    background: #FFFFFF;
+    border-top: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+    background: rgb(var(--v-theme-surface));
 }
 
 .user-card {
@@ -485,8 +505,8 @@ const displayUserRole = computed(() => currentUser.value?.role_name)
     gap: 9px;
     padding: 9px 8px;
     border-radius: 10px;
-    background: rgba(31, 41, 55, 0.04);
-    border: 1px solid rgba(31, 41, 55, 0.1);
+    background: rgba(var(--v-theme-primary), 0.04);
+    border: 1px solid rgba(var(--v-theme-primary), 0.15);
 }
 
 .user-card--collapsed {
@@ -494,26 +514,35 @@ const displayUserRole = computed(() => currentUser.value?.role_name)
 }
 
 .user-avatar {
-    border: 1.5px solid rgba(31, 41, 55, 0.2);
+    border: 1.5px solid rgba(var(--v-theme-primary), 0.3);
     flex-shrink: 0;
 }
 
 .user-name {
     font-size: 12px;
     font-weight: 600;
-    color: #111827;
+    color: rgb(var(--v-theme-on-surface));
     line-height: 1.2;
 }
 
 .user-role {
     font-size: 9.5px;
-    color: rgba(31, 41, 55, 0.45);
+    color: rgba(var(--v-theme-on-surface), 0.45);
 }
 
 .user-info {
     flex: 1;
     min-width: 0;
     overflow: hidden;
+}
+
+.omagi-mobile-bar {
+    background: rgb(var(--v-theme-surface)) !important;
+    border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.08) !important;
+}
+
+.omagi-mobile-bar .brand-name {
+    margin-left: 4px;
 }
 
 .omagi-main {

@@ -8,14 +8,14 @@
             <v-icon size="16" color="#6ee7b7">mdi-wallet-plus-outline</v-icon>
           </div>
           <div>
-            <div class="funding-title">Pool Funding Center</div>
-            <div class="funding-subtitle">Company Top-up & Member Bonus</div>
+            <div class="funding-title">{{ t('jackpot.companyTopupCenter') }}</div>
+            <div class="funding-subtitle">{{ t('jackpot.companyTopupSubtitle') }}</div>
           </div>
         </div>
         <div class="funding-header-right">
-          <v-btn color="#7c3aed" variant="flat" size="small" class="mr-2" @click="openCreateBonus">
+          <v-btn color="create" variant="flat" size="small" class="mr-2" @click="openCreateBonus">
             <v-icon size="14" start>mdi-gift-outline</v-icon>
-            Create Member Bonus
+            {{ t('jackpot.createMemberBonus') }}
           </v-btn>
           <v-btn icon variant="text" size="small" @click="closeDialog">
             <v-icon size="18" color="#9ca3af">mdi-close</v-icon>
@@ -31,8 +31,8 @@
             <v-card class="panel-card" elevation="0">
               <div class="panel-header">
                 <div>
-                  <h2>Company Top-up</h2>
-                  <p>Add more balance to the live jackpot pool.</p>
+                  <h2>{{ t('jackpot.companyTopup') }}</h2>
+                  <p>{{ t('jackpot.updateActivePool') }}</p>
                 </div>
                 <v-icon size="22" color="var(--pool-accent,#0d9488)">mdi-cash-plus</v-icon>
               </div>
@@ -41,7 +41,7 @@
 
               <div class="panel-body">
                 <div class="field-group">
-                  <label class="field-label">Amount</label>
+                  <label class="field-label">{{ t('jackpot.amount') }}</label>
                   <v-text-field
                     v-model="localTopup.amount"
                     type="text"
@@ -57,10 +57,10 @@
                 </div>
 
                 <div class="field-group">
-                  <label class="field-label">Note</label>
+                  <label class="field-label">{{ t('jackpot.note') }}</label>
                   <v-text-field
                     v-model="localTopup.note"
-                    placeholder="Optional note"
+                    :placeholder="t('common.optionalNote')"
                     density="compact"
                     variant="outlined"
                     hide-details="auto"
@@ -69,11 +69,11 @@
 
                 <div class="mini-stats">
                   <div class="mini-stat">
-                    <span class="mini-stat__label">Before</span>
+                    <span class="mini-stat__label">{{ t('jackpot.before') }}</span>
                     <strong>{{ formatAmount(currentAmount) }}</strong>
                   </div>
                   <div class="mini-stat mini-stat--after">
-                    <span class="mini-stat__label">After</span>
+                    <span class="mini-stat__label">{{ t('jackpot.after') }}</span>
                     <strong>{{ formatAmount(predictedAmount) }}</strong>
                   </div>
                 </div>
@@ -83,7 +83,7 @@
 
               <div class="panel-actions">
                 <v-btn class="primary-action" color="primary" :loading="topupLoading" @click="submitTopup" block>
-                  Add Top-up
+                  {{ t('jackpot.addTopUp') }}
                 </v-btn>
               </div>
             </v-card>
@@ -94,8 +94,8 @@
             <v-card class="panel-card" elevation="0">
               <div class="panel-header">
                 <div>
-                  <h2>Jackpot Settings</h2>
-                  <p>Update the active pool configuration.</p>
+                  <h2>{{ t('jackpot.jackpotSettings') }}</h2>
+                  <p>{{ t('jackpot.updateActivePool') }}</p>
                 </div>
                 <v-icon size="22" color="var(--pool-accent,#6366f1)">mdi-cog-outline</v-icon>
               </div>
@@ -104,32 +104,32 @@
 
               <div class="panel-body settings-grid">
                 <div class="field-group">
-                  <label class="field-label">Threshold Amount</label>
+                  <label class="field-label">{{ t('jackpot.thresholdAmount') }}</label>
                   <v-text-field :model-value="display.threshold_amount" readonly density="compact" variant="outlined" hide-details />
                 </div>
 
                 <div class="field-group">
-                  <label class="field-label">Chance Denominator</label>
+                  <label class="field-label">{{ t('jackpot.chanceDenominator') }}</label>
                   <v-text-field :model-value="display.chance_denom" readonly density="compact" variant="outlined" hide-details />
                 </div>
 
                 <div class="field-group">
-                  <label class="field-label">Payout Percent</label>
+                  <label class="field-label">{{ t('jackpot.payoutPercentLabel') }}</label>
                   <v-text-field :model-value="display.payout_percent" readonly density="compact" variant="outlined" hide-details />
                 </div>
 
                 <div class="field-group">
-                  <label class="field-label">Min Eligible Bet Amount</label>
+                  <label class="field-label">{{ t('jackpot.minEligibleBetAmount') }}</label>
                   <v-text-field :model-value="display.min_eligible_bet_amount" readonly density="compact" variant="outlined" hide-details />
                 </div>
 
                 <div class="field-group">
-                  <label class="field-label">Jackpot Fixed Payout Amount</label>
+                  <label class="field-label">{{ t('jackpot.jackpotFixedPayoutAmount') }}</label>
                   <v-text-field :model-value="display.jackpot_fixed_payout_amount" readonly density="compact" variant="outlined" hide-details />
                 </div>
 
                 <div class="field-group field-group--readonly">
-                  <label class="field-label">Current Pool Progress</label>
+                  <label class="field-label">{{ t('jackpot.currentPoolProgress') }}</label>
                   <div class="progress-meta">
                     <span>{{ poolProgress.toFixed(1) }}%</span>
                     <span>{{ formatAmount(currentAmount) }} / {{ formatAmount(thresholdAmount) }}</span>
@@ -142,17 +142,17 @@
 
               <div class="panel-actions panel-actions--split">
                 <div class="panel-meta">
-                  <span>Top-up total: {{ formatAmount(companyTopupTotal) }}</span>
-                  <span>Fixed payout: {{ formatAmount(fixedPayout) }}</span>
+                  <span>{{ t('jackpot.topupTotal') }}: {{ formatAmount(companyTopupTotal) }}</span>
+                  <span>{{ t('jackpot.fixedPayoutTotal') }}: {{ formatAmount(fixedPayout) }}</span>
                 </div>
 
                 <div class="flex gap-2">
-                  <v-btn variant="outlined" color="deep-purple" @click="openCreateBonus" size="small">
+                  <v-btn variant="flat" color="create" @click="openCreateBonus" size="small">
                     <v-icon size="14" start>mdi-gift-outline</v-icon>
-                    Member Bonus
+                    {{ t('jackpot.memberBonus') }}
                   </v-btn>
                   <v-btn color="#0f172a" variant="flat" @click="closeDialog">
-                    Done
+                    {{ t('common.done') }}
                   </v-btn>
                 </div>
               </div>
@@ -162,7 +162,7 @@
       </div>
 
       <div class="funding-footer">
-        <span><v-icon size="13" color="#10b981" class="mr-1">mdi-trending-up</v-icon> Live pool sync enabled</span>
+        <span><v-icon size="13" color="#10b981" class="mr-1">mdi-trending-up</v-icon> {{ t('jackpot.livePoolSync') }}</span>
         <span> • Jackpot Engine v2.14.7</span>
       </div>
     </v-card>
@@ -173,9 +173,9 @@
         <div class="dialog-header">
           <div class="dialog-title-row">
             <v-icon size="20" color="rgb(var(--v-theme-primary))">mdi-cash-plus</v-icon>
-            <h2>Create Member Bonus</h2>
+            <h2>{{ t('jackpot.createMemberBonus') }}</h2>
           </div>
-          <v-btn icon size="small" variant="text" @click="closeCreateDialog">
+          <v-btn icon size="small" color="#ff2c2c" variant="plain" @click="closeCreateDialog">
             <v-icon>mdi-close</v-icon>
           </v-btn>
         </div>
@@ -185,23 +185,21 @@
         <div class="dialog-body">
           <div class="form-grid">
             <div class="form-group half">
-              <label class="form-label">Member ID <span class="required">*</span></label>
+              <label class="form-label">{{ t('members.member') }} </label>
               <v-text-field
-                v-model="createForm.member_id"
+                v-model="createForm.member_name"
                 type="text"
-                inputmode="numeric"
+                inputmode="text"
                 autocomplete="off"
                 density="compact"
                 variant="outlined"
                 hide-details="auto"
-                placeholder="1"
-                @keydown="blockNonIntegerKeys"
-                @paste.prevent="handleIntegerPaste"
+                placeholder="Member Name"
               />
             </div>
 
             <div class="form-group half">
-              <label class="form-label">Amount <span class="required">*</span></label>
+              <label class="form-label">{{ t('jackpot.amount') }} </label>
               <v-text-field
                 v-model="createForm.amount"
                 type="text"
@@ -217,13 +215,13 @@
             </div>
 
             <div class="form-group full">
-              <label class="form-label">Note</label>
+              <label class="form-label">{{ t('jackpot.note') }}</label>
               <v-text-field
                 v-model="createForm.note"
                 density="compact"
                 variant="outlined"
                 hide-details="auto"
-                placeholder="Optional note"
+                :placeholder="t('common.optionalNote')"
               />
             </div>
           </div>
@@ -232,9 +230,9 @@
         <v-divider />
 
         <div class="dialog-actions">
-          <v-btn variant="outlined" @click="closeCreateDialog" :disabled="createLoading">Cancel</v-btn>
-          <v-btn color="primary" :loading="createLoading" @click="submitCreateBonus">
-            Create Bonus
+          <v-btn variant="outlined" color="cancel" @click="closeCreateDialog" :disabled="createLoading">{{ t('common.cancel') }}</v-btn>
+          <v-btn color="create" :loading="createLoading" @click="submitCreateBonus">
+            {{ t('jackpot.createMemberBonus') }}
           </v-btn>
         </div>
       </v-card>
@@ -244,6 +242,7 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from "vue";
+import { useFrontendI18n } from "~/composables/i18n";
 
 interface Props {
   modelValue: boolean;
@@ -257,10 +256,11 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   topupLoading: false,
 });
+const { t } = useFrontendI18n();
 const emit = defineEmits<{
   (e: "update:modelValue", v: boolean): void;
   (e: "topup", payload: { amount: string; note: string }): void;
-  (e: "create-bonus", payload: { member_id: string; amount: string; note: string }): void;
+  (e: "create-bonus", payload: { member_name: string; amount: string; note: string }): void;
 }>();
 
 const localTopup = reactive({ amount: "", note: "" });
@@ -291,18 +291,9 @@ function blockNonDecimalKeys(e: KeyboardEvent){
   if (!/^\d$/.test(e.key)) e.preventDefault();
   if (e.key==="." && (e.target as HTMLInputElement).value.includes(".")) e.preventDefault();
 }
-function blockNonIntegerKeys(e: KeyboardEvent){
-  const ok = ["Backspace","Delete","Tab","ArrowLeft","ArrowRight","Home","End"];
-  if (ok.includes(e.key) || e.ctrlKey || e.metaKey) return;
-  if (!/^\d$/.test(e.key)) e.preventDefault();
-}
 function handleDecimalPaste(e: ClipboardEvent){
   const t = e.clipboardData?.getData("text") || "";
   if (!/^\d*\.?\d*$/.test(t)) e.preventDefault();
-}
-function handleIntegerPaste(e: ClipboardEvent){
-  const t = e.clipboardData?.getData("text") || "";
-  if (!/^\d+$/.test(t)) e.preventDefault();
 }
 
 function submitTopup(){
@@ -313,19 +304,19 @@ function closeDialog(){ emit("update:modelValue", false); }
 /* Create Member Bonus nested */
 const createDialog = ref(false);
 const createLoading = ref(false);
-const createForm = reactive({ member_id:"", amount:"", note:"" });
+const createForm = reactive({ member_name:"", amount:"", note:"" });
 
 function openCreateBonus(){ createDialog.value = true; }
 function closeCreateDialog(){ if(!createLoading.value) createDialog.value=false; }
 
 async function submitCreateBonus(){
-  if (!createForm.member_id.trim() || !(parseFloat(createForm.amount)>0)) return;
+  if (!createForm.member_name.trim() || !(parseFloat(createForm.amount)>0)) return;
   createLoading.value = true;
   try {
     emit("create-bonus", { ...createForm });
     // parent should close - we optimistically close
     createDialog.value = false;
-    createForm.member_id=""; createForm.amount=""; createForm.note="";
+    createForm.member_name=""; createForm.amount=""; createForm.note="";
   } finally {
     createLoading.value = false;
   }

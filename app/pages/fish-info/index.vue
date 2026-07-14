@@ -1,8 +1,8 @@
 <template>
-  <div class="coin-page">
-    <div class="page-header">
+  <div class="coin-page ">
+    <div class="page-header mt-3">
       <div>
-        <h1 class="page-title">Fish Info</h1>
+        <h1 class="page-title">{{ t('fish.title') }}</h1>
       </div>
     </div>
 
@@ -17,7 +17,7 @@
         :total-pages="1"
       >
         <template #cell-is_boss="{ item }">
-          <v-chip v-if="item.is_boss" color="warning" size="small" variant="flat">Boss</v-chip>
+          <v-chip v-if="item.is_boss" color="warning" size="small" variant="flat">{{ t('fish.boss') }}</v-chip>
           <span v-else class="text-secondary">-</span>
         </template>
 
@@ -27,7 +27,7 @@
             size="small"
             variant="flat"
           >
-            {{ item.miss_reward_enabled ? 'Yes' : 'No' }}
+            {{ item.miss_reward_enabled ? t('fish.yes') : t('fish.no') }}
           </v-chip>
         </template>
 
@@ -128,26 +128,29 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import AppTable, { type TableColumn } from '~/components/DynamicTableStyle.vue'
+import { useFrontendI18n } from '~/composables/i18n'
 import { getFishTypes, type FishTypeItem } from '~/composables/service/fishTypeApi'
 
+const { t } = useFrontendI18n()
 
-const columns: TableColumn<FishTypeItem>[] = [
+
+const columns = computed<TableColumn<FishTypeItem>[]>(() => [
   { key: 'index',               label: 'លេខ',            type: 'index' },
-  { key: 'fish_type_name',      label: 'Fish Name',      cellClass: 'fish-name' },
-  { key: 'is_boss',             label: 'Boss' },
-  { key: 'min_kill_odd',        label: 'Kill Odd (Min)', width: '120px' },
-  { key: 'max_kill_odd',        label: 'Kill Odd (Max)', width: '120px' },
-  { key: 'base_speed',          label: 'Base Speed' },
-  { key: 'miss_reward_enabled', label: 'Miss Reward' },
-  { key: 'min_miss_reward_odd', label: 'Miss Odd (Min)', width: '120px' },
-  { key: 'max_miss_reward_odd', label: 'Miss Odd (Max)', width: '120px' },
-  { key: 'action',              label: 'Action' },
-]
+  { key: 'fish_type_name',      label: t('fish.fishName'),      cellClass: 'fish-name' },
+  { key: 'is_boss',             label: t('fish.boss') },
+  { key: 'min_kill_odd',        label: t('fish.killOddMin'), width: '120px' },
+  { key: 'max_kill_odd',        label: t('fish.killOddMax'), width: '120px' },
+  { key: 'base_speed',          label: t('fish.baseSpeed') },
+  { key: 'miss_reward_enabled', label: t('fish.missReward') },
+  { key: 'min_miss_reward_odd', label: t('fish.missOddMin'), width: '120px' },
+  { key: 'max_miss_reward_odd', label: t('fish.missOddMax'), width: '120px' },
+  { key: 'action',              label: t('fish.action') },
+])
 
 const currentPage  = ref(1)
-const itemsPerPage = 50
+const itemsPerPage = 20
 const totalItems   = ref(0)
 const fishTypes    = ref<FishTypeItem[]>([])
 const isLoading    = ref(false)
@@ -252,7 +255,7 @@ async function fetchFishTypes() {
     console.error('[fish-type] failed to load', error)
     fishTypes.value  = []
     totalItems.value = 0
-    errorMessage.value = error?.message || 'Failed to load fish types'
+    errorMessage.value = error?.message || t('fish.failedToLoad')
   } finally {
     isLoading.value = false
   }
@@ -278,7 +281,7 @@ onMounted(() => fetchFishTypes())
   font-size: 22px;
   font-weight: 800;
   letter-spacing: -0.5px;
-  color: #111827;
+  color: rgb(var(--v-theme-primary));
 }
 
 .content-wepper {

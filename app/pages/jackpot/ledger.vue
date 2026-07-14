@@ -2,14 +2,14 @@
   <div class="coin-page">
     <div class="page-header">
       <div>
-        <h1 class="page-title">Jackpot Ledger</h1>
+        <h1 class="page-title">{{ t('jackpot.ledger') }}</h1>
       </div>
     </div>
 
     <div class="content-wepper flex flex-col gap-2">
       <div class="filter-row">
         <div class="filter-left">
-          <span class="filter-label">កាលបរិច្ឆេទ</span>
+          <span class="filter-label">{{ t('report.date') }}</span>
           <v-text-field
             v-model="filterDate"
             type="date"
@@ -32,13 +32,9 @@
 
       <AppTable
         :columns="columns"
-        :items="ledgerData"
+        :items="ledgerData.slice(0, 10)"
         :loading="isLoading"
         :error="errorMessage"
-        :page="currentPage"
-        :page-size="itemsPerPage"
-        :total-pages="totalPages"
-        @update:page="currentPage = $event"
       >
         <template #cell-global_contribution_coin="{ item }">
           <span class="positive">{{ formatAmount(parseAmount(item.global_contribution_coin)) }}</span>
@@ -61,41 +57,31 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
-import type { LocationQueryValue } from 'vue-router'
+import { computed, onMounted, ref, watch } from 'vue'
 import AppTable, { type TableColumn } from '~/components/DynamicTableStyle.vue'
 import PeriodFilterButtons from '~/components/PeriodFilterButtons.vue'
+import { useFrontendI18n } from '~/composables/i18n'
 import { getJackpotLedgers, type JackpotLedgerItem } from '~/composables/service/jackpotLedgerApi'
 
-const route  = useRoute()
-const router = useRouter()
+const { t } = useFrontendI18n()
 
-const columns: TableColumn<JackpotLedgerItem>[] = [
-  { key: 'index',                      label: 'លេខ',                type: 'index' },
-  { key: 'member_id',                  label: 'Member ID' },
-  { key: 'fish_type_name',             label: 'Fish Type' },
-  { key: 'source_type',                label: 'Source Type' },
-  { key: 'global_contribution_coin',   label: 'Contribution Coin' },
-  { key: 'pool_before',                label: 'Pool Before' },
-  { key: 'pool_after',                 label: 'Pool After' },
-  { key: 'created_by',                 label: 'Created By' },
-  { key: 'created_at',                 label: 'Created At' },
-]
+const columns = computed<TableColumn<JackpotLedgerItem>[]>(() => [
+  { key: 'index',                      label: 'លេខរៀង',                type: 'index' },
+  { key: 'member_id',                  label: t('members.loginId') },
+  { key: 'fish_type_name',             label: t('fish.fishName') },
+  { key: 'source_type',                label: t('jackpot.sourceType') },
+  { key: 'global_contribution_coin',   label: t('jackpot.amount') },
+  { key: 'pool_before',                label: t('jackpot.before') },
+  { key: 'pool_after',                 label: t('jackpot.after') },
+  { key: 'created_by',                 label: t('gameConfig.updatedBy') },
+  { key: 'created_at',                 label: t('gameConfig.updatedAt') },
+])
 
 const filterDate    = ref(formatDateForInput(new Date()))
-const currentPage   = ref(1)
-const itemsPerPage  = 20
-const totalItems    = ref(0)
 const ledgerData    = ref<JackpotLedgerItem[]>([])
 const isLoading     = ref(false)
 const errorMessage  = ref('')
-const isRouteSynced = ref(false)
 const activePeriod  = ref<'custom' | 'today' | 'yesterday' | 'this_week'>('today')
-
-
-const totalPages = computed(() =>
-  Math.max(1, Math.ceil(totalItems.value / itemsPerPage)),
-)
 
 
 function parseAmount(value: string | undefined | null): number {
@@ -126,11 +112,6 @@ function formatDateTime(value: string): string {
   }).format(date)
 }
 
-function normalizeQueryValue(value: LocationQueryValue | LocationQueryValue[] | null | undefined): string {
-  if (Array.isArray(value)) return normalizeQueryValue(value[0])
-  return value ?? ''
-}
-
 function getTodayDate()        { return formatDateForInput(new Date()) }
 function getYesterdayDate()    { const d = new Date(); d.setDate(d.getDate() - 1); return formatDateForInput(d) }
 function getSevenDaysAgoDate() { const d = new Date(); d.setDate(d.getDate() - 6); return formatDateForInput(d) }
@@ -146,76 +127,37 @@ function getCurrentRange(period = activePeriod.value) {
 }
 
 function syncRouteQuery() {
-  const range = getCurrentRange()
-  const next = { period: range.period, start: range.start, end: range.end, page: `${currentPage.value}` }
-  const cur  = {
-    period: normalizeQueryValue(route.query.period),
-    start:  normalizeQueryValue(route.query.start),
-    end:    normalizeQueryValue(route.query.end),
-    page:   normalizeQueryValue(route.query.page),
-  }
-  if (cur.period === next.period && cur.start === next.start && cur.end === next.end && cur.page === next.page) return
-  router.replace({ path: route.path, query: next })
+  // no-op: pagination was removed from this view
 }
-
-function syncStateFromRoute() {
-  const routePage   = Number.parseInt(normalizeQueryValue(route.query.page), 10)
-  const routeStart  = normalizeQueryValue(route.query.start)
-  const routePeriod = normalizeQueryValue(route.query.period)
-  const routeEnd    = normalizeQueryValue(route.query.end)
-
-  if (!Number.isNaN(routePage) && routePage > 0) currentPage.value = routePage
-  activePeriod.value = ['today', 'yesterday', 'this_week'].includes(routePeriod)
-    ? routePeriod as 'today' | 'yesterday' | 'this_week'
-    : 'today'
-
-  if      (activePeriod.value === 'today')     filterDate.value = getTodayDate()
-  else if (activePeriod.value === 'yesterday') filterDate.value = routeStart || routeEnd || getYesterdayDate()
-  else if (activePeriod.value === 'this_week') filterDate.value = routeStart || getSevenDaysAgoDate()
-  else if (routeStart)                         filterDate.value = routeStart
-  else if (routeEnd)                           filterDate.value = routeEnd
-}
-
 
 async function fetchLedgers() {
   isLoading.value    = true
   errorMessage.value = ''
   try {
-    const response = await getJackpotLedgers(currentPage.value, itemsPerPage, filterDate.value, filterDate.value)
+    const response = await getJackpotLedgers(1, 10, filterDate.value, filterDate.value)
     const payload  = response?.data.value
-    ledgerData.value = payload?.data?.ledgers ?? []
-    totalItems.value = payload?.total ?? 0
+    ledgerData.value = (payload?.data?.ledgers ?? []).slice(0, 10)
   } catch (error: any) {
     console.error('[analytics-ledger] failed to load', error)
     ledgerData.value = []
-    totalItems.value = 0
-    errorMessage.value = error?.message || 'Failed to load jackpot ledger'
+    errorMessage.value = error?.message || t('jackpot.failedToLoadLedger')
   } finally {
     isLoading.value = false
   }
 }
 
-function handleDateChange() { activePeriod.value = 'custom'; currentPage.value = 1 }
+function handleDateChange() { activePeriod.value = 'custom' }
 
 function setQuickPeriod(period: 'today' | 'yesterday' | 'this_week') {
   activePeriod.value = period
   filterDate.value   = getCurrentRange(period).start
-  currentPage.value  = 1
 }
 
 onMounted(async () => {
-  syncStateFromRoute()
-  await nextTick()
   await fetchLedgers()
-  isRouteSynced.value = true
-  syncRouteQuery()
 })
 
-watch([filterDate, currentPage], () => {
-  if (!isRouteSynced.value) return
-  syncRouteQuery()
-  fetchLedgers()
-})
+watch(filterDate, fetchLedgers)
 </script>
 
 <style scoped>
@@ -235,7 +177,7 @@ watch([filterDate, currentPage], () => {
   font-size: 22px;
   font-weight: 800;
   letter-spacing: -0.5px;
-  color: #111827;
+  color: rgb(var(--v-theme-primary));
 }
 
 .filter-row {

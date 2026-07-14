@@ -14,6 +14,8 @@ export interface GameConfig {
   rtp_ceiling: string;
   jackpot_rate: string;
   status_id: number;
+  updated_at?: string | null;
+  updated_by?: number | null;
   updated_by_username?: string;
 }
 

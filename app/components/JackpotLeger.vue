@@ -3,15 +3,9 @@
     <div class="content-wepper flex flex-col gap-2">
       <AppVTable
         :columns="columns"
-        :items="ledgerData"
+        :items="ledgerData.slice(0, 10)"
         :loading="isLoading"
         :error="errorMessage"
-        :page="currentPage"
-        :page-size="itemsPerPage"
-        :total-pages="totalPages"
-        empty-text="No jackpot ledger found"
-        empty-subtext="Try another date."
-        @update:page="currentPage = $event"
       >
         <template #cell-global_contribution_coin="{ item }">
           <span class="positive">{{ formatAmount(parseAmount(item.global_contribution_coin)) }}</span>
@@ -34,32 +28,28 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
-import AppVTable, { type TableColumn } from '~/components/AppTableFixed.vue'
+import { computed, onMounted, ref } from 'vue'
+import AppVTable, { type TableColumn } from '~/components/DynamicTableStyle.vue'
+import { useFrontendI18n } from '~/composables/i18n'
 import { getJackpotLedgers, type JackpotLedgerItem } from '~/composables/service/jackpotLedgerApi'
 
-const columns: TableColumn<JackpotLedgerItem>[] = [
-  { key: 'index',                    label: 'លេខ',               type: 'index' },
-  { key: 'member_id',                label: 'Member ID' },
-  { key: 'fish_type_name',           label: 'Fish Type' },
-  { key: 'source_type',              label: 'Source Type' },
-  { key: 'global_contribution_coin', label: 'Contribution Coin' },
-  { key: 'pool_before',              label: 'Pool Before' },
-  { key: 'pool_after',               label: 'Pool After' },
-  { key: 'created_by',               label: 'Created By' },
-  { key: 'created_at',               label: 'Created At' },
-]
+const { t } = useFrontendI18n()
 
-const currentPage  = ref(1)
-const itemsPerPage = 10
-const totalItems   = ref(0)
+const columns = computed<TableColumn<JackpotLedgerItem>[]>(() => [
+  { key: 'index',                    label: 'លេខ',               type: 'index' },
+  { key: 'member_id',                label: t('members.loginId') },
+  { key: 'fish_type_name',           label: t('fish.fishName') },
+  { key: 'source_type',              label: t('jackpot.sourceType') },
+  { key: 'global_contribution_coin', label: t('jackpot.amount') },
+  { key: 'pool_before',              label: t('jackpot.before') },
+  { key: 'pool_after',               label: t('jackpot.after') },
+  { key: 'created_by',               label: t('gameConfig.updatedBy') },
+  { key: 'created_at',               label: t('gameConfig.updatedAt') },
+])
+
 const ledgerData   = ref<JackpotLedgerItem[]>([])
 const isLoading    = ref(false)
 const errorMessage = ref('')
-
-const totalPages = computed(() =>
-  Math.max(1, Math.ceil(totalItems.value / itemsPerPage)),
-)
 
 function formatDateForInput(date: Date): string {
   const year  = date.getFullYear()
@@ -94,23 +84,19 @@ async function fetchLedgers() {
   errorMessage.value = ''
   try {
     const today    = formatDateForInput(new Date())
-    const response = await getJackpotLedgers(currentPage.value, itemsPerPage, today, today)
+    const response = await getJackpotLedgers(1, 10, today, today)
     const payload  = response?.data.value
-    ledgerData.value = payload?.data?.ledgers ?? []
-    totalItems.value = payload?.total ?? 0
+    ledgerData.value = (payload?.data?.ledgers ?? []).slice(0, 10)
   } catch (error: any) {
     console.error('[analytics-ledger] failed to load', error)
     ledgerData.value = []
-    totalItems.value = 0
-    errorMessage.value = error?.message || 'Failed to load jackpot ledger'
+    errorMessage.value = error?.message || t('jackpot.failedToLoadLedger')
   } finally {
     isLoading.value = false
   }
 }
 
 onMounted(fetchLedgers)
-
-watch(currentPage, fetchLedgers)
 </script>
 
 <style scoped>

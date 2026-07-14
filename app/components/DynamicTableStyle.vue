@@ -14,8 +14,8 @@
         <tr v-if="loading" class="no-hover">
           <td :colspan="columns.length" class="empty-cell">
             <div class="empty-state">
-              <v-progress-circular indeterminate color="#1F2937" size="36" width="3" />
-              <div class="empty-text">កំពុងទាញយកទិន្នន័យ...</div>
+              <v-progress-circular indeterminate color="#0097A7" size="36" width="3" />
+              <div class="empty-text">{{ t('common.loading') }}</div>
             </div>
           </td>
         </tr>
@@ -24,7 +24,7 @@
         <tr v-else-if="error" class="no-hover">
           <td :colspan="columns.length" class="empty-cell">
             <div class="empty-state">
-              <v-icon size="40" color="#EF4444">mdi-alert-circle-outline</v-icon>
+              <v-icon size="40" color="#E53935">mdi-alert-circle-outline</v-icon>
               <div class="empty-text error-text">{{ error }}</div>
             </div>
           </td>
@@ -36,10 +36,10 @@
             <div class="empty-state">
               <img
                 src="https://assets-v2.lottiefiles.com/a/8f195bf4-1179-11ee-88da-277f023b0f0c/z4c7jIndmE.gif"
-                alt="No data"
+                :alt="t('common.noData')"
                 class="empty-img"
               />
-              <div class="empty-text">គ្មានទិន្នន័យ</div>
+              <div class="empty-text">{{ t('common.noData') }}</div>
             </div>
           </td>
         </tr>
@@ -78,7 +78,7 @@
           <!-- Page subtotal row -->
           <tr v-if="subtotals" class="summary-row">
             <td :colspan="subtotals.labelSpan ?? 1" class="summary-label">
-              {{ subtotals.pageLabel ?? 'សរុបក្នុងមួយទំព័រ' }}
+              {{ subtotals.pageLabel ?? t('report.pageSubtotal') }}
             </td>
             <td v-for="sub in subtotals.cols" :key="sub.key" :class="sub.class">
               {{ sub.value }}
@@ -88,7 +88,7 @@
           <!-- Grand total row -->
           <tr v-if="grandTotals" class="summary-row grand-total-row">
             <td :colspan="grandTotals.labelSpan ?? 1" class="summary-label">
-              {{ grandTotals.pageLabel ?? 'សរុបទាំងអស់' }}
+              {{ grandTotals.pageLabel ?? t('report.grandTotal') }}
             </td>
             <td v-for="sub in grandTotals.cols" :key="sub.key" :class="sub.class">
               {{ sub.value }}
@@ -114,6 +114,7 @@
 
 <script setup lang="ts" generic="T extends Record<string, any>">
 import { computed } from 'vue'
+import { useFrontendI18n } from '~/composables/i18n'
 
 // ── Types ──────────────────────────────────────────────
 export interface TableColumn<T = any> {
@@ -162,6 +163,7 @@ const props = withDefaults(defineProps<{
 })
 
 defineEmits<{ 'update:page': [page: number] }>()
+const { t } = useFrontendI18n()
 
 // ── Computed ───────────────────────────────────────────
 
@@ -205,7 +207,7 @@ function getBadgeClass(col: TableColumn<T>, item: T): string {
   background: transparent !important;
   border-radius: 12px;
   overflow: hidden;
-  border: 1px solid rgba(31, 41, 55, 0.12);
+  border: 1px solid rgba(var(--v-theme-secondary), 0.3);
 }
 
 .app-table :deep(table) {
@@ -222,12 +224,12 @@ function getBadgeClass(col: TableColumn<T>, item: T): string {
 }
 
 .app-table :deep(thead th) {
-  background: #1F2937 !important;
-  color: #FFFFFF !important;
+  background: rgb(var(--v-theme-primary)) !important;
+  color: #fff !important;
   font-weight: 700 !important;
   font-size: 12px !important;
   text-align: center !important;
-  border: 1.5px solid rgba(31, 41, 55, 0.3) !important;
+  border: 1.5px solid rgb(var(--v-theme-secondary)) !important;
   white-space: nowrap;
   padding: 6px 10px !important;
   line-height: 1.2 !important;
@@ -239,9 +241,9 @@ function getBadgeClass(col: TableColumn<T>, item: T): string {
 }
 
 .app-table :deep(tbody td) {
-  background: #FFFFFF !important;
-  color: #111827 !important;
-  border: 1px solid rgba(31, 41, 55, 0.08) !important;
+  background: rgb(var(--v-theme-surface)) !important;
+  color: rgb(var(--v-theme-on-surface)) !important;
+  border: 1px solid rgba(var(--v-theme-secondary), 0.25) !important;
   text-align: center !important;
   font-size: 12px !important;
   padding: 4px 10px !important;
@@ -250,21 +252,21 @@ function getBadgeClass(col: TableColumn<T>, item: T): string {
 }
 
 .app-table :deep(tbody td.positive) {
-  color: #1E9C07 !important;
+  color: rgb(var(--v-theme-success)) !important;
   font-weight: 700 !important;
 }
 
 .app-table :deep(tbody td.negative) {
-  color: #EF4444 !important;
+  color: rgb(var(--v-theme-warning)) !important;
   font-weight: 700 !important;
 }
 
 .app-table :deep(tbody tr:nth-child(even) td) {
-  background: rgba(31, 41, 55, 0.02) !important;
+  background: rgba(var(--v-theme-primary), 0.05) !important;
 }
 
 .app-table :deep(tbody tr:hover td) {
-  background: rgba(31, 41, 55, 0.05) !important;
+  background: rgba(var(--v-theme-primary), 0.12) !important;
   transition: background 0.2s ease;
 }
 
@@ -274,41 +276,41 @@ function getBadgeClass(col: TableColumn<T>, item: T): string {
 
 /* ── No hover for state rows ── */
 .app-table :deep(tbody tr.no-hover:hover td) {
-  background: #FFFFFF !important;
+  background: rgb(var(--v-theme-surface)) !important;
   cursor: default;
 }
 
 /* ── Summary rows ── */
 .app-table :deep(tbody tr.summary-row td) {
-  background: rgba(31, 41, 55, 0.06) !important;
+  background: rgba(var(--v-theme-primary), 0.10) !important;
   font-weight: 700 !important;
 }
 
 .app-table :deep(tbody tr.grand-total-row td) {
-  background: rgba(31, 41, 55, 0.12) !important;
+  background: rgba(var(--v-theme-primary), 0.20) !important;
 }
 
 .app-table :deep(tbody tr.summary-row td.summary-label) {
   text-align: right !important;
-  color: #1F2937 !important;
+  color: rgb(var(--v-theme-primary)) !important;
   padding-right: 12px !important;
 }
 
 .app-table :deep(tbody tr.summary-row td.positive),
 .app-table :deep(tbody tr.grand-total-row td.positive) {
-  color: #1E9C07 !important;
+  color: rgb(var(--v-theme-success)) !important;
   font-weight: 700 !important;
 }
 
 .app-table :deep(tbody tr.summary-row td.negative),
 .app-table :deep(tbody tr.grand-total-row td.negative) {
-  color: #EF4444 !important;
+  color: rgb(var(--v-theme-warning)) !important;
   font-weight: 700 !important;
 }
 
 /* ── Empty state ── */
 .empty-cell {
-  background: #FFFFFF !important;
+  background: rgb(var(--v-theme-surface)) !important;
   padding: 0 !important;
   border: none !important;
   height: 1px;
@@ -321,7 +323,7 @@ function getBadgeClass(col: TableColumn<T>, item: T): string {
   justify-content: center;
   gap: 12px;
   padding: 48px 24px;
-  background: #FFFFFF;
+  background: rgb(var(--v-theme-surface));
   height: 100%;
   min-height: 340px;
   box-sizing: border-box;
@@ -337,11 +339,13 @@ function getBadgeClass(col: TableColumn<T>, item: T): string {
 .empty-text {
   font-size: 22px;
   font-weight: 600;
-  color: #6B7280;
+  color: rgb(var(--v-theme-primary));
+  opacity: 0.7;
 }
 
 .error-text {
-  color: #EF4444;
+  color: rgb(var(--v-theme-error)) !important;
+  opacity: 1;
 }
 
 /* ── Badge cells ── */
@@ -356,24 +360,23 @@ function getBadgeClass(col: TableColumn<T>, item: T): string {
   letter-spacing: 0.4px;
 }
 
-:deep(.badge--green)  { background: rgba(0, 200, 100, 0.12); color: #00c853; }
-:deep(.badge--red)    { background: rgba(239, 68, 68, 0.1);  color: #EF4444; }
-:deep(.badge--yellow) { background: rgba(255, 160, 0, 0.1);  color: #ffb300; }
-:deep(.badge--grey)   { background: rgba(31, 41, 55, 0.08);  color: #374151; }
+:deep(.badge--green)  { background: rgba(30, 156, 7, 0.12); color: #1E9C07; }
+:deep(.badge--red)    { background: rgba(var(--v-theme-error), 0.12); color: rgb(var(--v-theme-error)); }
+:deep(.badge--yellow) { background: rgba(var(--v-theme-success), 0.12); color: rgb(var(--v-theme-success)); }
+:deep(.badge--grey)   { background: rgba(var(--v-theme-secondary), 0.12); color: rgb(var(--v-theme-primary)); }
 
 /* ── Pagination ── */
 .pagination {
   display: flex;
   justify-content: center;
-  /* margin-top: 12px; */
 }
 
 .pagination :deep(.v-pagination__item button),
 .pagination :deep(.v-pagination__prev button),
 .pagination :deep(.v-pagination__next button) {
-  background: #FFFFFF !important;
-  color: #1F2937 !important;
-  border: 1px solid rgba(31, 41, 55, 0.2) !important;
+  background: rgb(var(--v-theme-surface)) !important;
+  color: rgb(var(--v-theme-primary)) !important;
+  border: 1px solid rgb(var(--v-theme-secondary)) !important;
   width: 28px !important;
   height: 28px !important;
   min-width: 28px !important;
@@ -381,15 +384,16 @@ function getBadgeClass(col: TableColumn<T>, item: T): string {
 }
 
 .pagination :deep(.v-pagination__item--is-active button) {
-  background: #1F2937 !important;
-  color: #FFFFFF !important;
-  border-color: #1F2937 !important;
+  background: rgb(var(--v-theme-primary)) !important;
+  color: rgb(var(--v-theme-on-primary)) !important;
+  border-color: rgb(var(--v-theme-secondary)) !important;
 }
 
 .pagination :deep(.v-pagination__item button:hover),
 .pagination :deep(.v-pagination__prev button:hover),
 .pagination :deep(.v-pagination__next button:hover) {
-  background: rgba(31, 41, 55, 0.07) !important;
+  background: rgba(var(--v-theme-primary), 0.14) !important;
+  color: rgb(var(--v-theme-primary)) !important;
 }
 
 .pagination :deep(.v-pagination__prev button),
@@ -406,7 +410,7 @@ function getBadgeClass(col: TableColumn<T>, item: T): string {
 
 /* ── Scrollbar ── */
 .app-table :deep(.v-table__wrapper)::-webkit-scrollbar       { width: 5px; height: 5px; }
-.app-table :deep(.v-table__wrapper)::-webkit-scrollbar-track { background: rgba(31, 41, 55, 0.06); border-radius: 10px; }
-.app-table :deep(.v-table__wrapper)::-webkit-scrollbar-thumb { background: #4B5563; border-radius: 10px; }
-.app-table :deep(.v-table__wrapper)::-webkit-scrollbar-thumb:hover { background: #374151; }
+.app-table :deep(.v-table__wrapper)::-webkit-scrollbar-track { background: rgba(var(--v-theme-secondary), 0.1); border-radius: 10px; }
+.app-table :deep(.v-table__wrapper)::-webkit-scrollbar-thumb { background: rgb(var(--v-theme-secondary)); border-radius: 10px; }
+.app-table :deep(.v-table__wrapper)::-webkit-scrollbar-thumb:hover { background: rgb(var(--v-theme-primary)); }
 </style>

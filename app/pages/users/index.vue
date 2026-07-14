@@ -1,31 +1,30 @@
 <template>
-  <div class="coin-page">
-    <div class="page-header">
-      <div>
-        <h1 class="page-title">Users</h1>
+  <div class="users-page">
+    <!-- Header -->
+    <div class="page-header mt-3">
+      <div class="header-left">
+        <div class="header-icon">
+          <v-icon size="22" color="primary">mdi-account-multiple-outline</v-icon>
+        </div>
+        <div>
+          <h1 class="page-title">{{ t('users.title') }}</h1>
+          <!-- <p class="page-subtitle">{{ users.length }} {{ t('common.total') }}</p> -->
+        </div>
       </div>
+
+      <!-- <v-btn class="btn-primary" prepend-icon="mdi-plus" @click="openCreateUserDialog">
+        {{ t('users.addUser') }}
+      </v-btn> -->
     </div>
 
-    <div class="content-wepper">
+    <!-- Content Card -->
+    <div class="content-card">
       <div class="toolbar">
-        <!-- <v-text-field
-          v-model="userSearch"
-          placeholder="ឈ្មោះអ្នកប្រើប្រាស់"
-          prepend-inner-icon="mdi-magnify"
-          density="compact"
-          variant="outlined"
-          hide-details
-          class="search-field"
-          clearable
-        /> -->
+        <v-text-field v-model="userSearch" :placeholder="t('users.username')" prepend-inner-icon="mdi-magnify"
+          density="compact" variant="outlined" hide-details class="search-field" clearable />
 
-        <!-- <v-btn class="btn-primary" prepend-icon="mdi-plus" @click="openCreateUserDialog">
-          Add User
-        </v-btn> -->
-
-        <v-btn color="success" variant="flat" prepend-icon="mdi-plus" class="refresh-btn"  @click="openCreateUserDialog">
-          <!-- <v-icon size="16" class="mr-1">mdi-refresh</v-icon> -->
-          Add User
+        <v-btn color="create" prepend-icon="mdi-plus" @click="openCreateUserDialog">
+          {{ t('users.addUser') }}
         </v-btn>
       </div>
 
@@ -33,8 +32,10 @@
         :page-size="userPageSize" :total-pages="userTotalPages" @update:page="userPage = $event">
         <template #cell-username="{ item }">
           <div class="user-cell">
-            <div class="avatar">{{ getInitials(item.username) }}</div>
-            <div>
+            <div class="avatar" :style="{ background: avatarColor(item.username) }">
+              {{ getInitials(item.username) }}
+            </div>
+            <div class="user-info">
               <div class="user-name">{{ item.username }}</div>
               <div class="user-email">{{ item.email }}</div>
             </div>
@@ -42,24 +43,27 @@
         </template>
 
         <template #cell-role="{ item }">
-          <span class="role-badge">{{ item.role }}</span>
+          <span class="role-badge" :class="roleBadgeClass(item.role)">{{ item.role }}</span>
         </template>
 
         <template #cell-actions="{ item }">
-          <v-btn size="small" variant="outlined" prepend-icon="mdi-key-variant" @click="openAssignDialog(item)">
-            Assign Menus
+          <v-btn size="small" variant="outlined" class="assign-btn" prepend-icon="mdi-key-variant"
+            @click="openAssignDialog(item)">
+            {{ t('users.assignMenus') }}
           </v-btn>
         </template>
       </AppTable>
     </div>
 
     <!-- CREATE USER -->
-    <v-dialog v-model="createUserDialog" max-width="560">
+    <v-dialog v-model="createUserDialog" max-width="600">
       <v-card class="dialog-card">
         <div class="dialog-header">
           <div class="dialog-title-row">
-            <v-icon size="20" color="#1F2937">mdi-account-plus-outline</v-icon>
-            <h2>Create New User</h2>
+            <div class="dialog-icon">
+              <v-icon size="20" color="primary">mdi-account-plus-outline</v-icon>
+            </div>
+            <h2>{{ t('users.createNewUser') }}</h2>
           </div>
 
           <v-btn icon size="small" variant="text" @click="createUserDialog = false">
@@ -72,19 +76,18 @@
         <div class="dialog-body">
           <div class="form-grid">
             <div class="form-group half">
-              <label class="form-label">Username <span class="required">*</span></label>
+              <label class="form-label">{{ t('users.username') }} <span class="required">*</span></label>
               <v-text-field v-model="userForm.user_name" placeholder="e.g. ADMIN006" density="compact"
                 variant="outlined" hide-details="auto" />
             </div>
 
             <div class="form-group half">
-              <label class="form-label">Login ID <span class="required">*</span></label>
-              <v-text-field v-model="userForm.login_id" placeholder="e.g. ADMIN006" density="compact" variant="outlined"
-                hide-details="auto" />
+              <label class="form-label">{{ t('users.nickname') }}</label>
+              <v-text-field v-model="userForm.nickname" placeholder="e.g. noch" density="compact" variant="outlined"
+                hide-details />
             </div>
-
             <div class="form-group half">
-              <label class="form-label">Password <span class="required">*</span></label>
+              <label class="form-label">{{ t('users.password') }} <span class="required">*</span></label>
               <v-text-field v-model="userForm.password" :type="showPassword ? 'text' : 'password'" placeholder="••••••"
                 density="compact" variant="outlined" hide-details="auto"
                 :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
@@ -92,46 +95,39 @@
             </div>
 
             <div class="form-group half">
-              <label class="form-label">Email <span class="required">*</span></label>
+              <label class="form-label">{{ t('users.email') }} <span class="required">*</span></label>
               <v-text-field v-model="userForm.email" placeholder="e.g. admin@example.com" density="compact"
                 variant="outlined" hide-details="auto" />
             </div>
 
-            <div class="form-group half">
-              <label class="form-label">Nickname</label>
-              <v-text-field v-model="userForm.nickname" placeholder="e.g. noch" density="compact" variant="outlined"
-                hide-details />
-            </div>
-
-            <div class="form-group half">
-              <label class="form-label">Profile</label>
+            <!-- <div class="form-group half">
+              <label class="form-label">{{ t('users.profile') }}</label>
               <v-text-field v-model="userForm.profile" placeholder="e.g. admin" density="compact" variant="outlined"
                 hide-details />
-            </div>
+            </div> -->
 
             <div class="form-group full">
-              <label class="form-label">Assign Menus</label>
+              <div class="section-label-row">
+                <label class="form-label no-margin">{{ t('users.assignMenus') }}</label>
+                <span class="assign-count">{{ userForm.menu_ids.length }} / {{ allMenus.length }}</span>
+              </div>
 
               <div class="assign-menu-grid" style="max-height: 220px;">
                 <div v-for="menu in allMenus" :key="menu.id" class="assign-menu-item"
                   :class="{ selected: isCreateMenuSelected(menu.id) }" @click="toggleUserMenu(menu.id)">
                   <div class="assign-menu-left">
-                    <v-icon size="18" :color="isCreateMenuSelected(menu.id) ? '#1F2937' : '#9CA3AF'">
+                    <v-icon size="18" :color="isCreateMenuSelected(menu.id) ? 'primary' : '#9CA3AF'">
                       {{ menu.icon }}
                     </v-icon>
 
                     <span class="assign-menu-name">{{ menu.name }}</span>
                   </div>
 
-                  <v-icon size="18" :color="isCreateMenuSelected(menu.id) ? '#1F2937' : '#D1D5DB'">
+                  <v-icon size="18" :color="isCreateMenuSelected(menu.id) ? 'primary' : '#D1D5DB'">
                     {{ isCreateMenuSelected(menu.id) ? 'mdi-checkbox-marked' : 'mdi-checkbox-blank-outline' }}
                   </v-icon>
                 </div>
               </div>
-
-              <!-- <div class="assign-count" style="margin-top: 6px">
-                {{ userForm.menu_ids.length }} menu(s) selected
-              </div> -->
             </div>
           </div>
         </div>
@@ -139,23 +135,25 @@
         <v-divider />
 
         <div class="dialog-actions">
-          <v-btn variant="outlined" @click="createUserDialog = false">Cancel</v-btn>
+          <v-btn variant="outlined" color="cancel" @click="createUserDialog = false">{{ t('common.cancel') }}</v-btn>
 
-          <v-btn class="btn-primary" :loading="createUserLoading" @click="submitCreateUser">
-            Create User
+          <v-btn color="create" :loading="createUserLoading" @click="submitCreateUser">
+            {{ t('users.createUser') }}
           </v-btn>
         </div>
       </v-card>
     </v-dialog>
 
     <!-- ASSIGN USER MENUS -->
-    <v-dialog v-model="assignDialog" max-width="560">
+    <v-dialog v-model="assignDialog" max-width="600">
       <v-card class="dialog-card">
         <div class="dialog-header">
           <div class="dialog-title-row">
-            <v-icon size="20" color="#1F2937">mdi-key-variant</v-icon>
+            <div class="dialog-icon">
+              <v-icon size="20" color="primary">mdi-key-variant</v-icon>
+            </div>
             <div>
-              <h2>Assign Menus</h2>
+              <h2>{{ t('users.assignMenus') }}</h2>
               <p v-if="selectedUser" class="dialog-subtitle">{{ selectedUser.username }}</p>
             </div>
           </div>
@@ -169,38 +167,42 @@
 
         <div class="dialog-body">
           <div v-if="assignLoading" class="loading-state">
-            <v-progress-circular indeterminate color="#1F2937" size="28" />
-            <span>Loading user menus...</span>
+            <v-progress-circular indeterminate color="primary" size="28" />
+            <span>{{ t('users.loadingMenus') }}</span>
           </div>
 
-          <div v-else class="assign-menu-grid">
-            <div v-for="menu in allMenus" :key="menu.id" class="assign-menu-item"
-              :class="{ selected: isMenuAssigned(menu.id) }" @click="toggleMenu(menu.id)">
-              <div class="assign-menu-left">
-                <v-icon size="18" :color="isMenuAssigned(menu.id) ? '#1F2937' : '#9CA3AF'">
-                  {{ menu.icon }}
-                </v-icon>
-
-                <span class="assign-menu-name">{{ menu.name }}</span>
-                <!-- <span class="path-pill small">{{ menu.path }}</span> -->
-              </div>
-
-              <v-icon size="18" :color="isMenuAssigned(menu.id) ? '#1F2937' : '#D1D5DB'">
-                {{ isMenuAssigned(menu.id) ? 'mdi-checkbox-marked' : 'mdi-checkbox-blank-outline' }}
-              </v-icon>
+          <template v-else>
+            <div class="section-label-row">
+              <span class="assign-count">{{ assignedMenuIds.length }} / {{ allMenus.length }} {{
+                t('users.assignMenus').toLowerCase() }}</span>
             </div>
-          </div>
+
+            <div class="assign-menu-grid">
+              <div v-for="menu in allMenus" :key="menu.id" class="assign-menu-item"
+                :class="{ selected: isMenuAssigned(menu.id) }" @click="toggleMenu(menu.id)">
+                <div class="assign-menu-left">
+                  <v-icon size="18" :color="isMenuAssigned(menu.id) ? 'primary' : '#9CA3AF'">
+                    {{ menu.icon }}
+                  </v-icon>
+
+                  <span class="assign-menu-name">{{ menu.name }}</span>
+                </div>
+
+                <v-icon size="18" :color="isMenuAssigned(menu.id) ? 'primary' : '#D1D5DB'">
+                  {{ isMenuAssigned(menu.id) ? 'mdi-checkbox-marked' : 'mdi-checkbox-blank-outline' }}
+                </v-icon>
+              </div>
+            </div>
+          </template>
         </div>
 
         <v-divider />
 
         <div class="dialog-actions">
-          <!-- <span class="assign-count">{{ assignedMenuIds.length }} menu(s) selected</span> -->
+          <v-btn variant="outlined" color="cancel" @click="assignDialog = false">{{ t('common.cancel') }}</v-btn>
 
-          <v-btn variant="outlined" @click="assignDialog = false">Cancel</v-btn>
-
-          <v-btn class="btn-primary" :loading="assignSaving" @click="submitAssign">
-            Save Assignment
+          <v-btn color="primary" :loading="assignSaving" @click="submitAssign">
+            {{ t('users.saveAssignment') }}
           </v-btn>
         </div>
       </v-card>
@@ -210,8 +212,8 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import AppTable from '@/components/AppTable.vue'
-import type { TableColumn } from '@/components/DynamicTableStyle.vue'
+import AppTable, { type TableColumn } from '~/components/DynamicTableStyle.vue'
+import { useFrontendI18n } from '~/composables/i18n'
 import { useSnackbar } from '@/composables/useSnackbar'
 import {
   assignUserMenus,
@@ -224,6 +226,7 @@ import {
 } from '~/composables/service/adminManagementApi'
 
 const { showSuccess, showError } = useSnackbar()
+const { t } = useFrontendI18n()
 
 type Menu = MenuItem
 
@@ -266,12 +269,12 @@ const userPage = ref(1)
 const userPageSize = 10
 const userTotalPages = ref(1)
 
-const userColumns: TableColumn<User>[] = [
-  { key: 'id', label: '#', type: 'index', width: '48px' },
-  { key: 'username', label: 'User', align: 'left' },
-  { key: 'role', label: 'Role', width: '120px' },
-  { key: 'actions', label: 'Actions', width: '160px' },
-]
+const userColumns = computed<TableColumn<User>[]>(() => [
+  { key: 'id', label: t('members.no'), type: 'index', width: '48px' },
+  { key: 'username', label: t('members.member'), align: 'left' },
+  { key: 'role', label: t('users.profile'), width: '120px' },
+  { key: 'actions', label: t('common.actions'), width: '160px' },
+])
 
 const filteredUsers = computed(() =>
   users.value.filter(u =>
@@ -305,7 +308,7 @@ async function fetchUsers() {
     userTotalPages.value = 1
   }
   catch (e: any) {
-    userError.value = e?.message ?? 'Failed to load users'
+    userError.value = e?.message ?? t('users.failedToLoad')
   }
   finally {
     userLoading.value = false
@@ -314,6 +317,30 @@ async function fetchUsers() {
 
 function getInitials(name: string) {
   return name?.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) ?? '??'
+}
+
+// deterministic avatar color per username — first swatch is the theme primary,
+// the rest are a complementary spread so avatars stay visually distinct.
+const AVATAR_PALETTE = ['rgb(var(--v-theme-primary))', '#A78BFA', '#60A5FA', '#34D399', '#F59E0B', '#F87171']
+
+function avatarColor(name: string) {
+  if (!name) return AVATAR_PALETTE[0]
+
+  let hash = 0
+  for (let i = 0; i < name.length; i++) {
+    hash = (hash * 31 + name.charCodeAt(i)) % AVATAR_PALETTE.length
+  }
+
+  return AVATAR_PALETTE[Math.abs(hash) % AVATAR_PALETTE.length]
+}
+
+function roleBadgeClass(role: string) {
+  const normalized = (role || '').toLowerCase()
+
+  if (normalized.includes('super') || normalized.includes('admin')) return 'role-admin'
+  if (normalized.includes('manager')) return 'role-manager'
+
+  return 'role-default'
 }
 
 // CREATE USER
@@ -362,7 +389,7 @@ async function submitCreateUser() {
   const { user_name, login_id, password, email } = userForm.value
 
   if (!user_name || !login_id || !password || !email) {
-    showError('Please fill in all required fields')
+    showError(t('common.fieldRequired'))
     return
   }
 
@@ -371,13 +398,13 @@ async function submitCreateUser() {
   try {
     await createUser(userForm.value)
 
-    showSuccess(`User ${user_name} created successfully`)
+    showSuccess(t('users.createdSuccessfully'))
     createUserDialog.value = false
 
     await fetchUsers()
   }
   catch (e: any) {
-    showError(e?.message ?? 'Failed to create user')
+    showError(e?.message ?? t('users.createUser'))
   }
   finally {
     createUserLoading.value = false
@@ -435,11 +462,11 @@ async function submitAssign() {
   try {
     await assignUserMenus(selectedUser.value.id, assignedMenuIds.value)
 
-    showSuccess(`Menus assigned to ${selectedUser.value.username}`)
+    showSuccess(t('users.assignedSuccessfully'))
     assignDialog.value = false
   }
   catch (e: any) {
-    showError(e?.message ?? 'Assignment failed')
+    showError(e?.message ?? t('users.assignMenus'))
   }
   finally {
     assignSaving.value = false
@@ -453,45 +480,71 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.coin-page {
+.users-page {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 16px;
 }
 
+/* ═══════════ HEADER ═══════════ */
 .page-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
+  gap: 12px;
 }
 
-.page-title {
-  font-size: 22px;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-  color: #111827;
-  margin: 0;
-}
-
-.header-chips {
+.header-left {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.content-wepper {
+.header-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: rgba(var(--v-theme-primary), 0.12);
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.page-title {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: rgb(var(--v-theme-primary));
+  margin: 0;
+  line-height: 1.2;
+}
+
+.page-subtitle {
+  font-size: 12.5px;
+  color: rgba(var(--v-theme-on-surface), 0.45);
+  margin: 2px 0 0;
 }
 
 .btn-primary {
-  background: #1F2937 !important;
-  color: #fff !important;
+  background: rgb(var(--v-theme-primary)) !important;
+  color: rgb(var(--v-theme-on-primary)) !important;
   font-weight: 600;
   letter-spacing: 0;
-  border-radius: 8px !important;
+  border-radius: 10px !important;
+  box-shadow: 0 4px 14px rgba(var(--v-theme-primary), 0.35) !important;
+}
+
+/* ═══════════ CONTENT CARD ═══════════ */
+.content-card {
+  background: rgb(var(--v-theme-surface));
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.1);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 .toolbar {
@@ -502,25 +555,42 @@ onMounted(() => {
 }
 
 .search-field {
-  max-width: 280px;
+  max-width: 300px;
 }
 
-.path-pill {
-  font-family: 'Courier New', monospace;
-  font-size: 11px;
-  background: #F3F4F6;
-  color: #4B5563;
-  border: 1px solid rgba(31, 41, 55, 0.1);
-  border-radius: 5px;
-  padding: 2px 8px;
-  white-space: nowrap;
+.search-field :deep(.v-field) {
+  border-radius: 10px;
 }
 
-.path-pill.small {
-  font-size: 10px;
-  padding: 1px 6px;
+/* border color + width when focused */
+.search-field :deep(.v-field--focused .v-field__outline) {
+  color: rgb(var(--v-theme-primary)) !important;
+  --v-field-border-width: 2px;
 }
 
+/* prepend icon color when focused */
+.search-field :deep(.v-field--focused .v-field__prepend-inner) {
+  color: rgb(var(--v-theme-primary));
+}
+
+/* label color when focused (if you add a label) */
+.search-field :deep(.v-field--focused .v-label) {
+  color: rgb(var(--v-theme-primary));
+}
+
+/* clear icon color when focused (optional) */
+.search-field :deep(.v-field--focused .v-field__clearable) {
+  color: rgb(var(--v-theme-primary));
+}
+
+.refresh-btn {
+  border-radius: 10px !important;
+  border-color: rgba(var(--v-theme-on-surface), 0.15) !important;
+  color: #6B7280 !important;
+  flex-shrink: 0;
+}
+
+/* ═══════════ USER CELL ═══════════ */
 .user-cell {
   display: flex;
   align-items: center;
@@ -531,8 +601,7 @@ onMounted(() => {
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: #E5E7EB;
-  color: #374151;
+  color: rgb(var(--v-theme-on-primary));
   font-size: 12px;
   font-weight: 700;
   display: flex;
@@ -541,28 +610,58 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
+.user-info {
+  min-width: 0;
+}
+
 .user-name {
   font-size: 13px;
   font-weight: 600;
-  color: #111827;
+  color: rgb(var(--v-theme-on-surface));
 }
 
 .user-email {
   font-size: 11px;
   color: #9CA3AF;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
+/* ═══════════ ROLE BADGE ═══════════ */
 .role-badge {
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.3px;
-  background: rgba(31, 41, 55, 0.07);
-  color: #374151;
   padding: 3px 10px;
   border-radius: 20px;
+  white-space: nowrap;
 }
 
+.role-badge.role-admin {
+  background: rgba(var(--v-theme-primary), 0.14);
+  color: rgb(var(--v-theme-primary));
+}
+
+.role-badge.role-manager {
+  background: rgba(96, 165, 250, 0.14);
+  color: #1D4ED8;
+}
+
+.role-badge.role-default {
+  background: rgba(var(--v-theme-on-surface), 0.07);
+  color: rgba(var(--v-theme-on-surface), 0.7);
+}
+
+.assign-btn {
+  border-radius: 8px !important;
+  border-color: rgba(var(--v-theme-on-surface), 0.15) !important;
+  color: rgba(var(--v-theme-on-surface), 0.7) !important;
+  font-size: 12px !important;
+}
+
+/* ═══════════ LOADING ═══════════ */
 .loading-state {
   display: flex;
   flex-direction: column;
@@ -573,8 +672,9 @@ onMounted(() => {
   font-size: 14px;
 }
 
+/* ═══════════ DIALOG ═══════════ */
 .dialog-card {
-  border-radius: 12px !important;
+  border-radius: 14px !important;
   overflow: hidden;
 }
 
@@ -588,13 +688,24 @@ onMounted(() => {
 .dialog-title-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+}
+
+.dialog-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(var(--v-theme-primary), 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .dialog-title-row h2 {
   font-size: 16px;
   font-weight: 700;
-  color: #111827;
+  color: rgb(var(--v-theme-on-surface));
   margin: 0;
 }
 
@@ -606,6 +717,8 @@ onMounted(() => {
 
 .dialog-body {
   padding: 20px;
+  max-height: 70vh;
+  overflow-y: auto;
 }
 
 .dialog-actions {
@@ -614,8 +727,10 @@ onMounted(() => {
   justify-content: flex-end;
   gap: 10px;
   padding: 14px 20px;
+  background: rgb(var(--v-theme-background));
 }
 
+/* ═══════════ FORM ═══════════ */
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -634,21 +749,32 @@ onMounted(() => {
   display: block;
   font-size: 12px;
   font-weight: 600;
-  color: #374151;
+  color: rgba(var(--v-theme-on-surface), 0.75);
   margin-bottom: 6px;
   text-transform: uppercase;
   letter-spacing: 0.4px;
 }
 
-.required {
-  color: #EF4444;
+.form-label.no-margin {
+  margin-bottom: 0;
 }
 
-/* ✅ 2-column grid for menu list */
+.section-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.required {
+  color: rgb(var(--v-theme-error));
+}
+
+/* ═══════════ MENU ASSIGNMENT GRID ═══════════ */
 .assign-menu-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 6px;
+  gap: 8px;
   overflow-y: auto;
 }
 
@@ -657,19 +783,20 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: 10px 12px;
-  border: 1px solid rgba(31, 41, 55, 0.1);
-  border-radius: 8px;
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.1);
+  border-radius: 10px;
   cursor: pointer;
   transition: all 0.15s;
 }
 
 .assign-menu-item:hover {
-  background: #F9FAFB;
+  background: rgb(var(--v-theme-background));
+  border-color: rgba(var(--v-theme-on-surface), 0.18);
 }
 
 .assign-menu-item.selected {
-  border-color: #1F2937;
-  background: rgba(31, 41, 55, 0.04);
+  border-color: rgb(var(--v-theme-primary));
+  background: rgba(var(--v-theme-primary), 0.06);
 }
 
 .assign-menu-left {
@@ -683,15 +810,18 @@ onMounted(() => {
 .assign-menu-name {
   font-size: 13px;
   font-weight: 500;
-  color: #111827;
+  color: rgb(var(--v-theme-on-surface));
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .assign-count {
-  font-size: 12px;
-  color: #6B7280;
-  margin-right: auto;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: rgb(var(--v-theme-primary));
+  background: rgba(var(--v-theme-primary), 0.1);
+  padding: 2px 9px;
+  border-radius: 20px;
 }
 </style>

@@ -2,7 +2,7 @@
   <div class="analytics-page">
     <div class="page-header">
       <div>
-        <h1 class="page-title">Report Management</h1>
+        <h1 class="page-title">{{ t('report.title') }}</h1>
       </div>
     </div>
 
@@ -10,7 +10,7 @@
 
       <div class="filter-row">
         <div class="filter-left">
-          <span class="filter-label">កាលបរិច្ឆេទ</span>
+          <span class="filter-label">{{ t('report.date') }}</span>
           <v-text-field v-model="filterDate" type="date" density="compact" hide-details variant="outlined"
             style="max-width: 180px" class="slate-input" @update:model-value="handleDateChange" />
         </div>
@@ -40,8 +40,8 @@
         </template>
 
         <template #cell-bonus="{ item }">
-          <v-btn size="small" variant="flat" class="bonus-btn" @click="openBonusDialog(item)">
-            + Bonus
+          <v-btn size="small" variant="flat" color="create" class="bonus-btn" @click="openBonusDialog(item)">
+            {{ t('report.addBonus') }}
           </v-btn>
         </template>
       </AppTable>
@@ -51,24 +51,24 @@
     <v-dialog v-model="bonusDialog" max-width="420" persistent>
       <v-card class="bonus-dialog-card">
         <v-card-title class="bonus-dialog-title">
-          បន្ថែម Bonus
+          {{ t('report.addBonus') }}
           <div class="bonus-dialog-subtitle">{{ selectedMember?.name }}</div>
         </v-card-title>
 
         <v-card-text class="pt-2">
-          <v-text-field v-model="bonusAmount" label="ចំនួនទឹកប្រាក់" persistent-hint
+          <v-text-field v-model="bonusAmount" :label="t('report.amount')" persistent-hint
             density="compact" hide-details="auto" variant="outlined" class="mb-3 slate-input" />
-          <v-textarea v-model="bonusNote" label="Note" variant="outlined" density="comfortable" rows="2" hide-details
+          <v-textarea v-model="bonusNote" :label="t('report.note')" variant="outlined" density="comfortable" rows="2" hide-details
             class="slate-input" />
           <div v-if="bonusError" class="bonus-error">{{ bonusError }}</div>
         </v-card-text>
 
         <v-card-actions class="justify-end pb-4 pr-4">
-          <v-btn variant="text" :disabled="bonusSubmitting" @click="closeBonusDialog">
-            បោះបង់
+          <v-btn variant="outlined" color="cancel" :disabled="bonusSubmitting" @click="closeBonusDialog">
+            {{ t('common.cancel') }}
           </v-btn>
-          <v-btn class="bonus-confirm-btn" :loading="bonusSubmitting" @click="submitBonus">
-            រក្សាទុក
+          <v-btn color="primary" class="bonus-confirm-btn" :loading="bonusSubmitting" @click="submitBonus">
+            {{ t('report.save') }}
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -81,27 +81,29 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import type { LocationQueryValue } from 'vue-router'
 import { toast } from 'vue-sonner'
 import AppTable, { type TableColumn, type TotalRow } from '~/components/DynamicTableStyle.vue'
+import { useFrontendI18n } from '~/composables/i18n'
 import { getReports, type ReportItem } from '~/composables/service/reportApi'
 import { createMemberBonus } from '~/composables/service/memberBonusApi'
 import PeriodFilterButtons from '~/components/PeriodFilterButtons.vue'
 
 const route = useRoute()
 const router = useRouter()
+const { t } = useFrontendI18n()
 
-const columns: TableColumn<ReportItem>[] = [
-  { key: 'index', label: 'លេខ', type: 'index' },
-  { key: 'member_name', label: 'Member Name' },
-  { key: 'total_bet_amount', label: 'Turn Over', align: 'right' },
-  { key: 'total_valid_bet', label: 'Valid Bet', align: 'right' },
+const columns = computed<TableColumn<ReportItem>[]>(() => [
+  { key: 'index', label: 'លេខរៀង', type: 'index' },
+  { key: 'member_name', label: t('members.member') },
+  { key: 'total_bet_amount', label: t('report.turnOver'), align: 'right' },
+  { key: 'total_valid_bet', label: t('report.validBet'), align: 'right' },
   {
     key: 'total_win_lose',
-    label: 'Win/Lose',
+    label: t('report.winLose'),
     align: 'right',
     cellClass: (item: ReportItem) => parseAmount(item.total_win_lose) >= 0 ? 'positive' : 'negative',
   },
-  { key: 'jackpot_win_amount', label: 'Jackpot Win', align: 'right' },
-  { key: 'bonus', label: 'Bonus', align: 'center' },
-]
+  { key: 'jackpot_win_amount', label: t('report.jackpotWin'), align: 'right' },
+  { key: 'bonus', label: t('report.bonus'), align: 'center' },
+])
 
 const filterDate = ref(formatDateForInput(new Date()))
 const currentPage = ref(1)
@@ -145,11 +147,11 @@ async function submitBonus() {
 
   const amountNum = parseAmount(bonusAmount.value)
   if (!bonusAmount.value || amountNum <= 0) {
-    bonusAmountError.value = 'សូមបញ្ចូលចំនួនទឹកប្រាក់ត្រឹមត្រូវ'
+    bonusAmountError.value = t('report.invalidAmount')
     return
   }
   if (!selectedMember.value?.id) {
-    bonusError.value = 'Member ID មិនត្រឹមត្រូវ'
+    bonusError.value = t('report.invalidMember')
     return
   }
 
@@ -160,13 +162,13 @@ async function submitBonus() {
       member_id: selectedMember.value.id,
       note: bonusNote.value,
     })
-    toast.success('បន្ថែម Bonus ជោគជ័យ')
+    toast.success(t('report.bonusCreated'))
     bonusDialog.value = false
     selectedMember.value = null
     await fetchReports()
   } catch (error: any) {
     console.error('[bonus] failed to create', error)
-    bonusError.value = error?.message || 'Failed to create bonus'
+    bonusError.value = error?.message || t('jackpot.failedToCreateMemberBonus')
   } finally {
     bonusSubmitting.value = false
   }
@@ -194,7 +196,7 @@ const subtotalsRow = computed<TotalRow | undefined>(() => {
 
   return {
     labelSpan: 2,
-    pageLabel: 'សរុបក្នុងមួយទំព័រ',
+    pageLabel: t('report.pageSubtotal'),
     cols: [
       { key: 'total_bet_amount', value: formatAmount(pageBetTotal.value), class: 'positive' },
       { key: 'total_valid_bet', value: formatAmount(pageValidTotal.value), class: 'positive' },
@@ -218,7 +220,7 @@ const grandTotalsRow = computed<TotalRow | undefined>(() => {
 
   return {
     labelSpan: 2,
-    pageLabel: 'សរុបទាំងអស់',
+    pageLabel: t('report.grandTotal'),
     cols: [
       { key: 'total_bet_amount', value: formatAmount(totalBet), class: 'positive' },
       { key: 'total_valid_bet', value: formatAmount(totalValid), class: 'positive' },
@@ -311,7 +313,7 @@ async function fetchReports() {
     reportData.value = []
     reportTotal.value = null
     totalItems.value = 0
-    errorMessage.value = error?.message || 'Failed to load analytics report'
+    errorMessage.value = error?.message || t('report.failedToLoad')
   } finally {
     isLoading.value = false
   }
@@ -371,7 +373,7 @@ watch([filterDate, currentPage, activePeriod], () => {
   font-size: 22px;
   font-weight: 800;
   letter-spacing: -0.5px;
-  color: #111827;
+  color: rgb(var(--v-theme-primary));
 }
 
 .page-subtitle {
@@ -452,8 +454,6 @@ watch([filterDate, currentPage, activePeriod], () => {
 }
 
 .bonus-btn {
-  background: #E879B0 !important;
-  color: #FFFFFF !important;
   font-weight: 700 !important;
   font-size: 12px !important;
   text-transform: none !important;
@@ -479,8 +479,6 @@ watch([filterDate, currentPage, activePeriod], () => {
 }
 
 .bonus-confirm-btn {
-  background: #E879B0 !important;
-  color: #FFFFFF !important;
   font-weight: 700 !important;
   text-transform: none !important;
 }

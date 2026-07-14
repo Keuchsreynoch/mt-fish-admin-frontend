@@ -1,5 +1,6 @@
 <template>
-  <v-dialog :model-value="modelValue" @update:model-value="emit('update:modelValue', $event)" max-width="720" persistent>
+  <v-dialog :model-value="modelValue" @update:model-value="emit('update:modelValue', $event)" max-width="720"
+    persistent>
     <v-card class="jackpot-dialog" elevation="0">
       <!-- Header -->
       <div class="dialog-header">
@@ -7,7 +8,7 @@
           <div class="title-icon">
             <v-icon size="16" color="#fff">mdi-crown</v-icon>
           </div>
-          <span>Jackpot Settings</span>
+          <span>{{ t('jackpot.jackpotSettings') }}</span>
         </div>
         <v-btn icon variant="text" size="small" @click="closeDialog">
           <v-icon size="18" color="#9ca3af">mdi-close</v-icon>
@@ -16,7 +17,7 @@
 
       <!-- Current Pool Banner -->
       <div class="current-pool-banner">
-        <div class="banner-label">Current Pool</div>
+        <div class="banner-label">{{ t('jackpot.currentAmount') }}</div>
         <div class="banner-value">{{ formatAmount(currentAmount) }}</div>
       </div>
 
@@ -28,59 +29,73 @@
             <div class="section-icon section-icon--blue">
               <v-icon size="14" color="#fff">mdi-cog</v-icon>
             </div>
-            <span>Pool Configuration</span>
+            <span>{{ t('jackpot.globalConfig') }}</span>
           </div>
 
           <div class="section-fields">
             <div class="field-row">
               <div class="field-col">
-                <label class="field-label">Company Top-Up</label>
-                <v-text-field
-                  v-model="localForm.company_topup_amount"
-                  type="text"
-                  inputmode="decimal"
-                  density="compact"
-                  variant="outlined"
-                  hide-details
-                  placeholder=" 0"
-                  @keydown="blockNonDecimalKeys"
-                  @paste.prevent="handleDecimalPaste"
-                />
+                <label class="field-label">{{ t('jackpot.companyTopup') }}</label>
+                <div class="input-with-stepper">
+                  <v-text-field v-model="localForm.company_topup_amount" type="text" inputmode="decimal" density="compact"
+                    variant="outlined" hide-details placeholder="0" class="stepper-input" @keydown="blockNonDecimalKeys"
+                    @paste.prevent="handleDecimalPaste" />
+                </div>
               </div>
 
               <div class="field-col">
-                <label class="field-label">Threshold</label>
+                <label class="field-label">{{ t('jackpot.threshold') }}</label>
                 <div class="input-with-stepper">
-                  <v-btn
-                    icon
-                    size="x-small"
-                    variant="outlined"
-                    class="stepper-btn stepper-btn--blue"
-                    @click="decrementField('threshold_amount')"
-                  >
-                    <v-icon size="14">mdi-minus</v-icon>
-                  </v-btn>
+                  <v-text-field v-model="localForm.threshold_amount" type="text" inputmode="decimal" density="compact"
+                    variant="outlined" hide-details placeholder="0" class="stepper-input" @keydown="blockNonDecimalKeys"
+                    @paste.prevent="handleDecimalPaste" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-card section-card--amber">
+          <div class="section-title">
+            <div class="section-icon section-icon--amber">
+              <v-icon size="14" color="#fff">mdi-gift-outline</v-icon>
+            </div>
+            <span>{{ t('jackpot.createMemberBonus') }}</span>
+          </div>
+
+          <div class="section-fields">
+            <div class="field-row">
+              <div class="field-col">
+                <label class="field-label">{{ t('members.member') }}</label>
+                <div class="input-with-stepper">
                   <v-text-field
-                    v-model="localForm.threshold_amount"
+                    v-model="localForm.member_name"
+                    type="text"
+                    inputmode="text"
+                    density="compact"
+                    variant="outlined"
+                    hide-details
+                    placeholder="Member Name"
+                    class="stepper-input"
+                  />
+                </div>
+              </div>
+
+              <div class="field-col">
+                <label class="field-label">{{ t('jackpot.amount') }}</label>
+                <div class="input-with-stepper">
+                  <v-text-field
+                    v-model="localForm.member_bonus_amount"
                     type="text"
                     inputmode="decimal"
                     density="compact"
                     variant="outlined"
                     hide-details
-                    placeholder="0"
+                    placeholder="0.00"
                     class="stepper-input"
                     @keydown="blockNonDecimalKeys"
                     @paste.prevent="handleDecimalPaste"
                   />
-                  <v-btn
-                    icon
-                    size="x-small"
-                    variant="outlined"
-                    class="stepper-btn stepper-btn--blue"
-                    @click="incrementField('threshold_amount')"
-                  >
-                    <v-icon size="14">mdi-plus</v-icon>
-                  </v-btn>
                 </div>
               </div>
             </div>
@@ -93,51 +108,24 @@
             <div class="section-icon section-icon--purple">
               <v-icon size="14" color="#fff">mdi-dice-multiple</v-icon>
             </div>
-            <span>Win Probability</span>
+            <span>{{ t('jackpot.winChance') }}</span>
           </div>
 
           <div class="section-fields">
             <div class="field-row-single">
               <div class="input-with-stepper input-with-stepper--wide">
-                <v-btn
-                  icon
-                  size="x-small"
-                  variant="outlined"
-                  class="stepper-btn stepper-btn--purple"
-                  @click="decrementField('chance_denom')"
-                >
-                  <v-icon size="14">mdi-minus</v-icon>
-                </v-btn>
                 <div class="chance-input-wrapper">
-                  <span class="chance-prefix">1 IN</span>
-                  <v-text-field
-                    v-model="localForm.chance_denom"
-                    type="text"
-                    inputmode="numeric"
-                    density="compact"
-                    variant="outlined"
-                    hide-details
-                    placeholder="5,000"
-                    class="stepper-input"
-                    @keydown="blockNonIntegerKeys"
-                    @paste.prevent="handleIntegerPaste"
-                  />
+                  <span class="chance-prefix">{{ t('common.oneIn') }}</span>
+                  <v-text-field v-model="localForm.chance_denom" type="text" inputmode="numeric" density="compact"
+                    variant="outlined" hide-details placeholder="5,000" class="stepper-input"
+                    @keydown="blockNonIntegerKeys" @paste.prevent="handleIntegerPaste" />
                 </div>
-                <v-btn
-                  icon
-                  size="x-small"
-                  variant="outlined"
-                  class="stepper-btn stepper-btn--purple"
-                  @click="incrementField('chance_denom')"
-                >
-                  <v-icon size="14">mdi-plus</v-icon>
-                </v-btn>
               </div>
             </div>
 
             <div class="probability-info">
-              <span class="probability-label">Probability:</span>
-              <span className="probability-value"> {{ winProbability }}% per spin</span>
+              <span class="probability-label">{{ t('jackpot.winChance') }}:</span>
+              <span class="probability-value"> {{ winProbability }}% {{ t('common.perSpin') }}</span>
             </div>
           </div>
         </div>
@@ -148,118 +136,37 @@
             <div class="section-icon section-icon--green">
               <v-icon size="14" color="#fff">mdi-cash-multiple</v-icon>
             </div>
-            <span>Payout Settings</span>
+            <span>{{ t('jackpot.payoutSettings') }}</span>
           </div>
 
           <div class="section-fields">
             <div class="field-row">
               <div class="field-col">
-                <label class="field-label">Payout Percent</label>
+                <label class="field-label">{{ t('jackpot.payoutPercentLabel') }}</label>
                 <div class="input-with-stepper">
-                  <v-btn
-                    icon
-                    size="x-small"
-                    variant="outlined"
-                    class="stepper-btn stepper-btn--green"
-                    @click="decrementField('payout_percent')"
-                  >
-                    <v-icon size="14">mdi-minus</v-icon>
-                  </v-btn>
-                  <v-text-field
-                    v-model="localForm.payout_percent"
-                    type="text"
-                    inputmode="decimal"
-                    density="compact"
-                    variant="outlined"
-                    hide-details
-                    placeholder="0.00"
-                    class="stepper-input"
-                    @keydown="blockNonDecimalKeys"
-                    @paste.prevent="handleDecimalPaste"
-                  />
-                  <v-btn
-                    icon
-                    size="x-small"
-                    variant="outlined"
-                    class="stepper-btn stepper-btn--green"
-                    @click="incrementField('payout_percent')"
-                  >
-                    <v-icon size="14">mdi-plus</v-icon>
-                  </v-btn>
+                  <v-text-field v-model="localForm.payout_percent" type="text" inputmode="decimal" density="compact"
+                    variant="outlined" hide-details placeholder="0.00" class="stepper-input"
+                    @keydown="blockNonDecimalKeys" @paste.prevent="handleDecimalPaste" />
                 </div>
               </div>
 
               <div class="field-col">
-                <label class="field-label">Fixed Payout</label>
+                <label class="field-label">{{ t('jackpot.fixedPayout') }}</label>
                 <div class="input-with-stepper">
-                  <v-btn
-                    icon
-                    size="x-small"
-                    variant="outlined"
-                    class="stepper-btn stepper-btn--green"
-                    @click="decrementField('jackpot_fixed_payout_amount')"
-                  >
-                    <v-icon size="14">mdi-minus</v-icon>
-                  </v-btn>
-                  <v-text-field
-                    v-model="localForm.jackpot_fixed_payout_amount"
-                    type="text"
-                    inputmode="decimal"
-                    density="compact"
-                    variant="outlined"
-                    hide-details
-                    placeholder="0.00"
-                    class="stepper-input"
-                    @keydown="blockNonDecimalKeys"
-                    @paste.prevent="handleDecimalPaste"
-                  />
-                  <v-btn
-                    icon
-                    size="x-small"
-                    variant="outlined"
-                    class="stepper-btn stepper-btn--green"
-                    @click="incrementField('jackpot_fixed_payout_amount')"
-                  >
-                    <v-icon size="14">mdi-plus</v-icon>
-                  </v-btn>
+                  <v-text-field v-model="localForm.jackpot_fixed_payout_amount" type="text" inputmode="decimal"
+                    density="compact" variant="outlined" hide-details placeholder="0.00" class="stepper-input"
+                    @keydown="blockNonDecimalKeys" @paste.prevent="handleDecimalPaste" />
                 </div>
               </div>
             </div>
 
             <div class="field-row-single mt-2">
               <div class="field-col" style="max-width: 340px;">
-                <label class="field-label">Min Eligible Bet Amount</label>
+                <label class="field-label">{{ t('jackpot.minEligibleBetAmount') }}</label>
                 <div class="input-with-stepper">
-                  <v-btn
-                    icon
-                    size="x-small"
-                    variant="outlined"
-                    class="stepper-btn stepper-btn--green"
-                    @click="decrementField('min_eligible_bet_amount')"
-                  >
-                    <v-icon size="14">mdi-minus</v-icon>
-                  </v-btn>
-                  <v-text-field
-                    v-model="localForm.min_eligible_bet_amount"
-                    type="text"
-                    inputmode="decimal"
-                    density="compact"
-                    variant="outlined"
-                    hide-details
-                    placeholder="0.00"
-                    class="stepper-input"
-                    @keydown="blockNonDecimalKeys"
-                    @paste.prevent="handleDecimalPaste"
-                  />
-                  <v-btn
-                    icon
-                    size="x-small"
-                    variant="outlined"
-                    class="stepper-btn stepper-btn--green"
-                    @click="incrementField('min_eligible_bet_amount')"
-                  >
-                    <v-icon size="14">mdi-plus</v-icon>
-                  </v-btn>
+                  <v-text-field v-model="localForm.min_eligible_bet_amount" type="text" inputmode="decimal"
+                    density="compact" variant="outlined" hide-details placeholder="0.00" class="stepper-input"
+                    @keydown="blockNonDecimalKeys" @paste.prevent="handleDecimalPaste" />
                 </div>
               </div>
             </div>
@@ -270,18 +177,14 @@
       <!-- Footer -->
       <div class="dialog-footer">
         <div class="footer-meta">
-          <span class="meta-label">Updated {{ lastUpdatedLabel }}</span>
+          <span class="meta-label">{{ t('gameConfig.updatedAt') }} {{ lastUpdatedLabel }}</span>
         </div>
         <div class="footer-actions">
-          <v-btn variant="text" color="grey-darken-1" @click="closeDialog" :disabled="updateLoading">
-            Cancel
+          <v-btn variant="outlined" color="cancel" @click="closeDialog" :disabled="updateLoading">
+            {{ t('common.cancel') }}
           </v-btn>
-          <v-btn
-            color="#7c3aed"
-            :loading="updateLoading"
-            @click="handleSave"
-          >
-            Save
+          <v-btn color="primary" :loading="updateLoading" @click="handleSave">
+            {{ t('common.save') }}
           </v-btn>
         </div>
       </div>
@@ -291,6 +194,7 @@
 
 <script setup lang="ts">
 import { computed, reactive, watch } from "vue";
+import { useFrontendI18n } from "~/composables/i18n";
 
 export interface JackpotCurrent {
   current_amount?: string | number;
@@ -310,6 +214,8 @@ export interface JackpotSettingsForm {
   min_eligible_bet_amount: string;
   jackpot_fixed_payout_amount: string;
   company_topup_amount: string;
+  member_name: string;
+  member_bonus_amount: string;
 }
 
 const props = defineProps<{
@@ -324,6 +230,7 @@ const emit = defineEmits<{
   (e: "submit", payload: JackpotSettingsForm): void;
   (e: "cancel"): void;
 }>();
+const { t } = useFrontendI18n();
 
 // local mutable copy – NEVER mutate props directly
 const localForm = reactive<JackpotSettingsForm>({
@@ -333,6 +240,8 @@ const localForm = reactive<JackpotSettingsForm>({
   min_eligible_bet_amount: "0.00",
   jackpot_fixed_payout_amount: "0.00",
   company_topup_amount: "",
+  member_name: "",
+  member_bonus_amount: "",
 });
 
 function syncFromPool(data: JackpotCurrent | null) {
@@ -343,6 +252,8 @@ function syncFromPool(data: JackpotCurrent | null) {
   localForm.min_eligible_bet_amount = String(data.min_eligible_bet_amount ?? "0.00");
   localForm.jackpot_fixed_payout_amount = String(data.jackpot_fixed_payout_amount ?? "0.00");
   localForm.company_topup_amount = "";
+  localForm.member_name = "";
+  localForm.member_bonus_amount = "";
 }
 
 // when dialog opens, hydrate local form
@@ -369,8 +280,8 @@ const winProbability = computed(() => {
 
 const lastUpdatedLabel = computed(() => {
   const v = props.poolData?.updated_at;
-  if (!v) return "just now";
-  try { return new Date(v).toLocaleTimeString(); } catch { return "just now"; }
+  if (!v) return t('notifications.justNow');
+  try { return new Date(v).toLocaleTimeString(); } catch { return t('notifications.justNow'); }
 });
 
 function parseAmount(value: string | number | null | undefined): number {
@@ -387,7 +298,7 @@ function formatAmount(value: string | number | null | undefined): string {
 }
 
 function blockNonDecimalKeys(event: KeyboardEvent) {
-  const allowed = ["Backspace","Delete","Tab","ArrowLeft","ArrowRight","Home","End","."];
+  const allowed = ["Backspace", "Delete", "Tab", "ArrowLeft", "ArrowRight", "Home", "End", "."];
   if (allowed.includes(event.key) || event.ctrlKey || event.metaKey) return;
   if (!/^\d$/.test(event.key)) event.preventDefault();
   // prevent second dot
@@ -396,7 +307,7 @@ function blockNonDecimalKeys(event: KeyboardEvent) {
   }
 }
 function blockNonIntegerKeys(event: KeyboardEvent) {
-  const allowed = ["Backspace","Delete","Tab","ArrowLeft","ArrowRight","Home","End"];
+  const allowed = ["Backspace", "Delete", "Tab", "ArrowLeft", "ArrowRight", "Home", "End"];
   if (allowed.includes(event.key) || event.ctrlKey || event.metaKey) return;
   if (!/^\d$/.test(event.key)) event.preventDefault();
 }
@@ -409,19 +320,6 @@ function handleDecimalPaste(e: ClipboardEvent) {
 function handleIntegerPaste(e: ClipboardEvent) {
   const pasted = e.clipboardData?.getData("text") || "";
   if (!/^\d+$/.test(pasted)) e.preventDefault();
-}
-
-function incrementField(field: keyof JackpotSettingsForm) {
-  const current = Number.parseFloat(localForm[field]) || 0;
-  const step = field === "chance_denom" ? 100 : field === "payout_percent" ? 0.1 : 1000;
-  const newVal = current + step;
-  localForm[field] = field === "chance_denom" ? String(Math.round(newVal)) : newVal.toFixed(2);
-}
-function decrementField(field: keyof JackpotSettingsForm) {
-  const current = Number.parseFloat(localForm[field]) || 0;
-  const step = field === "chance_denom" ? 100 : field === "payout_percent" ? 0.1 : 1000;
-  const newVal = Math.max(0, current - step);
-  localForm[field] = field === "chance_denom" ? String(Math.round(newVal)) : newVal.toFixed(2);
 }
 
 function closeDialog() {
@@ -466,27 +364,28 @@ function handleSave() {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(124,58,237,.25);
+  box-shadow: 0 2px 8px rgba(124, 58, 237, .25);
 }
 
 /* Current Pool Banner */
 .current-pool-banner {
   margin: 12px 20px;
   padding: 14px 18px;
-  background: #0f172a;
+  background: linear-gradient(135deg, #4c1d95, #7c3aed);
   border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.25);
 }
 
 .banner-label {
   font-size: 12px;
-  color: #94a3b8;
+  color: #fff;
   margin-bottom: 4px;
 }
 
 .banner-value {
   font-size: 22px;
   font-weight: 720;
-  color: #34d399;
+  color: #ffffff;
   letter-spacing: -0.015em;
 }
 
@@ -500,18 +399,45 @@ function handleSave() {
   gap: 12px;
 }
 
-.dialog-content::-webkit-scrollbar { width: 6px; }
-.dialog-content::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 3px; }
-.dialog-content::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+.dialog-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dialog-content::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.dialog-content::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
 
 /* Section Cards */
 .section-card {
   border-radius: 12px;
   padding: 14px 16px;
 }
-.section-card--blue { background: #eef2ff; border: 1px solid #e0e7ff; }
-.section-card--purple { background: #faf5ff; border: 1px solid #f3e8ff; }
-.section-card--green { background: #f0fdf4; border: 1px solid #dcfce7; }
+
+.section-card--blue {
+  background: #eef2ff;
+  border: 1px solid #e0e7ff;
+}
+
+.section-card--purple {
+  background: #faf5ff;
+  border: 1px solid #f3e8ff;
+}
+
+.section-card--green {
+  background: #f0fdf4;
+  border: 1px solid #dcfce7;
+}
+
+.section-card--amber {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+}
 
 .section-title {
   display: flex;
@@ -524,56 +450,150 @@ function handleSave() {
 }
 
 .section-icon {
-  width: 22px; height: 22px; border-radius: 6px;
-  display: flex; align-items: center; justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.section-icon--blue { background: #3b82f6; }
-.section-icon--purple { background: #7c3aed; }
-.section-icon--green { background: #10b981; }
+
+.section-icon--blue {
+  background: #3b82f6;
+}
+
+.section-icon--purple {
+  background: #7c3aed;
+}
+
+.section-icon--green {
+  background: #10b981;
+}
+
+.section-icon--amber {
+  background: #f59e0b;
+}
 
 /* Fields */
-.section-fields { display: flex; flex-direction: column; gap: 10px; }
-.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-@media (max-width: 560px){ .field-row{ grid-template-columns: 1fr; } }
-.field-row-single { display: flex; flex-direction: column; }
-.field-col { display: flex; flex-direction: column; gap: 5px; }
-.field-label { font-size: 11px; font-weight: 500; color: #6b7280; }
+.section-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 560px) {
+  .field-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.field-row-single {
+  display: flex;
+  flex-direction: column;
+}
+
+.field-col {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.field-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: #6b7280;
+}
 
 /* Input with Stepper */
 .input-with-stepper {
-  display: flex; align-items: center; gap: 6px;
-  background: #fff; border-radius: 10px; padding: 5px 6px; border: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  border-radius: 10px;
+  padding: 5px 6px;
+  border: 1px solid #e5e7eb;
 }
-.input-with-stepper--wide { flex-direction: row; }
 
-.stepper-btn {
-  min-width: 26px !important; width: 26px !important; height: 26px !important; border-radius: 7px !important;
+.input-with-stepper--wide {
+  flex-direction: row;
 }
-.stepper-btn--blue { color: #3b82f6 !important; border-color: #bfdbfe !important; }
-.stepper-btn--purple { color: #7c3aed !important; border-color: #e9d5ff !important; }
-.stepper-btn--green { color: #10b981 !important; border-color: #a7f3d0 !important; }
 
-.stepper-input { flex: 1; }
+.stepper-input {
+  flex: 1;
+}
+
 .stepper-input :deep(.v-field) {
-  box-shadow: none !important; border: none !important; padding: 0 4px !important; min-height: 28px !important;
+  box-shadow: none !important;
+  border: none !important;
+  padding: 0 4px !important;
+  min-height: 28px !important;
 }
-.stepper-input :deep(.v-field__input) { padding: 2px 4px !important; font-size: 13.5px; }
+
+.stepper-input :deep(.v-field__input) {
+  padding: 2px 4px !important;
+  font-size: 13.5px;
+}
 
 /* Chance Input */
-.chance-input-wrapper { display: flex; align-items: center; gap: 8px; flex: 1; }
-.chance-prefix { font-size: 12px; font-weight: 700; color: #6b7280; white-space: nowrap; }
+.chance-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.chance-prefix {
+  font-size: 12px;
+  font-weight: 700;
+  color: #6b7280;
+  white-space: nowrap;
+}
 
 /* Probability Info */
-.probability-info { margin-top: 8px; font-size: 12px; color: #6b7280; }
-.probability-label { color: #9ca3af; }
-.probability-value { font-weight: 650; color: #7c3aed; }
+.probability-info {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.probability-label {
+  color: #9ca3af;
+}
+
+.probability-value {
+  font-weight: 650;
+  color: #7c3aed;
+}
 
 /* Footer */
 .dialog-footer {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 14px 20px; border-top: 1px solid #f3f4f6; background: #fafafa;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-top: 1px solid #f3f4f6;
+  background: #fafafa;
 }
-.footer-meta { font-size: 12px; color: #9ca3af; }
-.footer-actions { display: flex; align-items: center; gap: 8px; }
-.mt-2 { margin-top: 8px; }
+
+.footer-meta {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mt-2 {
+  margin-top: 8px;
+}
 </style>

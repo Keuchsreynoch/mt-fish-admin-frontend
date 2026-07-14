@@ -30,7 +30,8 @@ export interface MemberBonusData {
 
 export interface CreateMemberBonusBody {
   amount: string;
-  member_id: number;
+  member_id?: number;
+  member_name?: string;
   note: string;
 }
 

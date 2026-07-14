@@ -1,10 +1,10 @@
 <template>
-    <div class="dashboard">
+    <div class="dashboard gap-3">
 
         <!-- Header -->
-        <div class="dash-header">
+        <div class="dash-header mt-3">
             <div>
-                <h1 class="dash-title">Welcome To Admin Dashboard</h1>
+                <h1 class="dash-title">{{ t('dashboard.title') }}</h1>
             </div>
         </div>
 
@@ -14,7 +14,9 @@
                 <div class="kpi-top">
                     <span class="kpi-emoji">{{ kpi.emoji }}</span>
                 </div>
-                <div class="kpi-value">{{ formatCoins(kpi.value) }}</div>
+                <div class="kpi-value" :style="{ fontSize: kpiFontSize(kpi.value) }">
+                    {{ formatCoins(kpi.value) }}
+                </div>
                 <div class="kpi-label">{{ kpi.label }}</div>
             </div>
         </div>
@@ -24,7 +26,7 @@
             <!-- Quick Stats -->
             <div class="ocean-card">
                 <div class="card-header">
-                    <div class="card-title">📊 Profit Breakdown</div>
+                    <div class="card-title">📊 {{ t('dashboard.profitBreakdown') }}</div>
                 </div>
                 <div class="stats-list">
                     <div v-for="stat in quickStats" :key="stat.label" class="stat-row">
@@ -37,11 +39,11 @@
                 </div>
                 <div class="divider-h" />
                 <div class="win-rate">
-                    <div class="wr-label">House Win Rate</div>
+                    <div class="wr-label">{{ t('dashboard.houseWinRate') }}</div>
                     <div class="wr-ring">
                         <svg viewBox="0 0 80 80" class="wr-svg">
                             <circle cx="40" cy="40" r="32" fill="none" stroke="rgba(31,41,55,0.12)" stroke-width="7" />
-                            <circle cx="40" cy="40" r="32" fill="none" stroke="#E879B0" stroke-width="7"
+                            <circle cx="40" cy="40" r="32" fill="none" stroke="#0097A7" stroke-width="7"
                                 :stroke-dasharray="201" :stroke-dashoffset="201 - (201 * houseWinRate / 100)"
                                 stroke-linecap="round" transform="rotate(-90 40 40)" />
                         </svg>
@@ -53,10 +55,10 @@
             <!-- Top Players -->
             <div class="ocean-card">
                 <div class="card-header">
-                    <div class="card-title">🏆 Top Win Members</div>
+                    <div class="card-title">🏆 {{ t('dashboard.topWinMembers') }}</div>
                 </div>
-                <div v-if="pending" class="loading-state">Loading...</div>
-                <div v-else-if="topWinMembers.length === 0" class="empty-state">No data</div>
+                <div v-if="pending" class="loading-state">{{ t('common.loading') }}</div>
+                <div v-else-if="topWinMembers.length === 0" class="empty-state">{{ t('common.noData') }}</div>
                 <div v-else class="player-list">
                     <div v-for="(player, i) in topWinMembers" :key="player.member_id" class="player-row">
                         <span class="player-rank">{{ i < 3 ? ['🥇', '🥈', '🥉'][i] : `#${i + 1}` }}</span>
@@ -65,11 +67,15 @@
                                 </div>
                                 <div class="player-info">
                                     <div class="player-name">{{ player.username }}</div>
-                                    <div class="player-games">{{ player.win_count }} wins</div>
+                                    <div class="player-games">{{ t('dashboard.wins', { count: player.win_count }) }}
+                                    </div>
                                 </div>
                                 <div class="player-col">
                                     <div class="player-win">+{{ formatCoins(player.total_win_amount) }}</div>
-                                    <div class="player-bet">Bet {{ formatCoins(player.total_bet_amount) }}</div>
+                                    <div class="player-bet">{{ t('dashboard.bet', {
+                                        amount:
+                                            formatCoins(player.total_bet_amount)
+                                    }) }}</div>
                                 </div>
                     </div>
                 </div>
@@ -79,22 +85,22 @@
         <!-- Jackpot Pool -->
         <div class="ocean-card jackpot-card">
             <div class="card-header">
-                <div class="card-title">🎰 Jackpot Pool</div>
+                <div class="card-title">🎰 {{ t('dashboard.jackpotPool') }}</div>
             </div>
             <div class="jackpot-body">
                 <div class="jackpot-stat">
-                    <div class="jackpot-stat-label">Current Pool</div>
+                    <div class="jackpot-stat-label">{{ t('dashboard.currentPool') }}</div>
                     <div class="jackpot-stat-value pink">{{ formatCoins(dashData?.current_pool_jackpot) }}</div>
                 </div>
                 <div class="jackpot-divider" />
                 <div class="jackpot-stat">
-                    <div class="jackpot-stat-label">Threshold</div>
+                    <div class="jackpot-stat-label">{{ t('dashboard.threshold') }}</div>
                     <div class="jackpot-stat-value">{{ formatCoins(dashData?.threshold_amount) }}</div>
                 </div>
                 <div class="jackpot-divider" />
                 <div class="jackpot-progress-wrap">
                     <div class="jackpot-progress-label">
-                        <span>Pool Progress</span>
+                        <span>{{ t('dashboard.poolProgress') }}</span>
                         <span class="jackpot-pct">{{ jackpotPct.toFixed(2) }}%</span>
                     </div>
                     <div class="jackpot-bar-bg">
@@ -108,7 +114,10 @@
 </template>
 
 <script setup lang="ts">
+import { useFrontendI18n } from "~/composables/i18n"
 import { getDashboard, type DashboardData } from "~/composables/service/dashboardApi"
+
+const { t } = useFrontendI18n()
 
 definePageMeta({
     layout: "default",
@@ -171,24 +180,42 @@ function formatCompactCoins(val?: string | number): string {
     })
 }
 
+// The longer the formatted number, the smaller the font — keeps big
+// totals (e.g. total_turnover) from overflowing the KPI card.
+function kpiFontSize(val?: string | number): string {
+    const formatted = formatCoins(val)
+    const len = formatted.length
+
+    if (len <= 8) return "24px"
+    if (len <= 11) return "20px"
+    if (len <= 14) return "17px"
+    if (len <= 17) return "15px"
+    return "13px"
+}
+
 const kpis = computed(() => [
     {
-        label: "Total Turnover",
+        label: t('dashboard.totalTurnover'),
         value: dashData.value?.total_turnover,
         emoji: "💰",
     },
     {
-        label: "Total Payout",
+        label: t('dashboard.totalPayout'),
         value: dashData.value?.total_payout,
         emoji: "💸",
     },
     {
-        label: "Company Profit",
+        label: t('dashboard.totalCompanyProfit'),
         value: dashData.value?.total_company_profit,
         emoji: "📈",
     },
     {
-        label: "Jackpot Pool",
+        label: t('dashboard.currentCompanyProfit'),
+        value: dashData.value?.current_company_profit,
+        emoji: "✨",
+    },
+    {
+        label: t('dashboard.jackpotPool'),
         value: dashData.value?.current_pool_jackpot,
         emoji: "🎰",
     },
@@ -224,22 +251,22 @@ const quickStats = computed(() => {
 
     return [
         {
-            label: "Turnover",
+            label: t('dashboard.turnover'),
             pct: 100,
             value: formatCompactCoins(turnover),
         },
         {
-            label: "Payout",
+            label: t('dashboard.payout'),
             pct: Math.round((payout / total) * 100),
             value: formatCompactCoins(payout),
         },
         {
-            label: "Profit",
+            label: t('dashboard.profit'),
             pct: Math.round((profit / total) * 100),
             value: formatCompactCoins(profit),
         },
         {
-            label: "Jackpot Pool",
+            label: t('dashboard.jackpotPool'),
             pct: Math.round((jackpot / total) * 100),
             value: formatCompactCoins(jackpot),
         },
@@ -252,7 +279,6 @@ const quickStats = computed(() => {
 .dashboard {
     display: flex;
     flex-direction: column;
-    gap: 24px;
 }
 
 .dash-header {
@@ -267,34 +293,38 @@ const quickStats = computed(() => {
     font-size: 22px;
     font-weight: 800;
     letter-spacing: -0.5px;
-    color: #111827;
+    /* color: #111827;
+     */
+    color: rgb(var(--v-theme-primary)) !important;
+
 }
 
 /* ═══════════ KPI CARDS ═══════════ */
 .kpi-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 16px;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1100px) {
+    .kpi-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
     .kpi-grid {
         grid-template-columns: repeat(2, 1fr);
     }
 }
 
-@media (max-width: 520px) {
-    .kpi-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
 .kpi-card {
-    padding: 20px;
+    padding: 16px;
     border-radius: 14px;
     background: #FFFFFF;
     border: 1px solid rgba(31, 41, 55, 0.12);
     transition: transform 0.2s, box-shadow 0.2s;
+    min-width: 0;
 }
 
 .kpi-card:hover {
@@ -311,11 +341,14 @@ const quickStats = computed(() => {
 }
 
 .kpi-value {
-    font-size: 26px;
     font-weight: 800;
     color: #111827;
     letter-spacing: -0.5px;
-    line-height: 1;
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: font-size 0.15s ease;
 }
 
 .kpi-label {
@@ -323,6 +356,9 @@ const quickStats = computed(() => {
     color: rgba(31, 41, 55, 0.45);
     margin-top: 6px;
     font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* ═══════════ GRIDS ═══════════ */
@@ -391,7 +427,7 @@ const quickStats = computed(() => {
 .stat-bar {
     height: 100%;
     border-radius: 3px;
-    background: #E879B0;
+    background: #0097A7;
     transition: width 0.6s ease;
 }
 
@@ -485,8 +521,8 @@ const quickStats = computed(() => {
     width: 30px;
     height: 30px;
     border-radius: 50%;
-    background: rgba(232, 121, 176, 0.12);
-    color: #993556;
+    background: rgba(0, 151, 167, 0.12);
+    color: #006978;
     font-size: 11px;
     font-weight: 700;
     display: flex;
@@ -518,7 +554,7 @@ const quickStats = computed(() => {
 .player-win {
     font-size: 13px;
     font-weight: 700;
-    color: #E879B0;
+    color: #0097A7;
 }
 
 .player-bet {
@@ -555,7 +591,7 @@ const quickStats = computed(() => {
 }
 
 .jackpot-stat-value.pink {
-    color: #E879B0;
+    color: #0097A7;
 }
 
 .jackpot-divider {
@@ -580,20 +616,20 @@ const quickStats = computed(() => {
 
 .jackpot-pct {
     font-weight: 700;
-    color: #E879B0;
+    color: #0097A7;
 }
 
 .jackpot-bar-bg {
     height: 8px;
     border-radius: 4px;
-    background: rgba(232, 121, 176, 0.12);
+    background: rgba(0, 151, 167, 0.12);
     overflow: hidden;
 }
 
 .jackpot-bar-fill {
     height: 100%;
     border-radius: 4px;
-    background: linear-gradient(90deg, #E879B0, #993556);
+    background: linear-gradient(90deg, #0097A7, #006978);
     transition: width 0.8s ease;
 }
 </style>

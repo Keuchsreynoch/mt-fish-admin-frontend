@@ -43,3 +43,14 @@ html, body { overflow: hidden !important; height: 100% !important; }
 .v-application__wrap { overflow: hidden !important; height: 100vh !important; }
 .v-main { overflow-y: auto !important; height: 100% !important; }
 .v-main__wrap { overflow-y: auto !important; min-height: 100% !important; }
+
+/* global, NOT scoped */
+.v-field--focused .v-field__outline {
+  color: rgb(var(--v-theme-primary)) !important;
+}
+
+.v-field--focused .v-field__prepend-inner,
+.v-field--focused .v-field__append-inner,
+.v-field--focused .v-label {
+  color: rgb(var(--v-theme-primary));
+}

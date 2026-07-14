@@ -9,7 +9,7 @@
       <div class="settings-dialog__header">
         <h2 class="settings-dialog__title">
           <v-icon size="18" class="mr-2">mdi-cog</v-icon>
-          Game Configuration Settings
+          {{ t('gameConfig.title') }}
         </h2>
         <v-btn
           icon
@@ -26,7 +26,7 @@
           <v-col cols="6">
             <v-text-field
               v-model="form.rtp_floor"
-              label="RTP Floor (%)"
+              :label="`${t('gameConfig.rtpFloor')} (%)`"
               type="number"
               step="0.01"
               density="compact"
@@ -38,7 +38,7 @@
           <v-col cols="6">
             <v-text-field
               v-model="form.rtp_target"
-              label="RTP Target (%)"
+              :label="`${t('gameConfig.rtpTarget')} (%)`"
               type="number"
               step="0.01"
               density="compact"
@@ -51,7 +51,7 @@
 
         <v-text-field
           v-model="form.rtp_ceiling"
-          label="RTP Ceiling (%)"
+          :label="`${t('gameConfig.rtpCeiling')} (%)`"
           type="number"
           step="0.01"
           density="compact"
@@ -63,7 +63,7 @@
 
         <v-text-field
           v-model="form.jackpot_rate"
-          label="Jackpot Rate (%)"
+          :label="`${t('gameConfig.jackpotRate')} (%)`"
           type="number"
           step="0.01"
           density="compact"
@@ -74,7 +74,7 @@
         />
 
         <div class="status-toggle mt-4">
-          <div class="status-toggle__label">Game Status</div>
+          <div class="status-toggle__label">{{ t('gameConfig.status') }}</div>
           <div class="status-toggle__options">
             <v-btn
               :color="form.status_id === 1 ? 'success' : 'grey-lighten-2'"
@@ -84,7 +84,7 @@
               @click="form.status_id = 1"
             >
               <v-icon size="14" class="mr-1">mdi-check-circle</v-icon>
-              Active
+              {{ t('common.active') }}
             </v-btn>
             <v-btn
               :color="form.status_id === 0 ? 'error' : 'grey-lighten-2'"
@@ -94,7 +94,7 @@
               @click="form.status_id = 0"
             >
               <v-icon size="14" class="mr-1">mdi-close-circle</v-icon>
-              Inactive
+              {{ t('common.inactive') }}
             </v-btn>
           </div>
         </div>
@@ -106,11 +106,11 @@
         <v-spacer />
         <v-btn
           variant="outlined"
-          color="grey"
+          color="cancel"
           @click="onCancel"
           :disabled="updateLoading"
         >
-          Cancel
+          {{ t('common.cancel') }}
         </v-btn>
         <v-btn
           color="primary"
@@ -119,7 +119,7 @@
           @click="onSubmit"
         >
           <v-icon size="16" class="mr-1">mdi-content-save</v-icon>
-          Save Changes
+          {{ t('common.save') }}
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -128,6 +128,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { useFrontendI18n } from '~/composables/i18n'
 import type { GameConfig, UpdateGameConfigBody } from '~/composables/service/gameConfigApi'
 
 interface Props {
@@ -144,6 +145,7 @@ interface Emits {
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
+const { t } = useFrontendI18n()
 
 const form = ref<UpdateGameConfigBody>({
   rtp_target: '',
@@ -182,27 +184,33 @@ function validate(): boolean {
   const jackpot = parseAmount(form.value.jackpot_rate)
 
   if (isNaN(floor) || floor < 0 || floor > 100) {
-    newErrors.rtp_floor = 'RTP Floor must be between 0 and 100'
+    newErrors.rtp_floor = t('gameConfig.mustBeBetween', { field: t('gameConfig.rtpFloor') })
   }
 
   if (isNaN(target) || target < 0 || target > 100) {
-    newErrors.rtp_target = 'RTP Target must be between 0 and 100'
+    newErrors.rtp_target = t('gameConfig.mustBeBetween', { field: t('gameConfig.rtpTarget') })
   }
 
   if (isNaN(ceiling) || ceiling < 0 || ceiling > 100) {
-    newErrors.rtp_ceiling = 'RTP Ceiling must be between 0 and 100'
+    newErrors.rtp_ceiling = t('gameConfig.mustBeBetween', { field: t('gameConfig.rtpCeiling') })
   }
 
   if (!isNaN(floor) && !isNaN(target) && floor > target) {
-    newErrors.rtp_floor = 'RTP Floor cannot be greater than RTP Target'
+    newErrors.rtp_floor = t('gameConfig.cannotBeGreaterThan', {
+      left: t('gameConfig.rtpFloor'),
+      right: t('gameConfig.rtpTarget'),
+    })
   }
 
   if (!isNaN(target) && !isNaN(ceiling) && target > ceiling) {
-    newErrors.rtp_target = 'RTP Target cannot be greater than RTP Ceiling'
+    newErrors.rtp_target = t('gameConfig.cannotBeGreaterThan', {
+      left: t('gameConfig.rtpTarget'),
+      right: t('gameConfig.rtpCeiling'),
+    })
   }
 
   if (isNaN(jackpot) || jackpot < 0 || jackpot > 100) {
-    newErrors.jackpot_rate = 'Jackpot Rate must be between 0 and 100'
+    newErrors.jackpot_rate = t('gameConfig.mustBeBetween', { field: t('gameConfig.jackpotRate') })
   }
 
   errors.value = newErrors

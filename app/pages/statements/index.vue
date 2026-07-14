@@ -2,14 +2,14 @@
   <div class="coin-page">
     <div class="page-header">
       <div>
-        <h1 class="page-title">Statements</h1>
+        <h1 class="page-title">{{ t('statements.title') }}</h1>
       </div>
     </div>
 
     <div class="content-wepper flex flex-col gap-2">
       <div class="filter-row">
         <div class="filter-left">
-          <span class="filter-label">កាលបរិច្ឆេទ</span>
+          <span class="filter-label">{{ t('statements.date') }}</span>
           <v-text-field
             v-model="filterDate"
             type="date"
@@ -44,7 +44,7 @@
       >
         <template #cell-is_kill="{ item }">
           <span :style="{ color: item.is_kill ? '#1E9C07' : '#EF4444', fontWeight: 700 }">
-            {{ item.is_kill ? 'Yes' : 'No' }}
+            {{ item.is_kill ? t('statements.yes') : t('statements.no') }}
           </span>
         </template>
       </AppTable>
@@ -59,9 +59,14 @@ import { getStatements, type StatementItem } from '~/composables/service/stateme
 import AppTable from '~/components/DynamicTableStyle.vue'
 import type { TableColumn, TotalRow } from '~/components/DynamicTableStyle.vue'
 import PeriodFilterButtons from '~/components/PeriodFilterButtons.vue'
+import { useFrontendI18n } from '~/composables/i18n'
 
 const route = useRoute()
 const router = useRouter()
+const { t } = useFrontendI18n()
+
+type Period = 'today' | 'yesterday' | 'this_week'
+type ActivePeriod = Period | 'custom'
 
 const filterDate = ref(formatDateForInput(new Date()))
 const currentPage = ref(1)
@@ -70,41 +75,43 @@ const totalItems = ref(0)
 const reportData = ref<StatementItem[]>([])
 const isLoading = ref(false)
 const errorMessage = ref('')
-const activePeriod = ref('today')
+const activePeriod = ref<ActivePeriod>('today')
 const isRouteSynced = ref(false)
 
 const allBetTotal = ref(0)
 const allValidTotal = ref(0)
 const allWinLoseTotal = ref(0)
 
+const validPeriods = ['custom', 'today', 'yesterday', 'this_week'] as const
+
 // ── Columns ────────────────────────────────────────────
-const columns: TableColumn<StatementItem>[] = [
-  { key: 'index', label: 'លេខ', type: 'index' },
-  { key: 'session_no', label: 'Session No' },
-  { key: 'bet_no', label: 'Bet No' },
-  { key: 'ticket_no', label: 'Ticket No' },
-  { key: 'fish_type_name', label: 'Fish' },
-  { key: 'bet_amount', label: 'លុយចាក់', format: (v: string) => formatAmount(parseAmount(v)) },
-  { key: 'bet_valid', label: 'Valid Bet', format: (v: string) => formatAmount(parseAmount(v)) },
-  { key: 'bet_invalid', label: 'Invalid Bet', format: (v: string) => formatAmount(parseAmount(v)) },
-  { key: 'is_kill', label: 'Kill' },
+const columns = computed<TableColumn<StatementItem>[]>(() => [
+  { key: 'index', label: 'លេខរៀង', type: 'index' },
+  { key: 'session_no', label: t('statements.sessionNo') },
+  { key: 'bet_no', label: t('statements.betNo') },
+  { key: 'ticket_no', label: t('statements.ticketNo') },
+  { key: 'fish_type_name', label: t('statements.fish') },
+  { key: 'bet_amount', label: t('statements.betAmount'), format: (v: string) => formatAmount(parseAmount(v)) },
+  { key: 'bet_valid', label: t('statements.validBet'), format: (v: string) => formatAmount(parseAmount(v)) },
+  { key: 'bet_invalid', label: t('statements.invalidBet'), format: (v: string) => formatAmount(parseAmount(v)) },
+  { key: 'is_kill', label: t('statements.kill') },
   {
     key: 'reward',
-    label: 'Reward',
+    label: t('statements.reward'),
     format: (_v: string, item: StatementItem) => formatAmount(getRewardAmount(item)),
   },
   {
     key: 'total_win_lose',
-    label: 'ឈ្នះ/ចាញ់',
+    label: t('statements.winLose'),
     format: (v: string) => formatAmount(parseAmount(v)),
     cellClass: (item: StatementItem) => parseAmount(item.total_win_lose) >= 0 ? 'positive' : 'negative',
   },
   {
     key: 'created_at',
-    label: 'Time',
+    label: t('statements.time'),
     format: (v: string) => formatDateTime(v),
   },
-]
+])
 
 const pageBetTotal = computed(() =>
   reportData.value.reduce((s, i) => s + parseAmount(i.bet_amount), 0),
@@ -123,7 +130,7 @@ const subtotalsRow = computed<TotalRow | undefined>(() => {
   if (!reportData.value.length) return undefined
   return {
     labelSpan: 5,
-    pageLabel: 'សរុបក្នុងមួយទំព័រ',
+    pageLabel: t('statements.pageSubtotal'),
     cols: [
       { key: 'bet_amount', value: formatAmount(pageBetTotal.value) },
       { key: 'bet_valid', value: formatAmount(pageValidTotal.value) },
@@ -145,7 +152,7 @@ const grandTotalsRow = computed<TotalRow | undefined>(() => {
   if (!reportData.value.length) return undefined
   return {
     labelSpan: 5,
-    pageLabel: 'សរុបទាំងអស់',
+    pageLabel: t('statements.grandTotal'),
     cols: [
       { key: 'bet_amount', value: formatAmount(allBetTotal.value) },
       { key: 'bet_valid', value: formatAmount(allValidTotal.value) },
@@ -205,7 +212,7 @@ function formatDateTime(value: string): string {
   }).format(date)
 }
 
-function getCurrentRange(period = activePeriod.value) {
+function getCurrentRange(period: ActivePeriod = activePeriod.value) {
   const today = getTodayDate()
   switch (period) {
     case 'today': return { period, start: today, end: today }
@@ -218,6 +225,10 @@ function getCurrentRange(period = activePeriod.value) {
 function normalizeQueryValue(value: LocationQueryValue | LocationQueryValue[] | null | undefined): string {
   if (Array.isArray(value)) return normalizeQueryValue(value[0])
   return value ?? ''
+}
+
+function isValidPeriod(value: string): value is (typeof validPeriods)[number] {
+  return (validPeriods as readonly string[]).includes(value)
 }
 
 function syncRouteQuery() {
@@ -239,7 +250,7 @@ function syncStateFromRoute() {
   const routePeriod = normalizeQueryValue(route.query.period)
 
   if (!Number.isNaN(routePage) && routePage > 0) currentPage.value = routePage
-  activePeriod.value = routePeriod || 'today'
+  activePeriod.value = isValidPeriod(routePeriod) ? routePeriod : 'today'
 
   if (routeStart) {
     filterDate.value = routeStart
@@ -289,7 +300,7 @@ async function fetchStatements() {
     console.error('[statements] failed to load', err)
     reportData.value = []
     totalItems.value = allBetTotal.value = allValidTotal.value = allWinLoseTotal.value = 0
-    errorMessage.value = err?.message || 'Failed to load statements'
+    errorMessage.value = err?.message || t('statements.failedToLoad')
   } finally {
     isLoading.value = false
   }
@@ -342,7 +353,7 @@ defineExpose({
   font-size: 22px;
   font-weight: 800;
   letter-spacing: -0.5px;
-  color: #111827;
+  color: rgb(var(--v-theme-primary));
 }
 
 .filter-row {
@@ -359,16 +370,6 @@ defineExpose({
   flex-wrap: wrap;
 }
 
-.filter-right {
-  display: flex;
-  gap: 10px;
-}
-
-.filter-label {
-  color: #111827 !important;
-  font-weight: 600;
-  font-size: 13px;
-}
 
 .slate-input :deep(.v-field) {
   background: #FFFFFF !important;

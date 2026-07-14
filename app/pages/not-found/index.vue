@@ -3,7 +3,7 @@
     <div class="max-w-lg text-center">
       <img
         src="https://png.pngtree.com/png-vector/20201123/ourmid/pngtree-404-not-found-or-page-error-flat-line-concept-png-image_2468879.jpg"
-        alt="Page Not Found"
+        :alt="t('notFound.title')"
         class="w-full max-w-md mx-auto"
       />
 
@@ -12,7 +12,7 @@
       </h1>
 
       <p class="mt-2 text-xl font-semibold text-gray-700">
-        Page Not Found
+        {{ t('notFound.title') }}
       </p>
 
       <!-- <p class="mt-3 text-gray-500">
@@ -24,16 +24,22 @@
           to="/"
           class="px-5 py-2 rounded-lg bg-primary text-white hover:opacity-90 transition"
         >
-          Go Home
+          {{ t('notFound.home') }}
         </NuxtLink>
 
         <button
           class="px-5 py-2 rounded-lg border border-gray-300 hover:bg-gray-100 transition"
           @click="$router.back()"
         >
-          Go Back
+          {{ t('notFound.back') }}
         </button>
       </div>
     </div>
   </div>
 </template>
+
+<script setup lang="ts">
+import { useFrontendI18n } from '~/composables/i18n'
+
+const { t } = useFrontendI18n()
+</script>

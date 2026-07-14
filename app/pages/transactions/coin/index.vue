@@ -2,7 +2,7 @@
   <div class="coin-page">
     <div class="page-header">
       <div>
-        <h1 class="page-title">Transition Coin</h1>
+        <h1 class="page-title">{{ t('balance.exchangeTitle') }}</h1>
         <!-- <p class="page-subtitle">Edit RTP and jackpot settings for the active game.</p> -->
       </div>
     </div>
@@ -10,7 +10,7 @@
     <div class="content-wepper flex flex-col gap-2">
       <div class="filter-row">
         <div class="filter-left">
-          <span class="filter-label">កាលបរិច្ឆេទ</span>
+          <span class="filter-label">{{ t('report.date') }}</span>
           <v-text-field v-model="filterDate" type="date" density="compact" hide-details variant="outlined"
             style="max-width: 150px" class="slate-input" @update:model-value="handleDateChange" />
         </div>
@@ -41,9 +41,11 @@ import { getCoinTransactions, type CoinTransactionItem } from '~/composables/ser
 import AppTable from '~/components/DynamicTableStyle.vue'
 import type { TableColumn } from '~/components/DynamicTableStyle.vue'
 import PeriodFilterButtons from '~/components/PeriodFilterButtons.vue'
+import { useFrontendI18n } from '~/composables/i18n'
 
 const route = useRoute()
 const router = useRouter()
+const { t } = useFrontendI18n()
 
 const filterDate = ref(formatDateForInput(new Date()))
 const currentPage = ref(1)
@@ -61,26 +63,26 @@ const totalPages = computed(() => Math.max(1, Math.ceil(totalItems.value / items
 
 // ── Columns ───────────────────────────────────────────────────────────────────
 
-const columns: TableColumn<CoinTransactionItem>[] = [
-  { key: 'index', label: 'លេខ', type: 'index' },
-  { key: 'username', label: 'Username', align: 'left' },
+const columns = computed<TableColumn<CoinTransactionItem>[]>(() => [
+  { key: 'index', label: 'លេខរៀង', type: 'index' },
+  { key: 'username', label: t('users.username'), align: 'left' },
   {
     key: 'before_coin',
-    label: 'Before Coin',
+    label: t('jackpot.before'),
     format: (v: string) => formatAmount(parseAmount(v)),
     cellClass: (item: CoinTransactionItem) => getAmountClass(item.before_coin),
   },
   {
     key: 'amount',
-    label: 'Amount',
+    label: t('jackpot.amount'),
     format: (v: string) => formatAmount(parseAmount(v)),
     cellClass: (item: CoinTransactionItem) => getAmountClass(item.amount),
   },
-  { key: 'reference', label: 'Reference', align: 'left', format: (v: string) => v || '-' },
-  { key: 'status_id', label: 'Status' },
-  { key: 'order', label: 'Order' },
-  { key: 'created_at', label: 'Created At', format: (v: string) => formatDateTime(v) },
-]
+  { key: 'reference', label: t('report.note'), align: 'left', format: (v: string) => v || '-' },
+  { key: 'status_id', label: t('gameConfig.status') },
+  { key: 'order', label: t('report.bonus') },
+  { key: 'created_at', label: t('gameConfig.updatedAt'), format: (v: string) => formatDateTime(v) },
+])
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -191,7 +193,7 @@ async function fetchCoinTransactions() {
     console.error('[coin-transactions] failed to load', err)
     reportData.value = []
     totalItems.value = 0
-    errorMessage.value = err?.message || 'Failed to load coin transactions'
+    errorMessage.value = err?.message || t('common.noDataFound')
   } finally {
     isLoading.value = false
   }
@@ -241,7 +243,7 @@ watch([filterDate, currentPage, activePeriod], () => {
   font-size: 22px;
   font-weight: 800;
   letter-spacing: -0.5px;
-  color: #111827;
+  color: rgb(var(--v-theme-primary));
 }
 
 .coin-page {

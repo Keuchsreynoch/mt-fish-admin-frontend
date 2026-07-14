@@ -1,37 +1,37 @@
 <template>
   <div class="jackpot flex flex-col gap-3">
     <!-- Page header with Refresh -->
-    <div class="page-header">
-      <h1 class="page-title text-2xl font-semibold">Jackpot Management</h1>
-      <v-btn color="success" variant="flat" class="refresh-btn" :loading="isLoading" @click="fetchCurrentPool">
+    <div class="page-header mt-3">
+      <h1 class="page-title text-2xl font-semibold">{{ t('jackpot.management') }}</h1>
+      <!-- <v-btn color="success" variant="flat" class="refresh-btn" :loading="isLoading" @click="fetchCurrentPool">
         <v-icon size="16" class="mr-1">mdi-refresh</v-icon>
-        Refresh
-      </v-btn>
+        {{ t('gameConfig.refresh') }}
+      </v-btn> -->
     </div>
 
     <!-- Top summary strip -->
     <v-row dense class="summary-strip">
       <v-col cols="6" md="3">
         <div class="strip-card strip-card--amber">
-          <div class="strip-label">Current Amount</div>
+          <div class="strip-label">{{ t('jackpot.currentAmount') }}</div>
           <div class="strip-value">{{ formatAmount(getCurrentAmount) }}</div>
         </div>
       </v-col>
       <v-col cols="6" md="3">
         <div class="strip-card strip-card--green">
-          <div class="strip-label">Threshold</div>
+          <div class="strip-label">{{ t('jackpot.threshold') }}</div>
           <div class="strip-value">{{ formatAmount(getThresholdAmount) }}</div>
         </div>
       </v-col>
       <v-col cols="6" md="3">
         <div class="strip-card strip-card--blue">
-          <div class="strip-label">Payout %</div>
+          <div class="strip-label">{{ t('jackpot.payoutPercent') }}</div>
           <div class="strip-value">{{ formatAmount(getPayoutPercent) }}%</div>
         </div>
       </v-col>
       <v-col cols="6" md="3">
         <div class="strip-card strip-card--violet">
-          <div class="strip-label">Fixed Payout</div>
+          <div class="strip-label">{{ t('jackpot.fixedPayout') }}</div>
           <div class="strip-value">{{ formatAmount(getFixedPayoutAmount) }}</div>
         </div>
       </v-col>
@@ -40,10 +40,10 @@
     <!-- Tabs -->
     <div class="jackpot-tabs">
       <v-tabs v-model="activeTab" density="compact" color="primary" class="jackpot-tabs__bar">
-        <v-tab value="settings" class="tab-item">Global</v-tab>
-        <v-tab value="ledger" class="tab-item">Ledger</v-tab>
-        <v-tab value="member-bonus" class="tab-item">Member Bonus</v-tab>
-        <v-tab value="history" class="tab-item">History</v-tab>
+        <v-tab value="settings" class="tab-item">{{ t('jackpot.global') }}</v-tab>
+        <v-tab value="ledger" class="tab-item">{{ t('jackpot.ledger') }}</v-tab>
+        <v-tab value="member-bonus" class="tab-item">{{ t('jackpot.memberBonus') }}</v-tab>
+        <v-tab value="history" class="tab-item">{{ t('jackpot.history') }}</v-tab>
       </v-tabs>
 
       <v-window v-model="activeTab" class="jackpot-tabs__window">
@@ -52,7 +52,7 @@
           <!-- Global Jackpot Configuration -->
           <v-card class="config-card mb-3" elevation="0">
             <div class="config-card__header">
-              <h2 class="config-card__title">Global Jackpot Configuration</h2>
+              <h2 class="config-card__title">{{ t('jackpot.globalConfig') }}</h2>
               <!-- THIS IS THE FIX: open dialog, not inline editor -->
               <v-btn
                 icon
@@ -71,7 +71,7 @@
                 <div class="tile tile--blue">
                   <div class="tile-label">
                     <!-- <v-icon size="14" class="tile-icon">mdi-currency-usd</v-icon> -->
-                    Current Amount
+                    {{ t('jackpot.currentAmount') }}
                   </div>
                   <div class="tile-value">{{ formatAmount(getCurrentAmount) }}</div>
                 </div>
@@ -81,7 +81,7 @@
                 <div class="tile tile--purple">
                   <div class="tile-label">
                     <!-- <v-icon size="14" class="tile-icon">mdi-flag</v-icon> -->
-                    Threshold
+                    {{ t('jackpot.threshold') }}
                   </div>
                   <div class="tile-value">{{ formatAmount(getThresholdAmount) }}</div>
                 </div>
@@ -91,7 +91,7 @@
                 <div class="tile tile--amber">
                   <div class="tile-label">
                     <!-- <v-icon size="14" class="tile-icon">mdi-dice-multiple</v-icon> -->
-                    Win Chance
+                    {{ t('jackpot.winChance') }}
                   </div>
                   <div class="tile-value">1/{{ poolData?.chance_denom ?? 0 }}</div>
                 </div>
@@ -101,7 +101,7 @@
                 <div class="tile tile--green">
                   <div class="tile-label">
                     <!-- <v-icon size="14" class="tile-icon">mdi-percent</v-icon> -->
-                    Payout %
+                    {{ t('jackpot.payoutPercent') }}
                   </div>
                   <div class="tile-value">{{ formatAmount(getPayoutPercent) }}%</div>
                 </div>
@@ -111,7 +111,7 @@
                 <div class="tile tile--red">
                   <div class="tile-label">
                     <!-- <v-icon size="14" class="tile-icon">mdi-bank-transfer-in</v-icon> -->
-                    Company Top-up
+                    {{ t('jackpot.companyTopup') }}
                   </div>
                   <div class="tile-value">{{ formatAmount(getCompanyTopupAmount) }}</div>
                 </div>
@@ -121,7 +121,7 @@
                 <div class="tile tile--indigo">
                   <div class="tile-label">
                     <!-- <v-icon size="14" class="tile-icon">mdi-trophy</v-icon> -->
-                    Fixed Payout
+                    {{ t('jackpot.fixedPayout') }}
                   </div>
                   <div class="tile-value">{{ formatAmount(getFixedPayoutAmount) }}</div>
                 </div>
@@ -130,63 +130,49 @@
           </v-card>
 
           <!-- Jackpot Reservations -->
-          <v-card class="reservations-card" elevation="0">
+          <!-- <v-card class="reservations-card" elevation="0">
             <div class="reservations-card__header">
               <div>
                 <h2 class="reservations-card__title">
-                  <!-- <v-icon size="18" class="mr-1" color="amber-darken-2">mdi-crown</v-icon> -->
-                  Jackpot Reservations
+                  <v-icon size="18" class="mr-1" color="amber-darken-2">mdi-crown</v-icon>
+                  {{ t('jackpot.jackpotReservations') }}
                 </h2>
                 <div class="reservations-card__subtitle">
-                  Showing {{ reservationsRangeStart }}-{{ reservationsRangeEnd }} of {{ reservationsTotal }}
+                  {{ t('jackpot.showingFirst10') }}
                 </div>
               </div>
             </div>
 
             <div class="reservations-card__filters">
-              <v-text-field v-model="reservationSearch" label="Member Name" placeholder="Search member name"
+              <v-text-field v-model="reservationSearch" :label="t('jackpot.memberName')" :placeholder="t('jackpot.searchMemberName')"
                 prepend-inner-icon="mdi-magnify" density="compact" variant="outlined" hide-details clearable
                 class="reservations-search" @keyup.enter="fetchReservations" />
               <v-btn variant="outlined" density="comfortable" class="reset-btn" @click="resetReservationFilters">
                 <v-icon size="16" class="mr-1">mdi-refresh</v-icon>
-                Reset
+                {{ t('common.reset') }}
               </v-btn>
             </div>
 
-            <v-table class="reservations-table" density="comfortable">
-              <thead>
-                <tr>
-                  <th>Name</th><th>Jackpot</th><th>Updated At</th><th>Status</th><th>Status ID</th><th>Update</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-if="reservationsLoading">
-                  <td colspan="6" class="text-center py-6">
-                    <v-progress-circular indeterminate size="20" color="primary" />
-                  </td>
-                </tr>
-                <tr v-else-if="!reservations.length">
-                  <td colspan="6" class="text-center py-8">
-                    <v-icon size="32" color="grey-lighten-1">mdi-text-box-search-outline</v-icon>
-                    <div class="empty-title">No jackpot reservations found</div>
-                    <div class="empty-subtitle">Try another member name.</div>
-                  </td>
-                </tr>
-                <tr v-for="row in reservations" v-else :key="row.id">
-                  <td>{{ row.name }}</td>
-                  <td>{{ formatAmount(row.jackpot) }}</td>
-                  <td>{{ formatDateTime(row.updated_at) }}</td>
-                  <td>{{ row.status }}</td>
-                  <td>{{ row.status_id }}</td>
-                  <td>
-                    <v-btn size="small" variant="text" color="primary" @click="onUpdateReservation(row)">
-                      Update
-                    </v-btn>
-                  </td>
-                </tr>
-              </tbody>
-            </v-table>
-          </v-card>
+            <AppTable
+              :columns="reservationColumns"
+              :items="reservationRows"
+              :loading="reservationsLoading"
+            >
+              <template #cell-jackpot="{ item }">
+                {{ formatAmount(item.jackpot) }}
+              </template>
+
+              <template #cell-updated_at="{ item }">
+                {{ formatDateTime(item.updated_at) }}
+              </template>
+
+              <template #cell-update="{ item }">
+                <v-btn size="small" variant="text" color="primary" @click="onUpdateReservation(item)">
+                  {{ t('jackpot.update') }}
+                </v-btn>
+              </template>
+            </AppTable>
+          </v-card> -->
         </v-window-item>
 
         <v-window-item value="member-bonus">
@@ -216,9 +202,12 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
+import AppTable, { type TableColumn } from "~/components/DynamicTableStyle.vue";
 import JackpotSettingsDialog, { type JackpotSettingsForm } from "~/components/JackpotSettingsForm.vue";
+import { useFrontendI18n } from "~/composables/i18n";
 
 import { useSnackbar } from "~/composables/useSnackbar";
+import { createMemberBonus } from "~/composables/service/memberBonusApi";
 import {
   createJackpotCompanyTopup,
   getJackpotCurrent,
@@ -228,6 +217,7 @@ import {
 } from "~/composables/service/jackpotCurrentPoolApi";
 
 const { showSuccess, showError } = useSnackbar();
+const { t } = useFrontendI18n();
 
 const activeTab = ref("settings");
 const showSettings = ref(false); // v-model for dialog
@@ -249,15 +239,15 @@ interface JackpotReservationRow {
 const reservations = ref<JackpotReservationRow[]>([]);
 const reservationsLoading = ref(false);
 const reservationSearch = ref("");
-const reservationsTotal = ref(0);
-const reservationsPage = ref(1);
-const reservationsPerPage = ref(10);
-const reservationsRangeStart = computed(() =>
-  reservationsTotal.value === 0 ? 0 : (reservationsPage.value - 1) * reservationsPerPage.value + 1
-);
-const reservationsRangeEnd = computed(() =>
-  Math.min(reservationsPage.value * reservationsPerPage.value, reservationsTotal.value)
-);
+const reservationRows = computed(() => reservations.value.slice(0, 10));
+const reservationColumns = computed<TableColumn<JackpotReservationRow>[]>(() => [
+  { key: "name", label: t('jackpot.name') },
+  { key: "jackpot", label: t('jackpot.jackpot') },
+  { key: "updated_at", label: t('jackpot.updatedAt') },
+  { key: "status", label: t('jackpot.status') },
+  { key: "status_id", label: t('jackpot.statusId') },
+  { key: "update", label: t('jackpot.update') },
+]);
 
 function parseAmount(value: string | number | null | undefined): number {
   if (value === null || value === undefined || value === "") return 0;
@@ -297,7 +287,7 @@ async function fetchCurrentPool() {
   } catch (error: any) {
     console.error("[jackpot-pool] failed to load", error);
     poolData.value = null;
-    errorMessage.value = error?.message || "Failed to load jackpot pool";
+    errorMessage.value = error?.message || t('jackpot.failedToLoad');
     showError(errorMessage.value);
   } finally {
     isLoading.value = false;
@@ -313,6 +303,8 @@ function openSettingsDialog() {
 async function onSettingsSubmit(form: JackpotSettingsForm) {
   const chanceDenom = Number.parseInt(form.chance_denom, 10) || 1;
   const companyTopupAmount = parseAmount(form.company_topup_amount);
+  const memberBonusAmount = parseAmount(form.member_bonus_amount);
+  const memberName = form.member_name.trim();
 
   const payload: UpdateJackpotCurrentBody = {
     threshold_amount: toAmountString(form.threshold_amount),
@@ -331,19 +323,26 @@ async function onSettingsSubmit(form: JackpotSettingsForm) {
         note: "",
       });
     }
+    if (memberName && memberBonusAmount > 0) {
+      await createMemberBonus({
+        member_name: memberName,
+        amount: toAmountString(memberBonusAmount),
+        note: "",
+      });
+    }
 
     const data = response?.data.value?.data ?? null;
     if (data) poolData.value = data;
     showSuccess(
       companyTopupAmount > 0
-        ? "Jackpot settings updated and company top-up added successfully"
-        : (response?.data.value?.message || "Jackpot settings updated successfully"),
+        ? t('jackpot.updatedAndTopup')
+        : (response?.data.value?.message || t('jackpot.updatedSuccessfully')),
     );
     showSettings.value = false; // close dialog on success
     await fetchCurrentPool();
   } catch (error: any) {
     console.error("[jackpot-pool] update failed", error);
-    showError(error?.message || "Failed to update jackpot settings");
+    showError(error?.message || t('jackpot.failedToUpdate'));
   } finally {
     updateLoading.value = false;
   }
@@ -352,12 +351,11 @@ async function onSettingsSubmit(form: JackpotSettingsForm) {
 // reservations stubs
 async function fetchReservations() {
   reservationsLoading.value = true;
-  try { /* your API */ } catch (e:any){ showError(e?.message || "Failed to load"); }
+  try { /* your API */ } catch (e:any){ showError(e?.message || t('jackpot.failedToLoadReservations')); }
   finally { reservationsLoading.value = false; }
 }
 function resetReservationFilters() {
   reservationSearch.value = "";
-  reservationsPage.value = 1;
   fetchReservations();
 }
 function onUpdateReservation(row: JackpotReservationRow) {
@@ -373,6 +371,7 @@ onMounted(() => {
 <style scoped>
 /* your original styles – unchanged, copy from your file */
 .page-header { display: flex; align-items: center; justify-content: space-between; }
+.page-title { color: rgb(var(--v-theme-primary)); }
 .refresh-btn { text-transform: none; }
 .summary-strip { margin: 0; }
 .strip-card { padding: 10px 14px; background: #fff; border: 1px solid #e5e7eb; border-left-width: 4px; border-radius: 8px; height: 100%; }

@@ -1,32 +1,44 @@
+<!-- components/LogoutDialog.vue -->
 <template>
-    <v-dialog v-model="model" max-width="360" >
+    <v-dialog v-model="model" max-width="360">
         <v-card class="logout-card" rounded="xl">
             <div class="logout-icon-wrap">
-                <v-icon size="24" color="#D97706">mdi-logout</v-icon>
+                <v-icon size="24" color="#fff">mdi-logout</v-icon>
             </div>
 
-            <v-card-title class="logout-title">Log out</v-card-title>
+            <v-card-title class="logout-title">{{ t('logout.title') }}</v-card-title>
             <v-card-text class="logout-text">
-                You'll need to sign in again to access your account.
+                {{ t('logout.message') }}
             </v-card-text>
 
             <v-card-actions class="logout-actions">
-                <v-btn variant="outlined" rounded="lg" class="logout-btn-cancel" @click="model = false">
-                    Cancel
-                </v-btn>
-                <v-btn variant="flat" rounded="lg" class="logout-btn-confirm" @click="confirmLogout">
-                    Log out
-                </v-btn>
+                <AppButton
+                    action="cancel"
+                    variant="outlined"
+                    :label="t('common.cancel')"
+                    class="logout-btn"
+                    @click="model = false"
+                />
+                <AppButton
+                    action="logout"
+                    variant="flat"
+                    :label="t('logout.action')"
+                    class="logout-btn"
+                    @click="confirmLogout"
+                />
             </v-card-actions>
         </v-card>
     </v-dialog>
 </template>
 
 <script setup lang="ts">
+import { useFrontendI18n } from '~/composables/i18n'
 import { useAuthStore } from '~/stores/authStore'
+import AppButton from '~/components/Button.vue'
 
 const model = defineModel<boolean>({ default: false })
 const authStore = useAuthStore()
+const { t } = useFrontendI18n()
 
 function confirmLogout() {
     model.value = false
@@ -48,7 +60,7 @@ function confirmLogout() {
     width: 56px;
     height: 56px;
     border-radius: 50%;
-    background: #FEF3C7;
+    background: #FF2C2C;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -77,15 +89,7 @@ function confirmLogout() {
     width: 100%;
 }
 
-.logout-btn-cancel {
+.logout-btn {
     flex: 1;
-    color: rgba(31, 41, 55, 0.6) !important;
-    border-color: rgba(31, 41, 55, 0.15) !important;
-}
-
-.logout-btn-confirm {
-    flex: 1;
-    background: #D97706 !important;
-    color: #FFFFFF !important;
 }
 </style>

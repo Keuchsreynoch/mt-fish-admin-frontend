@@ -1,6 +1,5 @@
 <template>
   <div class="login-page">
-    <LanguageSwitcher />
     <div class="login-page__backdrop" />
 
     <div class="login-page__center">
@@ -49,7 +48,7 @@
 
           <v-btn
             type="submit"
-            color="info"
+            color="primary"
             size="x-large"
             rounded="lg"
             block
@@ -66,10 +65,9 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import LanguageSwitcher from "~/components/LanguageSwitcher.vue";
 import { useAuthStore } from "~/stores/authStore";
 import { sonnerToast } from "~/utils/sonnerToast";
-import {useFrontendI18n} from "~/composables/i18n/index"
+import { useFrontendI18n } from "~/composables/i18n";
 
 type Errors = {
   user_name?: string;

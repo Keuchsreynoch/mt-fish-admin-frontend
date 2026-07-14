@@ -1,12 +1,12 @@
 <template>
   <div class="coin-page">
-    <div class="page-header">
+    <div class="page-header mt-3">
       <div>
-        <h1 class="page-title">Members</h1>
+        <h1 class="page-title">{{ t('members.title') }}</h1>
       </div>
       <div class="header-chips">
         <v-chip size="small" variant="tonal">
-          {{ totalItems }} total
+          {{ t('members.total', { total: totalItems }) }}
         </v-chip>
       </div>
     </div>
@@ -35,7 +35,7 @@
             size="small"
             style="font-weight: 600;"
           >
-            {{ item.is_online ? 'Online' : 'Offline' }}
+            {{ item.is_online ? t('members.online') : t('members.offline') }}
           </v-chip>
         </template>
 
@@ -77,7 +77,10 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import AppTable, { type TableColumn } from '~/components/DynamicTableStyle.vue'
+import { useFrontendI18n } from '~/composables/i18n'
 import { getMembers, type MemberItem } from '~/composables/service/membersApi'
+
+const { t } = useFrontendI18n()
 
 const itemsPerPage = ref(20)
 const currentPage = ref(1)
@@ -89,18 +92,18 @@ const searchQuery = ref('')
 
 const selectedCurrencies = ref<Record<number, number>>({})
 
-const columns: TableColumn<MemberItem>[] = [
-  { key: 'id', label: 'NO', type: 'index', width: '60px' },
-  { key: 'user_name', label: 'Member', width: '160px' },
-  { key: 'login_id', label: 'Login ID' },
-  { key: 'phone_number', label: 'Phone' },
-  { key: 'nickname', label: 'Nickname', format: v => v || '-' },
-  { key: 'coin_amount', label: 'Coin Amount', format: v => formatBalance(v), width: '120px' },
-  { key: 'balances', label: 'Balance', width: '180px' },
-  { key: 'is_online', label: 'Status', width: '100px' },
-  { key: 'timezone', label: 'Timezone', format: v => v || '-' },
-  { key: 'created_at', label: 'Created', format: v => formatDate(v) },
-]
+const columns = computed<TableColumn<MemberItem>[]>(() => [
+  { key: 'id', label: t('members.no'), type: 'index', width: '60px' },
+  { key: 'user_name', label: t('members.member'), width: '160px' },
+  { key: 'login_id', label: t('members.loginId') },
+  { key: 'phone_number', label: t('members.phone') },
+  { key: 'nickname', label: t('members.nickname'), format: v => v || '-' },
+  { key: 'coin_amount', label: t('members.coinAmount'), format: v => formatBalance(v), width: '120px' },
+  { key: 'balances', label: t('members.balance'), width: '180px' },
+  { key: 'is_online', label: t('members.status'), width: '100px' },
+  { key: 'timezone', label: t('members.timezone'), format: v => v || '-' },
+  { key: 'created_at', label: t('members.created'), format: v => formatDate(v) },
+])
 
 const totalPages = computed(() =>
   Math.max(1, Math.ceil(totalItems.value / itemsPerPage.value))
@@ -170,7 +173,7 @@ async function fetchMembers() {
   } catch (e: any) {
     members.value = []
     totalItems.value = 0
-    errorMessage.value = e?.message || 'Failed to load'
+    errorMessage.value = e?.message || t('members.failedToLoad')
   } finally {
     isLoading.value = false
   }
@@ -197,7 +200,7 @@ onMounted(fetchMembers)
   font-size: 22px;
   font-weight: 800;
   letter-spacing: -0.5px;
-  color: #111827;
+  color: rgb(var(--v-theme-primary));
   margin: 0;
 }
 

@@ -3,15 +3,9 @@
     <div class="content-wepper flex flex-col gap-2">
       <AppVTable
         :columns="columns"
-        :items="historyData"
+        :items="historyData.slice(0, 10)"
         :loading="isLoading"
         :error="errorMessage"
-        :page="currentPage"
-        :page-size="itemsPerPage"
-        :total-pages="totalPages"
-        empty-text="No jackpot history found"
-        empty-subtext="Try another date."
-        @update:page="currentPage = $event"
       >
         <template #cell-payout_coin="{ item }">
           <span class="positive">{{ formatAmount(parseAmount(item.payout_coin)) }}</span>
@@ -34,38 +28,28 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
-import type { LocationQueryValue } from 'vue-router'
-import AppVTable, { type TableColumn } from '~/components/AppTableFixed.vue'
+import { computed, onMounted, ref } from 'vue'
+import AppVTable, { type TableColumn } from '~/components/DynamicTableStyle.vue'
+import { useFrontendI18n } from '~/composables/i18n'
 import { getJackpotHistories, type JackpotHistoryItem } from '~/composables/service/jackpotHistoryApi'
 
-const route = useRoute()
-const router = useRouter()
+const { t } = useFrontendI18n()
 
-const columns: TableColumn<JackpotHistoryItem>[] = [
-  { key: 'index',             label: 'លេខ',               type: 'index' },
-  { key: 'member_name',       label: 'Member Name' },
-  { key: 'fish_type_name',    label: 'Fish' },
-  { key: 'jackpot_type_name', label: 'Jackpot Type Name' },
-  { key: 'payout_coin',       label: 'Payout Coin' },
-  { key: 'pool_before',       label: 'Pool Before' },
-  { key: 'pool_after',        label: 'Pool After' },
-  { key: 'created_at',        label: 'Created At' },
-]
+const columns = computed<TableColumn<JackpotHistoryItem>[]>(() => [
+  { key: 'index',             label: 'លេខរៀង',               type: 'index' },
+  { key: 'member_name',       label: t('members.member') },
+  { key: 'fish_type_name',    label: t('fish.fishName') },
+  { key: 'jackpot_type_name', label: t('jackpot.jackpot') },
+  { key: 'payout_coin',       label: t('jackpot.amount') },
+  { key: 'pool_before',       label: t('jackpot.before') },
+  { key: 'pool_after',        label: t('jackpot.after') },
+  { key: 'created_at',        label: t('gameConfig.updatedAt') },
+])
 
 const filterDate = ref(formatDateForInput(new Date()))
-const currentPage = ref(1)
-const itemsPerPage = 20
-const totalItems = ref(0)
 const historyData = ref<JackpotHistoryItem[]>([])
 const isLoading = ref(false)
 const errorMessage = ref('')
-const isRouteSynced = ref(false)
-const activePeriod = ref<'custom' | 'today' | 'yesterday' | 'this_week'>('today')
-
-const totalPages = computed(() =>
-  Math.max(1, Math.ceil(totalItems.value / itemsPerPage)),
-)
 
 function parseAmount(value: string | undefined | null): number {
   return Number.parseFloat(value ?? '0') || 0
@@ -95,87 +79,23 @@ function formatDateTime(value: string): string {
   }).format(date)
 }
 
-function normalizeQueryValue(value: LocationQueryValue | LocationQueryValue[] | null | undefined): string {
-  if (Array.isArray(value)) return normalizeQueryValue(value[0])
-  return value ?? ''
-}
-
-function getTodayDate() { return formatDateForInput(new Date()) }
-function getYesterdayDate() { const d = new Date(); d.setDate(d.getDate() - 1); return formatDateForInput(d) }
-function getSevenDaysAgoDate() { const d = new Date(); d.setDate(d.getDate() - 6); return formatDateForInput(d) }
-
-function getCurrentRange(period = activePeriod.value) {
-  const today = getTodayDate()
-  switch (period) {
-    case 'today': return { period, start: today, end: today }
-    case 'yesterday': return { period, start: getYesterdayDate(), end: getYesterdayDate() }
-    case 'this_week': return { period, start: getSevenDaysAgoDate(), end: today }
-    default: return { period: 'custom', start: filterDate.value, end: filterDate.value }
-  }
-}
-
-function syncRouteQuery() {
-  const range = getCurrentRange()
-  const next = { period: range.period, start: range.start, end: range.end, page: `${currentPage.value}` }
-  const cur = {
-    period: normalizeQueryValue(route.query.period),
-    start: normalizeQueryValue(route.query.start),
-    end: normalizeQueryValue(route.query.end),
-    page: normalizeQueryValue(route.query.page),
-  }
-  if (cur.period === next.period && cur.start === next.start && cur.end === next.end && cur.page === next.page) return
-  router.replace({ path: route.path, query: next })
-}
-
-function syncStateFromRoute() {
-  const routePage = Number.parseInt(normalizeQueryValue(route.query.page), 10)
-  const routeStart = normalizeQueryValue(route.query.start)
-  const routePeriod = normalizeQueryValue(route.query.period)
-  const routeEnd = normalizeQueryValue(route.query.end)
-
-  if (!Number.isNaN(routePage) && routePage > 0) currentPage.value = routePage
-  activePeriod.value = ['today', 'yesterday', 'this_week'].includes(routePeriod)
-    ? routePeriod as 'today' | 'yesterday' | 'this_week'
-    : 'today'
-
-  if (activePeriod.value === 'today') filterDate.value = getTodayDate()
-  else if (activePeriod.value === 'yesterday') filterDate.value = routeStart || routeEnd || getYesterdayDate()
-  else if (activePeriod.value === 'this_week') filterDate.value = routeStart || getSevenDaysAgoDate()
-  else if (routeStart) filterDate.value = routeStart
-  else if (routeEnd) filterDate.value = routeEnd
-}
-
 async function fetchHistories() {
   isLoading.value = true
   errorMessage.value = ''
   try {
-    const response = await getJackpotHistories(currentPage.value, itemsPerPage, filterDate.value, filterDate.value)
+    const response = await getJackpotHistories(1, 10, filterDate.value, filterDate.value)
     const payload = response?.data.value
-    historyData.value = payload?.data?.histories ?? []
-    totalItems.value = payload?.total ?? 0
+    historyData.value = (payload?.data?.histories ?? []).slice(0, 10)
   } catch (error: any) {
     console.error('[jackpot-history] failed to load', error)
     historyData.value = []
-    totalItems.value = 0
-    errorMessage.value = error?.message || 'Failed to load jackpot history'
+    errorMessage.value = error?.message || t('jackpot.failedToLoadHistory')
   } finally {
     isLoading.value = false
   }
 }
 
-onMounted(async () => {
-  syncStateFromRoute()
-  await nextTick()
-  await fetchHistories()
-  isRouteSynced.value = true
-  syncRouteQuery()
-})
-
-watch([filterDate, currentPage], () => {
-  if (!isRouteSynced.value) return
-  syncRouteQuery()
-  fetchHistories()
-})
+onMounted(fetchHistories)
 </script>
 
 <style scoped>

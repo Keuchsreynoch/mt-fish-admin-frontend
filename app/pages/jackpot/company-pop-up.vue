@@ -2,14 +2,14 @@
   <div class="coin-page">
     <div class="page-header">
       <div>
-        <h1 class="page-title">Company Top-up</h1>
+        <h1 class="page-title">{{ t('jackpot.companyTopup') }}</h1>
       </div>
     </div>
 
     <div class="content-wepper flex flex-col gap-2">
       <div class="filter-row">
         <div class="filter-left">
-          <span class="filter-label">កាលបរិច្ឆេទ</span>
+          <span class="filter-label">{{ t('report.date') }}</span>
           <v-text-field
             v-model="filterDate"
             type="date"
@@ -69,6 +69,7 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import type { LocationQueryValue } from 'vue-router'
 import AppTable, { type TableColumn } from '~/components/DynamicTableStyle.vue'
 import PeriodFilterButtons from '~/components/PeriodFilterButtons.vue'
+import { useFrontendI18n } from '~/composables/i18n'
 import {
   getJackpotCompanyTopups,
   type JackpotCompanyTopupItem,
@@ -76,17 +77,18 @@ import {
 
 const route  = useRoute()
 const router = useRouter()
+const { t } = useFrontendI18n()
 
 
-const columns: TableColumn<JackpotCompanyTopupItem>[] = [
+const columns = computed<TableColumn<JackpotCompanyTopupItem>[]>(() => [
   { key: 'index',                  label: 'លេខ',       type: 'index' },
-  { key: 'amount',                 label: 'Amount' },
-  { key: 'current_amount_before',  label: 'Before' },
-  { key: 'current_amount_after',   label: 'After' },
-  { key: 'note',                   label: 'Note' },
-  { key: 'username',               label: 'Created By' },
-  { key: 'created_at',             label: 'Created At' },
-]
+  { key: 'amount',                 label: t('jackpot.amount') },
+  { key: 'current_amount_before',  label: t('jackpot.before') },
+  { key: 'current_amount_after',   label: t('jackpot.after') },
+  { key: 'note',                   label: t('jackpot.note') },
+  { key: 'username',               label: t('gameConfig.updatedBy') },
+  { key: 'created_at',             label: t('gameConfig.updatedAt') },
+])
 
 // ── State ─────────────────────────────────────────────────────────────────────
 
@@ -200,7 +202,7 @@ async function fetchTopups() {
     console.error('[game-config] failed to load company topups', error)
     topupData.value  = []
     totalItems.value = 0
-    errorMessage.value = error?.message || 'Failed to load company topups'
+    errorMessage.value = error?.message || t('jackpot.failedToLoadTopups')
   } finally {
     isLoading.value = false
   }
@@ -248,7 +250,7 @@ watch([filterDate, currentPage], () => {
   font-size: 22px;
   font-weight: 800;
   letter-spacing: -0.5px;
-  color: #111827;
+  color: rgb(var(--v-theme-primary));
 }
 
 .filter-row {

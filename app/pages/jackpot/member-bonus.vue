@@ -2,14 +2,14 @@
   <div class="coin-page">
     <div class="page-header">
       <div>
-        <h1 class="page-title">Member Bonus</h1>
+        <h1 class="page-title">{{ t('jackpot.memberBonus') }}</h1>
       </div>
     </div>
 
     <div class="content-wepper flex flex-col gap-2">
       <div class="filter-row">
         <div class="filter-left">
-          <span class="filter-label">កាលបរិច្ឆេទ</span>
+          <span class="filter-label">{{ t('report.date') }}</span>
           <v-text-field
             v-model="filterDate"
             type="date"
@@ -32,13 +32,9 @@
 
       <AppTable
         :columns="columns"
-        :items="bonusData"
+        :items="bonusData.slice(0, 10)"
         :loading="isLoading"
         :error="errorMessage"
-        :page="currentPage"
-        :page-size="itemsPerPage"
-        :total-pages="totalPages"
-        @update:page="currentPage = $event"
       >
         <template #cell-amount="{ item }">
           <span class="positive">{{ formatAmount(parseAmount(item.amount)) }}</span>
@@ -61,11 +57,11 @@
     <!-- FAB -->
     <v-btn
       class="create-fab"
-      color="primary"
+      color="create"
       icon="mdi-plus"
       size="large"
       elevation="8"
-      aria-label="Create member bonus"
+          :aria-label="t('jackpot.createMemberBonus')"
       @click="openCreateDialog"
     />
 
@@ -75,7 +71,7 @@
         <div class="dialog-header">
           <div class="dialog-title-row">
             <v-icon size="20" color="rgb(var(--v-theme-primary))">mdi-cash-plus</v-icon>
-            <h2>Create Member Bonus</h2>
+            <h2>{{ t('jackpot.createMemberBonus') }}</h2>
           </div>
           <v-btn icon size="small" variant="text" @click="closeCreateDialog">
             <v-icon>mdi-close</v-icon>
@@ -87,24 +83,21 @@
         <div class="dialog-body">
           <div class="form-grid">
             <div class="form-group half">
-              <label class="form-label">Member ID <span class="required">*</span></label>
+              <label class="form-label">{{ t('members.member') }} <span class="required">*</span></label>
               <v-text-field
-                :model-value="createForm.member_id"
+                v-model="createForm.member_name"
                 type="text"
-                inputmode="numeric"
+                inputmode="text"
                 autocomplete="off"
                 density="compact"
                 variant="outlined"
                 hide-details="auto"
-                placeholder="1"
-                @keydown="blockNonIntegerKeys"
-                @paste="handleIntegerPaste"
-                @update:model-value="createForm.member_id = sanitizeIntegerInput($event)"
+                placeholder="Member Name"
               />
             </div>
 
             <div class="form-group half">
-              <label class="form-label">Amount <span class="required">*</span></label>
+              <label class="form-label">{{ t('jackpot.amount') }} <span class="required">*</span></label>
               <v-text-field
                 :model-value="createForm.amount"
                 type="text"
@@ -121,13 +114,13 @@
             </div>
 
             <div class="form-group full">
-              <label class="form-label">Note</label>
+              <label class="form-label">{{ t('jackpot.note') }}</label>
               <v-text-field
                 v-model="createForm.note"
                 density="compact"
                 variant="outlined"
                 hide-details="auto"
-                placeholder="Optional note"
+                :placeholder="t('common.optionalNote')"
               />
             </div>
           </div>
@@ -136,9 +129,9 @@
         <v-divider />
 
         <div class="dialog-actions">
-          <v-btn variant="outlined" @click="closeCreateDialog">Cancel</v-btn>
-          <v-btn color="primary" :loading="createLoading" @click="submitCreateBonus">
-            Create Bonus
+          <v-btn variant="outlined" color="cancel" @click="closeCreateDialog">{{ t('common.cancel') }}</v-btn>
+          <v-btn color="create" :loading="createLoading" @click="submitCreateBonus">
+            {{ t('jackpot.createMemberBonus') }}
           </v-btn>
         </div>
       </v-card>
@@ -147,10 +140,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
-import type { LocationQueryValue } from 'vue-router'
+import { computed, onMounted, ref, watch } from 'vue'
 import AppTable, { type TableColumn } from '~/components/DynamicTableStyle.vue'
 import PeriodFilterButtons from '~/components/PeriodFilterButtons.vue'
+import { useFrontendI18n } from '~/composables/i18n'
 import { useSnackbar } from '~/composables/useSnackbar'
 import {
   createMemberBonus,
@@ -159,55 +152,39 @@ import {
 } from '~/composables/service/memberBonusApi'
 
 const { showError, showSuccess } = useSnackbar()
-const route  = useRoute()
-const router = useRouter()
-
+const { t } = useFrontendI18n()
 // ── Columns ───────────────────────────────────────────────────────────────────
 
-const columns: TableColumn<MemberBonusItem>[] = [
-  { key: 'index',      label: 'លេខ',       type: 'index' },
-  { key: 'member_id',  label: 'Member ID' },
-  { key: 'amount',     label: 'Amount' },
-  { key: 'note',       label: 'Note' },
-  { key: 'order',      label: 'Order' },
-  { key: 'status_id',  label: 'Status' },
-  { key: 'created_by', label: 'Created By' },
-  { key: 'created_at', label: 'Time' },
-]
+const columns = computed<TableColumn<MemberBonusItem>[]>(() => [
+  { key: 'index',      label: 'លេខរៀង',       type: 'index' },
+  { key: 'member_name',  label: t('members.member') },
+  { key: 'amount',     label: t('jackpot.amount') },
+  { key: 'note',       label: t('jackpot.note') },
+  { key: 'order',      label: t('report.bonus') },
+  { key: 'status_id',  label: t('gameConfig.status') },
+  { key: 'created_by', label: t('gameConfig.createBY') },
+  { key: 'created_at', label: t('gameConfig.createAT') },
+])
 
 // ── State ─────────────────────────────────────────────────────────────────────
 
 const filterDate    = ref(formatDateForInput(new Date()))
-const currentPage   = ref(1)
-const itemsPerPage  = 20
-const totalItems    = ref(0)
 const bonusData     = ref<MemberBonusItem[]>([])
 const isLoading     = ref(false)
 const errorMessage  = ref('')
-const isRouteSynced = ref(false)
 const activePeriod  = ref<'custom' | 'today' | 'yesterday' | 'this_week'>('today')
 const createDialog  = ref(false)
 const createLoading = ref(false)
 const createForm    = ref({
-  member_id: '',
+  member_name: '',
   amount: '',
   note: '',
 })
-
-// ── Computed ──────────────────────────────────────────────────────────────────
-
-const totalPages = computed(() =>
-  Math.max(1, Math.ceil(totalItems.value / itemsPerPage)),
-)
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function parseAmount(value: string | undefined | null): number {
   return Number.parseFloat(value ?? '0') || 0
-}
-
-function sanitizeIntegerInput(value: string | number | null | undefined): string {
-  return String(value ?? '').replace(/\D+/g, '')
 }
 
 function sanitizeDecimalInput(value: string | number | null | undefined): string {
@@ -252,35 +229,9 @@ function blockNonDecimalKeys(event: KeyboardEvent) {
   }
 }
 
-function blockNonIntegerKeys(event: KeyboardEvent) {
-  const allowedKeys = [
-    'Backspace',
-    'Delete',
-    'Tab',
-    'Enter',
-    'Escape',
-    'ArrowLeft',
-    'ArrowRight',
-    'Home',
-    'End',
-  ]
-
-  if (allowedKeys.includes(event.key) || event.ctrlKey || event.metaKey) return
-  if (!/^\d$/.test(event.key)) {
-    event.preventDefault()
-  }
-}
-
 function handleDecimalPaste(event: ClipboardEvent) {
   const text = event.clipboardData?.getData('text') ?? ''
   if (!/[\d.]/.test(text)) {
-    event.preventDefault()
-  }
-}
-
-function handleIntegerPaste(event: ClipboardEvent) {
-  const text = event.clipboardData?.getData('text') ?? ''
-  if (!/^\d+$/.test(text)) {
     event.preventDefault()
   }
 }
@@ -309,11 +260,6 @@ function formatDateTime(value: string): string {
   }).format(date)
 }
 
-function normalizeQueryValue(value: LocationQueryValue | LocationQueryValue[] | null | undefined): string {
-  if (Array.isArray(value)) return normalizeQueryValue(value[0])
-  return value ?? ''
-}
-
 function getTodayDate()        { return formatDateForInput(new Date()) }
 function getYesterdayDate()    { const d = new Date(); d.setDate(d.getDate() - 1); return formatDateForInput(d) }
 function getSevenDaysAgoDate() { const d = new Date(); d.setDate(d.getDate() - 6); return formatDateForInput(d) }
@@ -328,42 +274,11 @@ function getCurrentRange(period = activePeriod.value) {
   }
 }
 
-function syncRouteQuery() {
-  const range = getCurrentRange()
-  const next = { period: range.period, start: range.start, end: range.end, page: `${currentPage.value}` }
-  const cur  = {
-    period: normalizeQueryValue(route.query.period),
-    start:  normalizeQueryValue(route.query.start),
-    end:    normalizeQueryValue(route.query.end),
-    page:   normalizeQueryValue(route.query.page),
-  }
-  if (cur.period === next.period && cur.start === next.start && cur.end === next.end && cur.page === next.page) return
-  router.replace({ path: route.path, query: next })
-}
-
-function syncStateFromRoute() {
-  const routePage   = Number.parseInt(normalizeQueryValue(route.query.page), 10)
-  const routeStart  = normalizeQueryValue(route.query.start)
-  const routePeriod = normalizeQueryValue(route.query.period)
-  const routeEnd    = normalizeQueryValue(route.query.end)
-
-  if (!Number.isNaN(routePage) && routePage > 0) currentPage.value = routePage
-  activePeriod.value = ['today', 'yesterday', 'this_week'].includes(routePeriod)
-    ? routePeriod as 'today' | 'yesterday' | 'this_week'
-    : 'today'
-
-  if      (activePeriod.value === 'today')     filterDate.value = getTodayDate()
-  else if (activePeriod.value === 'yesterday') filterDate.value = routeStart || routeEnd || getYesterdayDate()
-  else if (activePeriod.value === 'this_week') filterDate.value = routeStart || getSevenDaysAgoDate()
-  else if (routeStart)                         filterDate.value = routeStart
-  else if (routeEnd)                           filterDate.value = routeEnd
-}
-
 function getStatusLabel(statusId: number): string {
   const map: Record<number, string> = {
-    1: 'Pending',
-    2: 'Approved',
-    3: 'Rejected',
+    1: t('common.pending'),
+    2: t('common.approved'),
+    3: t('common.rejected'),
   }
   return map[statusId] ?? `#${statusId}`
 }
@@ -374,15 +289,13 @@ async function fetchBonuses() {
   isLoading.value    = true
   errorMessage.value = ''
   try {
-    const response = await getMemberBonuses(currentPage.value, itemsPerPage, filterDate.value, filterDate.value)
+    const response = await getMemberBonuses(1, 10, filterDate.value, filterDate.value)
     const payload  = response?.data.value
-    bonusData.value  = payload?.data?.bonuses ?? []
-    totalItems.value = payload?.total ?? 0
+    bonusData.value  = (payload?.data?.bonuses ?? []).slice(0, 10)
   } catch (error: any) {
     console.error('[member-bonuses] failed to load', error)
     bonusData.value  = []
-    totalItems.value = 0
-    errorMessage.value = error?.message || 'Failed to load member bonuses'
+    errorMessage.value = error?.message || t('jackpot.failedToLoadHistory')
   } finally {
     isLoading.value = false
   }
@@ -390,16 +303,15 @@ async function fetchBonuses() {
 
 // ── Event handlers ────────────────────────────────────────────────────────────
 
-function handleDateChange() { activePeriod.value = 'custom'; currentPage.value = 1 }
+function handleDateChange() { activePeriod.value = 'custom' }
 
 function setQuickPeriod(period: 'today' | 'yesterday' | 'this_week') {
   activePeriod.value = period
   filterDate.value   = getCurrentRange(period).start
-  currentPage.value  = 1
 }
 
 function openCreateDialog() {
-  createForm.value = { member_id: '', amount: '', note: '' }
+  createForm.value = { member_name: '', amount: '', note: '' }
   createDialog.value = true
 }
 
@@ -408,45 +320,34 @@ function closeCreateDialog() {
 }
 
 async function submitCreateBonus() {
-  const memberId = Number.parseInt(createForm.value.member_id, 10)
   const amount   = parseAmount(createForm.value.amount)
 
-  if (!Number.isFinite(memberId) || memberId < 1 || amount <= 0) {
-    showError('Member ID and amount are required')
+  if (!createForm.value.member_name.trim() || amount <= 0) {
+    showError(t('report.invalidAmount'))
     return
   }
   createLoading.value = true
   try {
     const response = await createMemberBonus({
-      member_id: memberId,
+      member_name: createForm.value.member_name.trim(),
       amount:    createForm.value.amount,
       note:      createForm.value.note ?? '',
     })
     const payload = response?.data.value
-    showSuccess(payload?.message || 'Member bonus created successfully')
+    showSuccess(payload?.message || t('jackpot.memberBonusCreated'))
     createDialog.value = false
     await fetchBonuses()
   } catch (error: any) {
     console.error('[member-bonuses] create failed', error)
-    showError(error?.message || 'Failed to create member bonus')
+    showError(error?.message || t('jackpot.failedToCreateMemberBonus'))
   } finally {
     createLoading.value = false
   }
 }
 
-onMounted(async () => {
-  syncStateFromRoute()
-  await nextTick()
-  await fetchBonuses()
-  isRouteSynced.value = true
-  syncRouteQuery()
-})
+onMounted(fetchBonuses)
 
-watch([filterDate, currentPage], () => {
-  if (!isRouteSynced.value) return
-  syncRouteQuery()
-  fetchBonuses()
-})
+watch(filterDate, fetchBonuses)
 </script>
 
 <style scoped>
@@ -466,7 +367,7 @@ watch([filterDate, currentPage], () => {
   font-size: 22px;
   font-weight: 800;
   letter-spacing: -0.5px;
-  color: #111827;
+  color: rgb(var(--v-theme-primary));
 }
 
 .filter-row {
