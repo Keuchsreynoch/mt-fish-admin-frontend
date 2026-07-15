@@ -32,6 +32,7 @@ import { computed, onMounted, ref } from 'vue'
 import AppVTable, { type TableColumn } from '~/components/DynamicTableStyle.vue'
 import { useFrontendI18n } from '~/composables/i18n'
 import { getJackpotLedgers, type JackpotLedgerItem } from '~/composables/service/jackpotLedgerApi'
+import { formatDecimal } from '~/utils/numberFormat'
 
 const { t } = useFrontendI18n()
 
@@ -63,10 +64,7 @@ function parseAmount(value: string | undefined | null): number {
 }
 
 function formatAmount(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value)
+  return formatDecimal(value, { maximumFractionDigits: 2 })
 }
 
 function formatDateTime(value: string): string {

@@ -23,7 +23,7 @@ export interface DashboardData {
   total_company_profit: string;
   current_pool_jackpot: string;
   threshold_amount: string;
-  current_company_profit:  string;
+  reward_pool:  string;
   top_win_members: TopWinMember[];
 }
 

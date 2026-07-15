@@ -205,6 +205,7 @@ import { computed, onMounted, ref } from "vue";
 import AppTable, { type TableColumn } from "~/components/DynamicTableStyle.vue";
 import JackpotSettingsDialog, { type JackpotSettingsForm } from "~/components/JackpotSettingsForm.vue";
 import { useFrontendI18n } from "~/composables/i18n";
+import { formatDecimal } from "~/utils/numberFormat";
 
 import { useSnackbar } from "~/composables/useSnackbar";
 import { createMemberBonus } from "~/composables/service/memberBonusApi";
@@ -261,8 +262,7 @@ const getCompanyTopupAmount = computed(() => parseAmount(poolData.value?.company
 const getFixedPayoutAmount = computed(() => parseAmount(poolData.value?.jackpot_fixed_payout_amount));
 
 function formatAmount(value: string | number | null | undefined): string {
-  const amount = parseAmount(value);
-  return new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount);
+  return formatDecimal(parseAmount(value), { maximumFractionDigits: 2 });
 }
 function toAmountString(v: string | number | null | undefined): string {
   return parseAmount(v).toFixed(2);

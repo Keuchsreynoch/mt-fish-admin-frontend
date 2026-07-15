@@ -47,7 +47,7 @@
                                 :stroke-dasharray="201" :stroke-dashoffset="201 - (201 * houseWinRate / 100)"
                                 stroke-linecap="round" transform="rotate(-90 40 40)" />
                         </svg>
-                        <div class="wr-value">{{ houseWinRate.toFixed(1) }}%</div>
+                        <div class="wr-value">{{ formatPercent(houseWinRate, 1) }}%</div>
                     </div>
                 </div>
             </div>
@@ -101,7 +101,7 @@
                 <div class="jackpot-progress-wrap">
                     <div class="jackpot-progress-label">
                         <span>{{ t('dashboard.poolProgress') }}</span>
-                        <span class="jackpot-pct">{{ jackpotPct.toFixed(2) }}%</span>
+                        <span class="jackpot-pct">{{ formatPercent(jackpotPct, 2) }}%</span>
                     </div>
                     <div class="jackpot-bar-bg">
                         <div class="jackpot-bar-fill" :style="{ width: jackpotPct + '%' }" />
@@ -116,6 +116,7 @@
 <script setup lang="ts">
 import { useFrontendI18n } from "~/composables/i18n"
 import { getDashboard, type DashboardData } from "~/composables/service/dashboardApi"
+import { formatDecimal } from "~/utils/numberFormat"
 
 const { t } = useFrontendI18n()
 
@@ -149,9 +150,9 @@ function formatCoins(val?: string | number): string {
 
     if (Number.isNaN(n)) return "—"
 
-    return n.toLocaleString("en-US", {
-        minimumFractionDigits: 2,
+    return formatDecimal(n, {
         maximumFractionDigits: 2,
+        fallback: "—",
     })
 }
 
@@ -163,21 +164,25 @@ function formatCompactCoins(val?: string | number): string {
     if (Number.isNaN(n)) return "—"
 
     if (n >= 1_000_000_000) {
-        return (n / 1_000_000_000).toFixed(2) + "B"
+        return formatDecimal(n / 1_000_000_000, { maximumFractionDigits: 2 }) + "B"
     }
 
     if (n >= 1_000_000) {
-        return (n / 1_000_000).toFixed(2) + "M"
+        return formatDecimal(n / 1_000_000, { maximumFractionDigits: 2 }) + "M"
     }
 
     if (n >= 1_000) {
-        return (n / 1_000).toFixed(1) + "K"
+        return formatDecimal(n / 1_000, { maximumFractionDigits: 1 }) + "K"
     }
 
-    return n.toLocaleString("en-US", {
-        minimumFractionDigits: 2,
+    return formatDecimal(n, {
         maximumFractionDigits: 2,
+        fallback: "—",
     })
+}
+
+function formatPercent(value: number, maximumFractionDigits: number): string {
+    return formatDecimal(value, { maximumFractionDigits })
 }
 
 // The longer the formatted number, the smaller the font — keeps big
@@ -205,14 +210,14 @@ const kpis = computed(() => [
         emoji: "💸",
     },
     {
+        label: t('dashboard.rewardPoolAmount'),
+        value: dashData.value?.reward_pool,
+        emoji: "✨",
+    },
+    {
         label: t('dashboard.totalCompanyProfit'),
         value: dashData.value?.total_company_profit,
         emoji: "📈",
-    },
-    {
-        label: t('dashboard.currentCompanyProfit'),
-        value: dashData.value?.current_company_profit,
-        emoji: "✨",
     },
     {
         label: t('dashboard.jackpotPool'),

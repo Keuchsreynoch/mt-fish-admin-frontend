@@ -74,6 +74,7 @@ import {
   getJackpotCompanyTopups,
   type JackpotCompanyTopupItem,
 } from '~/composables/service/jackpotCurrentPoolApi'
+import { formatDecimal } from '~/utils/numberFormat'
 
 const route  = useRoute()
 const router = useRouter()
@@ -115,10 +116,7 @@ function parseAmount(value: string | undefined | null): number {
 }
 
 function formatAmount(value: string | undefined | null): string {
-  return new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(parseAmount(value))
+  return formatDecimal(parseAmount(value), { maximumFractionDigits: 2 })
 }
 
 function formatDateForInput(date: Date): string {

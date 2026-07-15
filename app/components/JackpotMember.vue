@@ -116,6 +116,7 @@ import {
   getMemberBonuses,
   type MemberBonusItem,
 } from '~/composables/service/memberBonusApi'
+import { formatDecimal } from '~/utils/numberFormat'
 
 const { showError, showSuccess } = useSnackbar()
 const { t } = useFrontendI18n()
@@ -172,10 +173,7 @@ function handleDecimalPaste(event: ClipboardEvent) {
 }
 
 function formatAmount(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value)
+  return formatDecimal(value, { maximumFractionDigits: 2 })
 }
 
 function formatDateTime(value: string): string {

@@ -131,7 +131,7 @@
                 <div class="field-group field-group--readonly">
                   <label class="field-label">{{ t('jackpot.currentPoolProgress') }}</label>
                   <div class="progress-meta">
-                    <span>{{ poolProgress.toFixed(1) }}%</span>
+                    <span>{{ formatDecimal(poolProgress, { maximumFractionDigits: 1 }) }}%</span>
                     <span>{{ formatAmount(currentAmount) }} / {{ formatAmount(thresholdAmount) }}</span>
                   </div>
                   <v-progress-linear :model-value="poolProgress" height="10" rounded color="primary" bg-color="rgba(15, 23, 42, 0.08)" />
@@ -243,6 +243,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from "vue";
 import { useFrontendI18n } from "~/composables/i18n";
+import { formatDecimal } from "~/utils/numberFormat";
 
 interface Props {
   modelValue: boolean;
@@ -283,7 +284,7 @@ const display = computed(() => ({
   jackpot_fixed_payout_amount: formatAmount(props.fixedPayout) + " KHR",
 }));
 
-function formatAmount(v:any){ const n = Number.parseFloat(String(v ?? 0))||0; return new Intl.NumberFormat("en-US",{minimumFractionDigits:2, maximumFractionDigits:2}).format(n); }
+function formatAmount(v:any){ const n = Number.parseFloat(String(v ?? 0))||0; return formatDecimal(n, { maximumFractionDigits: 2 }); }
 
 function blockNonDecimalKeys(e: KeyboardEvent){
   const ok = ["Backspace","Delete","Tab","ArrowLeft","ArrowRight","Home","End","."];

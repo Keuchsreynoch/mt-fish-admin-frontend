@@ -7,21 +7,21 @@
     </div>
 
     <v-row dense class="summary-strip">
-      <v-col cols="6" md="3">
+      <v-col cols="6" md="4">
+        <div class="strip-card strip-card--cyan">
+          <div class="strip-label">{{ t('gameConfig.gameName') }}</div>
+          <div class="strip-value">{{ poolData?.game_name || '-' }}</div>
+        </div>
+      </v-col>
+
+      <v-col cols="6" md="4">
         <div class="strip-card strip-card--amber">
           <div class="strip-label">{{ t('gameConfig.rtpTarget') }}</div>
           <div class="strip-value">{{ formatAmount(poolData?.rtp_target) }}%</div>
         </div>
       </v-col>
 
-      <v-col cols="6" md="3">
-        <div class="strip-card strip-card--blue">
-          <div class="strip-label">{{ t('gameConfig.jackpotRate') }}</div>
-          <div class="strip-value">{{ formatAmount(poolData?.jackpot_rate) }}%</div>
-        </div>
-      </v-col>
-
-      <v-col cols="6" md="3">
+      <v-col cols="6" md="4">
         <div class="strip-card strip-card--green">
           <div class="strip-label">{{ t('gameConfig.rtpRange') }}</div>
           <div class="strip-value">
@@ -31,7 +31,21 @@
         </div>
       </v-col>
 
-      <v-col cols="6" md="3">
+      <v-col cols="6" md="4">
+        <div class="strip-card strip-card--blue">
+          <div class="strip-label">{{ t('gameConfig.jackpotRate') }}</div>
+          <div class="strip-value">{{ formatAmount(poolData?.jackpot_rate) }}%</div>
+        </div>
+      </v-col>
+
+      <v-col cols="6" md="4">
+        <div class="strip-card strip-card--pink">
+          <div class="strip-label">{{ t('gameConfig.companyProfitRate') }}</div>
+          <div class="strip-value">{{ formatAmount(poolData?.company_profit_rate) }}%</div>
+        </div>
+      </v-col>
+
+      <v-col cols="6" md="4">
         <div class="strip-card strip-card--violet">
           <div class="strip-label">{{ t('gameConfig.status') }}</div>
           <div class="strip-value flex items-center gap-2">
@@ -52,7 +66,8 @@
             </h2>
           </div>
 
-          <v-btn icon size="small" color="primary" variant="flat" class="config-card__settings-btn" @click="">
+          <v-btn icon size="small" color="primary" variant="flat" class="config-card__settings-btn"
+            @click="showSettings = true">
             <v-icon size="18">mdi-cog</v-icon>
           </v-btn>
         </div>
@@ -79,6 +94,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useFrontendI18n } from '~/composables/i18n'
 import AppTable, { type TableColumn } from '~/components/DynamicTableStyle.vue'
+import { formatDecimal } from '~/utils/numberFormat'
 import {
   getGameConfig,
   updateGameConfig,
@@ -171,12 +187,9 @@ function parseAmount(value: string | number | null | undefined): number {
 }
 
 function formatAmount(value: string | number | null | undefined): string {
-  const amount = parseAmount(value)
-
-  return new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: 2,
+  return formatDecimal(parseAmount(value), {
     maximumFractionDigits: 2,
-  }).format(amount)
+  })
 }
 
 async function fetchGameConfig() {
@@ -208,6 +221,7 @@ async function onSettingsSubmit(form: UpdateGameConfigBody) {
           rtp_floor: '',
           rtp_ceiling: '',
           jackpot_rate: '',
+          company_profit_rate: '',
           status_id: 1,
         }),
         game_name: poolData.value?.game_name || '',
@@ -215,6 +229,7 @@ async function onSettingsSubmit(form: UpdateGameConfigBody) {
         rtp_floor: payload.data.rtp_floor,
         rtp_ceiling: payload.data.rtp_ceiling,
         jackpot_rate: payload.data.jackpot_rate,
+        company_profit_rate: payload.data.company_profit_rate,
         status_id: payload.data.status_id,
         updated_at: payload.data.updated_at,
         updated_by: payload.data.updated_by,

@@ -1,22 +1,12 @@
 <template>
-  <v-dialog
-    :model-value="modelValue"
-    max-width="500"
-    persistent
-    @update:model-value="$emit('update:modelValue', $event)"
-  >
+  <v-dialog :model-value="modelValue" max-width="500" @update:model-value="$emit('update:modelValue', $event)">
     <v-card class="settings-dialog">
       <div class="settings-dialog__header">
         <h2 class="settings-dialog__title">
           <v-icon size="18" class="mr-2">mdi-cog</v-icon>
           {{ t('gameConfig.title') }}
         </h2>
-        <v-btn
-          icon
-          size="small"
-          variant="text"
-          @click="onCancel"
-        >
+        <v-btn icon size="small" variant="text" @click="onCancel">
           <v-icon size="20">mdi-close</v-icon>
         </v-btn>
       </div>
@@ -24,75 +14,51 @@
       <v-card-text class="settings-dialog__body">
         <v-row dense>
           <v-col cols="6">
-            <v-text-field
-              v-model="form.rtp_floor"
-              :label="`${t('gameConfig.rtpFloor')} (%)`"
-              type="number"
-              step="0.01"
-              density="compact"
-              variant="outlined"
-              :error-messages="errors.rtp_floor"
-              hide-details="auto"
-            />
+            <v-text-field v-model="form.rtp_floor" type="text" inputmode="decimal" density="compact"
+              variant="outlined" :error-messages="errors.rtp_floor" hide-details="auto" placeholder="0"
+              class="stepper-input" @keydown="blockNonDecimalKeys" @paste.prevent="handleDecimalPaste"
+              @blur="normalizeField('rtp_floor')" />
           </v-col>
           <v-col cols="6">
-            <v-text-field
-              v-model="form.rtp_target"
-              :label="`${t('gameConfig.rtpTarget')} (%)`"
-              type="number"
-              step="0.01"
-              density="compact"
-              variant="outlined"
-              :error-messages="errors.rtp_target"
-              hide-details="auto"
-            />
+            <v-text-field v-model="form.rtp_target" :label="`${t('gameConfig.rtpTarget')} (%)`" type="text"
+              inputmode="decimal" density="compact" variant="outlined" :error-messages="errors.rtp_target"
+              hide-details="auto" @keydown="blockNonDecimalKeys" @paste.prevent="handleDecimalPaste"
+              @blur="normalizeField('rtp_target')" />
           </v-col>
         </v-row>
 
-        <v-text-field
-          v-model="form.rtp_ceiling"
-          :label="`${t('gameConfig.rtpCeiling')} (%)`"
-          type="number"
-          step="0.01"
-          density="compact"
-          variant="outlined"
-          class="mt-3"
-          :error-messages="errors.rtp_ceiling"
-          hide-details="auto"
-        />
+        <v-text-field v-model="form.rtp_ceiling" :label="`${t('gameConfig.rtpCeiling')} (%)`" type="text"
+          inputmode="decimal" density="compact" variant="outlined" class="mt-3" :error-messages="errors.rtp_ceiling"
+          hide-details="auto" @keydown="blockNonDecimalKeys" @paste.prevent="handleDecimalPaste"
+          @blur="normalizeField('rtp_ceiling')" />
 
-        <v-text-field
-          v-model="form.jackpot_rate"
-          :label="`${t('gameConfig.jackpotRate')} (%)`"
-          type="number"
-          step="0.01"
-          density="compact"
-          variant="outlined"
-          class="mt-3"
-          :error-messages="errors.jackpot_rate"
-          hide-details="auto"
-        />
+        <v-row dense class="mt-3">
+          <v-col cols="6">
+            <v-text-field v-model="form.jackpot_rate" :label="`${t('gameConfig.jackpotRate')} (%)`" type="text"
+              inputmode="decimal" density="compact" variant="outlined" :error-messages="errors.jackpot_rate"
+              hide-details="auto" @keydown="blockNonDecimalKeys" @paste.prevent="handleDecimalPaste"
+              @blur="normalizeField('jackpot_rate')" />
+          </v-col>
+          <v-col cols="6">
+            <v-text-field v-model="form.company_profit_rate" :label="`${t('gameConfig.companyProfitRate')} (%)`"
+              type="text" inputmode="decimal" density="compact" variant="outlined"
+              :error-messages="errors.company_profit_rate" hide-details="auto" @keydown="blockNonDecimalKeys"
+              @paste.prevent="handleDecimalPaste" @blur="normalizeField('company_profit_rate')" />
+          </v-col>
+        </v-row>
 
         <div class="status-toggle mt-4">
           <div class="status-toggle__label">{{ t('gameConfig.status') }}</div>
           <div class="status-toggle__options">
-            <v-btn
-              :color="form.status_id === 1 ? 'success' : 'grey-lighten-2'"
-              :variant="form.status_id === 1 ? 'flat' : 'outlined'"
-              size="small"
-              class="status-btn"
-              @click="form.status_id = 1"
-            >
+            <v-btn :color="form.status_id === 1 ? 'success' : 'grey-lighten-2'"
+              :variant="form.status_id === 1 ? 'flat' : 'outlined'" size="small" class="status-btn"
+              @click="form.status_id = 1">
               <v-icon size="14" class="mr-1">mdi-check-circle</v-icon>
               {{ t('common.active') }}
             </v-btn>
-            <v-btn
-              :color="form.status_id === 0 ? 'error' : 'grey-lighten-2'"
-              :variant="form.status_id === 0 ? 'flat' : 'outlined'"
-              size="small"
-              class="status-btn"
-              @click="form.status_id = 0"
-            >
+            <v-btn :color="form.status_id === 0 ? 'error' : 'grey-lighten-2'"
+              :variant="form.status_id === 0 ? 'flat' : 'outlined'" size="small" class="status-btn"
+              @click="form.status_id = 0">
               <v-icon size="14" class="mr-1">mdi-close-circle</v-icon>
               {{ t('common.inactive') }}
             </v-btn>
@@ -104,20 +70,10 @@
 
       <v-card-actions class="settings-dialog__actions">
         <v-spacer />
-        <v-btn
-          variant="outlined"
-          color="cancel"
-          @click="onCancel"
-          :disabled="updateLoading"
-        >
+        <v-btn variant="outlined" color="cancel" @click="onCancel" :disabled="updateLoading">
           {{ t('common.cancel') }}
         </v-btn>
-        <v-btn
-          color="primary"
-          variant="flat"
-          :loading="updateLoading"
-          @click="onSubmit"
-        >
+        <v-btn color="primary" variant="flat" :loading="updateLoading" @click="onSubmit">
           <v-icon size="16" class="mr-1">mdi-content-save</v-icon>
           {{ t('common.save') }}
         </v-btn>
@@ -152,18 +108,22 @@ const form = ref<UpdateGameConfigBody>({
   rtp_floor: '',
   rtp_ceiling: '',
   jackpot_rate: '',
+  company_profit_rate: '',
   status_id: 1
 })
 
 const errors = ref<Record<string, string>>({})
 
+type DecimalField = 'rtp_target' | 'rtp_floor' | 'rtp_ceiling' | 'jackpot_rate' | 'company_profit_rate'
+
 watch(() => props.modelValue, (isOpen) => {
   if (isOpen && props.poolData) {
     form.value = {
-      rtp_target: props.poolData.rtp_target,
-      rtp_floor: props.poolData.rtp_floor,
-      rtp_ceiling: props.poolData.rtp_ceiling,
-      jackpot_rate: props.poolData.jackpot_rate,
+      rtp_target: normalizeDecimalValue(props.poolData.rtp_target),
+      rtp_floor: normalizeDecimalValue(props.poolData.rtp_floor),
+      rtp_ceiling: normalizeDecimalValue(props.poolData.rtp_ceiling),
+      jackpot_rate: normalizeDecimalValue(props.poolData.jackpot_rate),
+      company_profit_rate: normalizeDecimalValue(props.poolData.company_profit_rate),
       status_id: props.poolData.status_id
     }
     errors.value = {}
@@ -175,6 +135,41 @@ function parseAmount(value: string | number | null | undefined): number {
   return parseFloat(String(value)) || 0
 }
 
+function handleDecimalPaste(e: ClipboardEvent) {
+  const pasted = e.clipboardData?.getData("text") || "";
+  const el = e.target as HTMLInputElement;
+  const next = (el.value.slice(0, el.selectionStart ?? 0) + pasted + el.value.slice(el.selectionEnd ?? 0));
+  if (!/^\d*\.?\d*$/.test(next)) e.preventDefault();
+}
+
+function blockNonDecimalKeys(event: KeyboardEvent) {
+  const allowed = ["Backspace", "Delete", "Tab", "ArrowLeft", "ArrowRight", "Home", "End", "."];
+  if (allowed.includes(event.key) || event.ctrlKey || event.metaKey) return;
+  if (!/^\d$/.test(event.key)) event.preventDefault();
+  // prevent second dot
+  if (event.key === "." && (event.target as HTMLInputElement).value.includes(".")) {
+    event.preventDefault();
+  }
+}
+
+function normalizeDecimalValue(value: string | number | null | undefined): string {
+  if (value === null || value === undefined || value === '') return ''
+
+  const numericValue = Number.parseFloat(String(value))
+  if (Number.isNaN(numericValue)) return ''
+
+  if (Number.isInteger(numericValue)) {
+    return numericValue.toFixed(2)
+  }
+
+  return numericValue.toString()
+}
+
+function normalizeField(field: DecimalField) {
+  const value = form.value[field]
+  form.value[field] = normalizeDecimalValue(value)
+}
+
 function validate(): boolean {
   const newErrors: Record<string, string> = {}
 
@@ -182,6 +177,7 @@ function validate(): boolean {
   const target = parseAmount(form.value.rtp_target)
   const ceiling = parseAmount(form.value.rtp_ceiling)
   const jackpot = parseAmount(form.value.jackpot_rate)
+  const companyProfit = parseAmount(form.value.company_profit_rate)
 
   if (isNaN(floor) || floor < 0 || floor > 100) {
     newErrors.rtp_floor = t('gameConfig.mustBeBetween', { field: t('gameConfig.rtpFloor') })
@@ -211,6 +207,10 @@ function validate(): boolean {
 
   if (isNaN(jackpot) || jackpot < 0 || jackpot > 100) {
     newErrors.jackpot_rate = t('gameConfig.mustBeBetween', { field: t('gameConfig.jackpotRate') })
+  }
+
+  if (isNaN(companyProfit) || companyProfit < 0 || companyProfit > 100) {
+    newErrors.company_profit_rate = t('gameConfig.mustBeBetween', { field: t('gameConfig.companyProfitRate') })
   }
 
   errors.value = newErrors

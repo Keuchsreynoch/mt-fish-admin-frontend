@@ -79,6 +79,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import AppTable, { type TableColumn } from '~/components/DynamicTableStyle.vue'
 import { useFrontendI18n } from '~/composables/i18n'
 import { getMembers, type MemberItem } from '~/composables/service/membersApi'
+import { formatDecimal } from '~/utils/numberFormat'
 
 const { t } = useFrontendI18n()
 
@@ -145,10 +146,7 @@ function selectCurrency(memberId: number, currencyId: number) {
 function formatBalance(value: string): string {
   const num = parseFloat(value)
   if (isNaN(num)) return '-'
-  return new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  }).format(num)
+  return formatDecimal(num, { maximumFractionDigits: 2, fallback: '-' })
 }
 
 function formatDate(value: string | null): string {

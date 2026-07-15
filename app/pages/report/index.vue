@@ -85,6 +85,7 @@ import { useFrontendI18n } from '~/composables/i18n'
 import { getReports, type ReportItem } from '~/composables/service/reportApi'
 import { createMemberBonus } from '~/composables/service/memberBonusApi'
 import PeriodFilterButtons from '~/components/PeriodFilterButtons.vue'
+import { formatDecimal } from '~/utils/numberFormat'
 
 const route = useRoute()
 const router = useRouter()
@@ -240,10 +241,7 @@ function parseAmount(value: string | undefined | null): number {
 }
 
 function formatAmount(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: 3,
-    maximumFractionDigits: 3,
-  }).format(value)
+  return formatDecimal(value, { maximumFractionDigits: 3 })
 }
 
 function formatDateForInput(date: Date): string {

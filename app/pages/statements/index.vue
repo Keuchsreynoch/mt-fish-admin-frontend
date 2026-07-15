@@ -60,6 +60,7 @@ import AppTable from '~/components/DynamicTableStyle.vue'
 import type { TableColumn, TotalRow } from '~/components/DynamicTableStyle.vue'
 import PeriodFilterButtons from '~/components/PeriodFilterButtons.vue'
 import { useFrontendI18n } from '~/composables/i18n'
+import { formatDecimal } from '~/utils/numberFormat'
 
 const route = useRoute()
 const router = useRouter()
@@ -178,10 +179,7 @@ function parseAmount(value: string | undefined | null): number {
 }
 
 function formatAmount(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: 3,
-    maximumFractionDigits: 3,
-  }).format(value)
+  return formatDecimal(value, { maximumFractionDigits: 3 })
 }
 
 function formatDateForInput(date: Date): string {

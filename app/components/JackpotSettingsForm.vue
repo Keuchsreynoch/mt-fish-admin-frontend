@@ -1,6 +1,5 @@
 <template>
-  <v-dialog :model-value="modelValue" @update:model-value="emit('update:modelValue', $event)" max-width="720"
-    persistent>
+  <v-dialog :model-value="modelValue" @update:model-value="emit('update:modelValue', $event)" max-width="720">
     <v-card class="jackpot-dialog" elevation="0">
       <!-- Header -->
       <div class="dialog-header">
@@ -195,6 +194,7 @@
 <script setup lang="ts">
 import { computed, reactive, watch } from "vue";
 import { useFrontendI18n } from "~/composables/i18n";
+import { formatDecimal, trimTrailingZeros } from "~/utils/numberFormat";
 
 export interface JackpotCurrent {
   current_amount?: string | number;
@@ -246,11 +246,11 @@ const localForm = reactive<JackpotSettingsForm>({
 
 function syncFromPool(data: JackpotCurrent | null) {
   if (!data) return;
-  localForm.threshold_amount = String(data.threshold_amount ?? "0.00");
+  localForm.threshold_amount = trimTrailingZeros(data.threshold_amount, { fallback: "0" });
   localForm.chance_denom = String(data.chance_denom ?? "5000");
-  localForm.payout_percent = String(data.payout_percent ?? "0.00");
-  localForm.min_eligible_bet_amount = String(data.min_eligible_bet_amount ?? "0.00");
-  localForm.jackpot_fixed_payout_amount = String(data.jackpot_fixed_payout_amount ?? "0.00");
+  localForm.payout_percent = trimTrailingZeros(data.payout_percent, { fallback: "0" });
+  localForm.min_eligible_bet_amount = trimTrailingZeros(data.min_eligible_bet_amount, { fallback: "0" });
+  localForm.jackpot_fixed_payout_amount = trimTrailingZeros(data.jackpot_fixed_payout_amount, { fallback: "0" });
   localForm.company_topup_amount = "";
   localForm.member_name = "";
   localForm.member_bonus_amount = "";
@@ -275,7 +275,9 @@ const winProbability = computed(() => {
   const denom = Number.parseInt(localForm.chance_denom, 10) || 0;
   if (denom <= 0) return "∞";
   const prob = (1 / denom) * 100;
-  return prob < 0.0001 ? prob.toExponential(2) : prob.toFixed(4);
+  return prob < 0.0001
+    ? prob.toExponential(2)
+    : formatDecimal(prob, { maximumFractionDigits: 4 });
 });
 
 const lastUpdatedLabel = computed(() => {
@@ -290,11 +292,9 @@ function parseAmount(value: string | number | null | undefined): number {
 }
 
 function formatAmount(value: string | number | null | undefined): string {
-  const amount = parseAmount(value);
-  return new Intl.NumberFormat("en-US", {
-    minimumFractionDigits: 2,
+  return formatDecimal(parseAmount(value), {
     maximumFractionDigits: 2,
-  }).format(amount);
+  });
 }
 
 function blockNonDecimalKeys(event: KeyboardEvent) {

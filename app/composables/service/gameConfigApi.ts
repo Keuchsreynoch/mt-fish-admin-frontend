@@ -13,6 +13,7 @@ export interface GameConfig {
   rtp_floor: string;
   rtp_ceiling: string;
   jackpot_rate: string;
+  company_profit_rate: string;
   status_id: number;
   updated_at?: string | null;
   updated_by?: number | null;
@@ -22,6 +23,7 @@ export interface GameConfig {
 export interface UpdateGameConfigResponse {
   id: number;
   jackpot_rate: string;
+  company_profit_rate: string;
   rtp_target: string;
   rtp_floor: string;
   rtp_ceiling: string;
@@ -36,6 +38,7 @@ export interface UpdateGameConfigBody {
   rtp_floor: string;
   rtp_ceiling: string;
   jackpot_rate: string;
+  company_profit_rate: string;
   status_id: number;
 }
 
