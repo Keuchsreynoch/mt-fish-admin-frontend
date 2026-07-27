@@ -12,23 +12,8 @@
       </div>
 
       <v-card-text class="settings-dialog__body">
-        <v-row dense>
-          <v-col cols="6">
-            <v-text-field v-model="form.rtp_floor" type="text" inputmode="decimal" density="compact"
-              variant="outlined" :error-messages="errors.rtp_floor" hide-details="auto" placeholder="0"
-              class="stepper-input" @keydown="blockNonDecimalKeys" @paste.prevent="handleDecimalPaste"
-              @blur="normalizeField('rtp_floor')" />
-          </v-col>
-          <v-col cols="6">
-            <v-text-field v-model="form.rtp_target" :label="`${t('gameConfig.rtpTarget')} (%)`" type="text"
-              inputmode="decimal" density="compact" variant="outlined" :error-messages="errors.rtp_target"
-              hide-details="auto" @keydown="blockNonDecimalKeys" @paste.prevent="handleDecimalPaste"
-              @blur="normalizeField('rtp_target')" />
-          </v-col>
-        </v-row>
-
         <v-text-field v-model="form.rtp_ceiling" :label="`${t('gameConfig.rtpCeiling')} (%)`" type="text"
-          inputmode="decimal" density="compact" variant="outlined" class="mt-3" :error-messages="errors.rtp_ceiling"
+          inputmode="decimal" density="compact" variant="outlined" :error-messages="errors.rtp_ceiling"
           hide-details="auto" @keydown="blockNonDecimalKeys" @paste.prevent="handleDecimalPaste"
           @blur="normalizeField('rtp_ceiling')" />
 
@@ -46,24 +31,6 @@
               @paste.prevent="handleDecimalPaste" @blur="normalizeField('company_profit_rate')" />
           </v-col>
         </v-row>
-
-        <div class="status-toggle mt-4">
-          <div class="status-toggle__label">{{ t('gameConfig.status') }}</div>
-          <div class="status-toggle__options">
-            <v-btn :color="form.status_id === 1 ? 'success' : 'grey-lighten-2'"
-              :variant="form.status_id === 1 ? 'flat' : 'outlined'" size="small" class="status-btn"
-              @click="form.status_id = 1">
-              <v-icon size="14" class="mr-1">mdi-check-circle</v-icon>
-              {{ t('common.active') }}
-            </v-btn>
-            <v-btn :color="form.status_id === 0 ? 'error' : 'grey-lighten-2'"
-              :variant="form.status_id === 0 ? 'flat' : 'outlined'" size="small" class="status-btn"
-              @click="form.status_id = 0">
-              <v-icon size="14" class="mr-1">mdi-close-circle</v-icon>
-              {{ t('common.inactive') }}
-            </v-btn>
-          </div>
-        </div>
       </v-card-text>
 
       <v-divider />
@@ -119,11 +86,11 @@ type DecimalField = 'rtp_target' | 'rtp_floor' | 'rtp_ceiling' | 'jackpot_rate' 
 watch(() => props.modelValue, (isOpen) => {
   if (isOpen && props.poolData) {
     form.value = {
-      rtp_target: normalizeDecimalValue(props.poolData.rtp_target),
-      rtp_floor: normalizeDecimalValue(props.poolData.rtp_floor),
-      rtp_ceiling: normalizeDecimalValue(props.poolData.rtp_ceiling),
-      jackpot_rate: normalizeDecimalValue(props.poolData.jackpot_rate),
-      company_profit_rate: normalizeDecimalValue(props.poolData.company_profit_rate),
+      rtp_target: normalizePercentValue(props.poolData.rtp_target),
+      rtp_floor: normalizePercentValue(props.poolData.rtp_floor),
+      rtp_ceiling: normalizePercentValue(props.poolData.rtp_ceiling),
+      jackpot_rate: normalizePercentValue(props.poolData.jackpot_rate),
+      company_profit_rate: normalizePercentValue(props.poolData.company_profit_rate),
       status_id: props.poolData.status_id
     }
     errors.value = {}
@@ -158,11 +125,20 @@ function normalizeDecimalValue(value: string | number | null | undefined): strin
   const numericValue = Number.parseFloat(String(value))
   if (Number.isNaN(numericValue)) return ''
 
-  if (Number.isInteger(numericValue)) {
-    return numericValue.toFixed(2)
-  }
-
   return numericValue.toString()
+}
+
+function normalizePercentValue(value: string | number | null | undefined): string {
+  if (value === null || value === undefined || value === '') return ''
+
+  const numericValue = Number.parseFloat(String(value))
+  if (Number.isNaN(numericValue)) return ''
+
+  return normalizeDecimalValue(Number((numericValue * 100).toFixed(10)))
+}
+
+function toBackendPercent(value: string | number | null | undefined): string {
+  return normalizeDecimalValue(Number((parseAmount(value) / 100).toFixed(10)))
 }
 
 function normalizeField(field: DecimalField) {
@@ -219,7 +195,14 @@ function validate(): boolean {
 
 function onSubmit() {
   if (validate()) {
-    emit('submit', { ...form.value })
+    emit('submit', {
+      ...form.value,
+      rtp_target: toBackendPercent(form.value.rtp_target),
+      rtp_floor: toBackendPercent(form.value.rtp_floor),
+      rtp_ceiling: toBackendPercent(form.value.rtp_ceiling),
+      jackpot_rate: toBackendPercent(form.value.jackpot_rate),
+      company_profit_rate: toBackendPercent(form.value.company_profit_rate),
+    })
   }
 }
 

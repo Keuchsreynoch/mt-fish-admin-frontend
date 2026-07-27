@@ -35,6 +35,7 @@ export interface MemberItem {
   login_session: string | null;
   last_login_at: string | null;
   is_online: boolean;
+  is_active: boolean;
   status_id: number;
   timezone: string | null;
   pattern: string | null;
@@ -49,14 +50,28 @@ export interface MemberData {
   members: MemberItem[];
 }
 
+export interface UpdateJackpotStatusData {
+  member_id: number;
+  is_active: boolean;
+  updated_at: string;
+  updated_by: number;
+}
+
 export async function getMembers(page = 1, perPage = 10) {
   return useApiInterceptor<ApiResponse<MemberData>>(
     buildUrlWithParams("/members", {
-      paging_options: {
-        page,
-        per_page: perPage,
-      },
+      paging_options: { page, per_page: perPage },
     }),
     { method: "GET" },
+  );
+}
+
+export async function updateMemberJackpotStatus(memberId: number, isActive: boolean) {
+  return useApiInterceptor<ApiResponse<UpdateJackpotStatusData>>(
+    `/members/${memberId}/jackpot-status`,
+    {
+      method: "PATCH", 
+      body: { is_active: isActive },
+    },
   );
 }

@@ -18,7 +18,7 @@
                         <!-- <div class="brand-logo"></div> -->
                         <template v-if="!collapsed">
                             <div class="brand-text">
-                                <div class="brand-name">Fish Dashboard</div>
+                                <div class="brand-name">{{ t('common.appName') }}</div>
                                 <div class="brand-sub">{{ t('layout.adminConsole') }}</div>
                             </div>
                         </template>
@@ -115,7 +115,7 @@
                     <div class="user-card" :class="{ 'user-card--collapsed': collapsed }">
                         <v-avatar size="34" class="user-avatar">
                             <img src="https://i.pinimg.com/736x/61/4a/14/614a1425c0dd8f30fd5d030bba584715.jpg"
-                                alt="Admin" />
+                                :alt="t('common.admin')" />
                         </v-avatar>
                         <template v-if="!collapsed">
                             <div class="user-info">
@@ -135,7 +135,7 @@
         <!-- ───────── Mobile Top Bar (mobile only, no header on desktop) ───────── -->
         <v-app-bar v-if="isMobile" flat height="56" class="omagi-mobile-bar">
             <v-app-bar-nav-icon @click="drawer = !drawer" />
-            <div class="brand-name">Fish Dashboard</div>
+            <div class="brand-name">{{ t('common.appName') }}</div>
         </v-app-bar>
 
         <!-- ───────── Main Content ───────── -->

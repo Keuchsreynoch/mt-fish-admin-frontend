@@ -1,144 +1,3 @@
-<template>
-  <div class="coin-page">
-    <div class="page-header">
-      <div>
-        <h1 class="page-title">{{ t('jackpot.memberBonus') }}</h1>
-      </div>
-    </div>
-
-    <div class="content-wepper flex flex-col gap-2">
-      <div class="filter-row">
-        <div class="filter-left">
-          <span class="filter-label">{{ t('report.date') }}</span>
-          <v-text-field
-            v-model="filterDate"
-            type="date"
-            density="compact"
-            hide-details
-            variant="outlined"
-            style="max-width: 180px"
-            class="slate-input"
-            @update:model-value="handleDateChange"
-          />
-        </div>
-
-        <div class="filter-right">
-          <PeriodFilterButtons
-            :active-period="activePeriod"
-            @update:active-period="setQuickPeriod"
-          />
-        </div>
-      </div>
-
-      <AppTable
-        :columns="columns"
-        :items="bonusData.slice(0, 10)"
-        :loading="isLoading"
-        :error="errorMessage"
-      >
-        <template #cell-amount="{ item }">
-          <span class="positive">{{ formatAmount(parseAmount(item.amount)) }}</span>
-        </template>
-
-        <template #cell-note="{ item }">
-          {{ item.note || '-' }}
-        </template>
-
-        <template #cell-status_id="{ item }">
-          {{ getStatusLabel(item.status_id) }}
-        </template>
-
-        <template #cell-created_at="{ item }">
-          {{ formatDateTime(item.created_at) }}
-        </template>
-      </AppTable>
-    </div>
-
-    <!-- FAB -->
-    <v-btn
-      class="create-fab"
-      color="create"
-      icon="mdi-plus"
-      size="large"
-      elevation="8"
-          :aria-label="t('jackpot.createMemberBonus')"
-      @click="openCreateDialog"
-    />
-
-    <!-- Create dialog -->
-    <v-dialog v-model="createDialog" max-width="560" >
-      <v-card class="create-dialog-card">
-        <div class="dialog-header">
-          <div class="dialog-title-row">
-            <v-icon size="20" color="rgb(var(--v-theme-primary))">mdi-cash-plus</v-icon>
-            <h2>{{ t('jackpot.createMemberBonus') }}</h2>
-          </div>
-          <v-btn icon size="small" variant="text" @click="closeCreateDialog">
-            <v-icon>mdi-close</v-icon>
-          </v-btn>
-        </div>
-
-        <v-divider />
-
-        <div class="dialog-body">
-          <div class="form-grid">
-            <div class="form-group half">
-              <label class="form-label">{{ t('members.member') }} <span class="required">*</span></label>
-              <v-text-field
-                v-model="createForm.member_name"
-                type="text"
-                inputmode="text"
-                autocomplete="off"
-                density="compact"
-                variant="outlined"
-                hide-details="auto"
-                placeholder="Member Name"
-              />
-            </div>
-
-            <div class="form-group half">
-              <label class="form-label">{{ t('jackpot.amount') }} <span class="required">*</span></label>
-              <v-text-field
-                :model-value="createForm.amount"
-                type="text"
-                inputmode="decimal"
-                autocomplete="off"
-                density="compact"
-                variant="outlined"
-                hide-details="auto"
-                placeholder="15000"
-                @keydown="blockNonDecimalKeys"
-                @paste="handleDecimalPaste"
-                @update:model-value="createForm.amount = sanitizeDecimalInput($event)"
-              />
-            </div>
-
-            <div class="form-group full">
-              <label class="form-label">{{ t('jackpot.note') }}</label>
-              <v-text-field
-                v-model="createForm.note"
-                density="compact"
-                variant="outlined"
-                hide-details="auto"
-                :placeholder="t('common.optionalNote')"
-              />
-            </div>
-          </div>
-        </div>
-
-        <v-divider />
-
-        <div class="dialog-actions">
-          <v-btn variant="outlined" color="cancel" @click="closeCreateDialog">{{ t('common.cancel') }}</v-btn>
-          <v-btn color="create" :loading="createLoading" @click="submitCreateBonus">
-            {{ t('jackpot.createMemberBonus') }}
-          </v-btn>
-        </div>
-      </v-card>
-    </v-dialog>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import AppTable, { type TableColumn } from '~/components/DynamicTableStyle.vue'
@@ -157,26 +16,26 @@ const { t } = useFrontendI18n()
 // ── Columns ───────────────────────────────────────────────────────────────────
 
 const columns = computed<TableColumn<MemberBonusItem>[]>(() => [
-  { key: 'index',      label: 'លេខរៀង',       type: 'index' },
-  { key: 'member_name',  label: t('members.member') },
-  { key: 'amount',     label: t('jackpot.amount') },
-  { key: 'note',       label: t('jackpot.note') },
-  { key: 'order',      label: t('report.bonus') },
-  { key: 'status_id',  label: t('gameConfig.status') },
+  { key: 'index', label: 'លេខរៀង', type: 'index' },
+  { key: 'member_name', label: t('members.member') },
+  { key: 'amount', label: t('jackpot.amount') },
+  { key: 'note', label: t('jackpot.note') },
+  { key: 'order', label: t('report.bonus') },
+  { key: 'status_id', label: t('gameConfig.status') },
   { key: 'created_by', label: t('gameConfig.createBY') },
   { key: 'created_at', label: t('gameConfig.createAT') },
 ])
 
 // ── State ─────────────────────────────────────────────────────────────────────
 
-const filterDate    = ref(formatDateForInput(new Date()))
-const bonusData     = ref<MemberBonusItem[]>([])
-const isLoading     = ref(false)
-const errorMessage  = ref('')
-const activePeriod  = ref<'custom' | 'today' | 'yesterday' | 'this_week'>('today')
-const createDialog  = ref(false)
+const filterDate = ref(formatDateForInput(new Date()))
+const bonusData = ref<MemberBonusItem[]>([])
+const isLoading = ref(false)
+const errorMessage = ref('')
+const activePeriod = ref<'custom' | 'today' | 'yesterday' | 'this_week'>('today')
+const createDialog = ref(false)
 const createLoading = ref(false)
-const createForm    = ref({
+const createForm = ref({
   member_name: '',
   amount: '',
   note: '',
@@ -204,6 +63,10 @@ function sanitizeDecimalInput(value: string | number | null | undefined): string
   }
 
   return `${integerPart || '0'}.${fractionPart}`
+}
+
+function normalizeMemberName(value: string | number | null | undefined): string {
+  return String(value ?? '').toUpperCase()
 }
 
 function blockNonDecimalKeys(event: KeyboardEvent) {
@@ -242,9 +105,9 @@ function formatAmount(value: number): string {
 }
 
 function formatDateForInput(date: Date): string {
-  const year  = date.getFullYear()
+  const year = date.getFullYear()
   const month = `${date.getMonth() + 1}`.padStart(2, '0')
-  const day   = `${date.getDate()}`.padStart(2, '0')
+  const day = `${date.getDate()}`.padStart(2, '0')
   return `${year}-${month}-${day}`
 }
 
@@ -258,17 +121,17 @@ function formatDateTime(value: string): string {
   }).format(date)
 }
 
-function getTodayDate()        { return formatDateForInput(new Date()) }
-function getYesterdayDate()    { const d = new Date(); d.setDate(d.getDate() - 1); return formatDateForInput(d) }
+function getTodayDate() { return formatDateForInput(new Date()) }
+function getYesterdayDate() { const d = new Date(); d.setDate(d.getDate() - 1); return formatDateForInput(d) }
 function getSevenDaysAgoDate() { const d = new Date(); d.setDate(d.getDate() - 6); return formatDateForInput(d) }
 
 function getCurrentRange(period = activePeriod.value) {
   const today = getTodayDate()
   switch (period) {
-    case 'today':     return { period, start: today,                end: today }
-    case 'yesterday': return { period, start: getYesterdayDate(),   end: getYesterdayDate() }
+    case 'today': return { period, start: today, end: today }
+    case 'yesterday': return { period, start: getYesterdayDate(), end: getYesterdayDate() }
     case 'this_week': return { period, start: getSevenDaysAgoDate(), end: today }
-    default:          return { period: 'custom', start: filterDate.value, end: filterDate.value }
+    default: return { period: 'custom', start: filterDate.value, end: filterDate.value }
   }
 }
 
@@ -284,15 +147,15 @@ function getStatusLabel(statusId: number): string {
 // ── Data fetching ─────────────────────────────────────────────────────────────
 
 async function fetchBonuses() {
-  isLoading.value    = true
+  isLoading.value = true
   errorMessage.value = ''
   try {
     const response = await getMemberBonuses(1, 10, filterDate.value, filterDate.value)
-    const payload  = response?.data.value
-    bonusData.value  = (payload?.data?.bonuses ?? []).slice(0, 10)
+    const payload = response?.data.value
+    bonusData.value = (payload?.data?.bonuses ?? []).slice(0, 10)
   } catch (error: any) {
     console.error('[member-bonuses] failed to load', error)
-    bonusData.value  = []
+    bonusData.value = []
     errorMessage.value = error?.message || t('jackpot.failedToLoadHistory')
   } finally {
     isLoading.value = false
@@ -305,7 +168,7 @@ function handleDateChange() { activePeriod.value = 'custom' }
 
 function setQuickPeriod(period: 'today' | 'yesterday' | 'this_week') {
   activePeriod.value = period
-  filterDate.value   = getCurrentRange(period).start
+  filterDate.value = getCurrentRange(period).start
 }
 
 function openCreateDialog() {
@@ -318,7 +181,7 @@ function closeCreateDialog() {
 }
 
 async function submitCreateBonus() {
-  const amount   = parseAmount(createForm.value.amount)
+  const amount = parseAmount(createForm.value.amount)
 
   if (!createForm.value.member_name.trim() || amount <= 0) {
     showError(t('report.invalidAmount'))
@@ -327,9 +190,9 @@ async function submitCreateBonus() {
   createLoading.value = true
   try {
     const response = await createMemberBonus({
-      member_name: createForm.value.member_name.trim(),
-      amount:    createForm.value.amount,
-      note:      createForm.value.note ?? '',
+      member_name: normalizeMemberName(createForm.value.member_name).trim(),
+      amount: createForm.value.amount,
+      note: createForm.value.note ?? '',
     })
     const payload = response?.data.value
     showSuccess(payload?.message || t('jackpot.memberBonusCreated'))
@@ -346,7 +209,106 @@ async function submitCreateBonus() {
 onMounted(fetchBonuses)
 
 watch(filterDate, fetchBonuses)
-</script>
+</script>       
+
+<template>
+  <div class="coin-page">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">{{ t('jackpot.memberBonus') }}</h1>
+      </div>
+    </div>
+
+    <div class="content-wepper flex flex-col gap-2">
+      <div class="filter-row">
+        <div class="filter-left">
+          <span class="filter-label">{{ t('report.date') }}</span>
+          <v-text-field v-model="filterDate" type="date" density="compact" hide-details variant="outlined"
+            style="max-width: 180px" class="slate-input" @update:model-value="handleDateChange" />
+        </div>
+
+        <div class="filter-right">
+          <PeriodFilterButtons :active-period="activePeriod" @update:active-period="setQuickPeriod" />
+        </div>
+      </div>
+
+      <AppTable :columns="columns" :items="bonusData.slice(0, 10)" :loading="isLoading" :error="errorMessage">
+        <template #cell-amount="{ item }">
+          <span class="positive">{{ formatAmount(parseAmount(item.amount)) }}</span>
+        </template>
+
+        <template #cell-note="{ item }">
+          {{ item.note || '-' }}
+        </template>
+
+        <template #cell-status_id="{ item }">
+          {{ getStatusLabel(item.status_id) }}
+        </template>
+
+        <template #cell-created_at="{ item }">
+          {{ formatDateTime(item.created_at) }}
+        </template>
+      </AppTable>
+    </div>
+
+    <!-- FAB -->
+    <v-btn class="create-fab" color="create" icon="mdi-plus" size="large" elevation="8"
+      :aria-label="t('jackpot.createMemberBonus')" @click="openCreateDialog" />
+
+    <!-- Create dialog -->
+    <v-dialog v-model="createDialog" max-width="560">
+      <v-card class="create-dialog-card">
+        <div class="dialog-header">
+          <div class="dialog-title-row">
+            <v-icon size="20" color="rgb(var(--v-theme-primary))">mdi-cash-plus</v-icon>
+            <h2>{{ t('jackpot.createMemberBonus') }}</h2>
+          </div>
+          <v-btn icon size="small" variant="text" @click="closeCreateDialog">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </div>
+
+        <v-divider />
+
+        <div class="dialog-body">
+          <div class="form-grid">
+            <div class="form-group half">
+              <label class="form-label">{{ t('members.member') }} <span class="required">*</span></label>
+              <v-text-field :model-value="createForm.member_name" type="text" inputmode="text" autocomplete="off"
+                density="compact" variant="outlined" hide-details="auto"
+                :placeholder="t('common.memberNamePlaceholder')"
+                @update:model-value="createForm.member_name = normalizeMemberName($event)" />
+            </div>
+
+            <div class="form-group half">
+              <label class="form-label">{{ t('jackpot.amount') }} <span class="required">*</span></label>
+              <v-text-field :model-value="createForm.amount" type="text" inputmode="decimal" autocomplete="off"
+                density="compact" variant="outlined" hide-details="auto" placeholder="15000"
+                @keydown="blockNonDecimalKeys" @paste="handleDecimalPaste"
+                @update:model-value="createForm.amount = sanitizeDecimalInput($event)" />
+            </div>
+
+            <div class="form-group full">
+              <label class="form-label">{{ t('jackpot.note') }}</label>
+              <v-text-field v-model="createForm.note" density="compact" variant="outlined" hide-details="auto"
+                :placeholder="t('common.optionalNote')" />
+            </div>
+          </div>
+        </div>
+
+        <v-divider />
+
+        <div class="dialog-actions">
+          <v-btn variant="outlined" color="cancel" @click="closeCreateDialog">{{ t('common.cancel') }}</v-btn>
+          <v-btn color="create" :loading="createLoading" @click="submitCreateBonus">
+            {{ t('jackpot.createMemberBonus') }}
+          </v-btn>
+        </div>
+      </v-card>
+    </v-dialog>
+  </div>
+</template>
+
 
 <style scoped>
 .coin-page {
@@ -471,8 +433,13 @@ watch(filterDate, fetchBonuses)
   gap: 6px;
 }
 
-.form-group.full  { grid-column: 1 / -1; }
-.form-group.half  { min-width: 0; }
+.form-group.full {
+  grid-column: 1 / -1;
+}
+
+.form-group.half {
+  min-width: 0;
+}
 
 .form-label {
   font-size: 13px;

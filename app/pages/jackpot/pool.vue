@@ -1,265 +1,84 @@
-<template>
-  <div class="jackpot flex flex-col gap-3">
-    <!-- Page header with Refresh -->
-    <div class="page-header mt-3">
-      <h1 class="page-title text-2xl font-semibold">{{ t('jackpot.management') }}</h1>
-      <!-- <v-btn color="success" variant="flat" class="refresh-btn" :loading="isLoading" @click="fetchCurrentPool">
-        <v-icon size="16" class="mr-1">mdi-refresh</v-icon>
-        {{ t('gameConfig.refresh') }}
-      </v-btn> -->
-    </div>
-
-    <!-- Top summary strip -->
-    <v-row dense class="summary-strip">
-      <v-col cols="6" md="3">
-        <div class="strip-card strip-card--amber">
-          <div class="strip-label">{{ t('jackpot.currentAmount') }}</div>
-          <div class="strip-value">{{ formatAmount(getCurrentAmount) }}</div>
-        </div>
-      </v-col>
-      <v-col cols="6" md="3">
-        <div class="strip-card strip-card--green">
-          <div class="strip-label">{{ t('jackpot.threshold') }}</div>
-          <div class="strip-value">{{ formatAmount(getThresholdAmount) }}</div>
-        </div>
-      </v-col>
-      <v-col cols="6" md="3">
-        <div class="strip-card strip-card--blue">
-          <div class="strip-label">{{ t('jackpot.payoutPercent') }}</div>
-          <div class="strip-value">{{ formatAmount(getPayoutPercent) }}%</div>
-        </div>
-      </v-col>
-      <v-col cols="6" md="3">
-        <div class="strip-card strip-card--violet">
-          <div class="strip-label">{{ t('jackpot.fixedPayout') }}</div>
-          <div class="strip-value">{{ formatAmount(getFixedPayoutAmount) }}</div>
-        </div>
-      </v-col>
-    </v-row>
-
-    <!-- Tabs -->
-    <div class="jackpot-tabs">
-      <v-tabs v-model="activeTab" density="compact" color="primary" class="jackpot-tabs__bar">
-        <v-tab value="settings" class="tab-item">{{ t('jackpot.global') }}</v-tab>
-        <v-tab value="ledger" class="tab-item">{{ t('jackpot.ledger') }}</v-tab>
-        <v-tab value="member-bonus" class="tab-item">{{ t('jackpot.memberBonus') }}</v-tab>
-        <v-tab value="history" class="tab-item">{{ t('jackpot.history') }}</v-tab>
-      </v-tabs>
-
-      <v-window v-model="activeTab" class="jackpot-tabs__window">
-        <!-- Global tab: config + reservations -->
-        <v-window-item value="settings">
-          <!-- Global Jackpot Configuration -->
-          <v-card class="config-card mb-3" elevation="0">
-            <div class="config-card__header">
-              <h2 class="config-card__title">{{ t('jackpot.globalConfig') }}</h2>
-              <!-- THIS IS THE FIX: open dialog, not inline editor -->
-              <v-btn
-                icon
-                size="small"
-                color="primary"
-                variant="flat"
-                class="config-card__settings-btn"
-                @click="openSettingsDialog"
-              >
-                <v-icon size="18">mdi-cog</v-icon>
-              </v-btn>
-            </div>
-
-            <v-row dense class="config-grid">
-              <v-col cols="6" sm="4">
-                <div class="tile tile--blue">
-                  <div class="tile-label">
-                    <!-- <v-icon size="14" class="tile-icon">mdi-currency-usd</v-icon> -->
-                    {{ t('jackpot.currentAmount') }}
-                  </div>
-                  <div class="tile-value">{{ formatAmount(getCurrentAmount) }}</div>
-                </div>
-              </v-col>
-
-              <v-col cols="6" sm="4">
-                <div class="tile tile--purple">
-                  <div class="tile-label">
-                    <!-- <v-icon size="14" class="tile-icon">mdi-flag</v-icon> -->
-                    {{ t('jackpot.threshold') }}
-                  </div>
-                  <div class="tile-value">{{ formatAmount(getThresholdAmount) }}</div>
-                </div>
-              </v-col>
-
-              <v-col cols="6" sm="4">
-                <div class="tile tile--amber">
-                  <div class="tile-label">
-                    <!-- <v-icon size="14" class="tile-icon">mdi-dice-multiple</v-icon> -->
-                    {{ t('jackpot.winChance') }}
-                  </div>
-                  <div class="tile-value">1/{{ poolData?.chance_denom ?? 0 }}</div>
-                </div>
-              </v-col>
-
-              <v-col cols="6" sm="4">
-                <div class="tile tile--green">
-                  <div class="tile-label">
-                    <!-- <v-icon size="14" class="tile-icon">mdi-percent</v-icon> -->
-                    {{ t('jackpot.payoutPercent') }}
-                  </div>
-                  <div class="tile-value">{{ formatAmount(getPayoutPercent) }}%</div>
-                </div>
-              </v-col>
-
-              <v-col cols="6" sm="4">
-                <div class="tile tile--red">
-                  <div class="tile-label">
-                    <!-- <v-icon size="14" class="tile-icon">mdi-bank-transfer-in</v-icon> -->
-                    {{ t('jackpot.companyTopup') }}
-                  </div>
-                  <div class="tile-value">{{ formatAmount(getCompanyTopupAmount) }}</div>
-                </div>
-              </v-col>
-
-              <v-col cols="6" sm="4">
-                <div class="tile tile--indigo">
-                  <div class="tile-label">
-                    <!-- <v-icon size="14" class="tile-icon">mdi-trophy</v-icon> -->
-                    {{ t('jackpot.fixedPayout') }}
-                  </div>
-                  <div class="tile-value">{{ formatAmount(getFixedPayoutAmount) }}</div>
-                </div>
-              </v-col>
-            </v-row>
-          </v-card>
-
-          <!-- Jackpot Reservations -->
-          <!-- <v-card class="reservations-card" elevation="0">
-            <div class="reservations-card__header">
-              <div>
-                <h2 class="reservations-card__title">
-                  <v-icon size="18" class="mr-1" color="amber-darken-2">mdi-crown</v-icon>
-                  {{ t('jackpot.jackpotReservations') }}
-                </h2>
-                <div class="reservations-card__subtitle">
-                  {{ t('jackpot.showingFirst10') }}
-                </div>
-              </div>
-            </div>
-
-            <div class="reservations-card__filters">
-              <v-text-field v-model="reservationSearch" :label="t('jackpot.memberName')" :placeholder="t('jackpot.searchMemberName')"
-                prepend-inner-icon="mdi-magnify" density="compact" variant="outlined" hide-details clearable
-                class="reservations-search" @keyup.enter="fetchReservations" />
-              <v-btn variant="outlined" density="comfortable" class="reset-btn" @click="resetReservationFilters">
-                <v-icon size="16" class="mr-1">mdi-refresh</v-icon>
-                {{ t('common.reset') }}
-              </v-btn>
-            </div>
-
-            <AppTable
-              :columns="reservationColumns"
-              :items="reservationRows"
-              :loading="reservationsLoading"
-            >
-              <template #cell-jackpot="{ item }">
-                {{ formatAmount(item.jackpot) }}
-              </template>
-
-              <template #cell-updated_at="{ item }">
-                {{ formatDateTime(item.updated_at) }}
-              </template>
-
-              <template #cell-update="{ item }">
-                <v-btn size="small" variant="text" color="primary" @click="onUpdateReservation(item)">
-                  {{ t('jackpot.update') }}
-                </v-btn>
-              </template>
-            </AppTable>
-          </v-card> -->
-        </v-window-item>
-
-        <v-window-item value="member-bonus">
-          <JackpotMember />
-        </v-window-item>
-
-        <v-window-item value="history">
-          <JackpotHistory />
-        </v-window-item>
-
-        <v-window-item value="ledger">
-          <JackpotLeger />
-        </v-window-item>
-      </v-window>
-    </div>
-
-    <!-- FIXED: DIALOG USAGE INSTEAD OF INLINE CompanyPopUp -->
-    <JackpotSettingsDialog
-      v-model="showSettings"
-      :pool-data="poolData"
-      :update-loading="updateLoading"
-      @submit="onSettingsSubmit"
-      @cancel="showSettings = false"
-    />
-  </div>
-</template>
-
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import AppTable, { type TableColumn } from "~/components/DynamicTableStyle.vue";
 import JackpotSettingsDialog, { type JackpotSettingsForm } from "~/components/JackpotSettingsForm.vue";
+import MemberBonusDialog, { type BonusMember } from "~/components/MemberBonusDialog.vue";
 import { useFrontendI18n } from "~/composables/i18n";
 import { formatDecimal } from "~/utils/numberFormat";
-
+import { getReports, type ReportItem } from '~/composables/service/reportApi'
 import { useSnackbar } from "~/composables/useSnackbar";
-import { createMemberBonus } from "~/composables/service/memberBonusApi";
 import {
-  createJackpotCompanyTopup,
+  createMemberBonus,
+  getMemberBonuses,
+  type MemberBonusItem,
+} from "~/composables/service/memberBonusApi";
+import {
   getJackpotCurrent,
   type JackpotCurrent,
   type UpdateJackpotCurrentBody,
   updateJackpotCurrent,
 } from "~/composables/service/jackpotCurrentPoolApi";
+import {
+  getJackpotHistories,
+  type JackpotHistoryItem,
+} from "~/composables/service/jackpotHistoryApi";
 
 const { showSuccess, showError } = useSnackbar();
 const { t } = useFrontendI18n();
 
-const activeTab = ref("settings");
-const showSettings = ref(false); // v-model for dialog
+const showSettings = ref(false);
 
 const poolData = ref<JackpotCurrent | null>(null);
 const isLoading = ref(false);
 const errorMessage = ref("");
 const updateLoading = ref(false);
+const reportData = ref<ReportItem[]>([])
+const reportTotal = ref<{ total_bet: string; total_valid_bet: string; total_winlose: string } | null>(null)
 
-// reservations (unchanged)
-interface JackpotReservationRow {
-  id: string | number;
-  name: string;
-  jackpot: string | number;
-  updated_at: string | null;
-  status: string;
-  status_id: number;
-}
-const reservations = ref<JackpotReservationRow[]>([]);
-const reservationsLoading = ref(false);
 const reservationSearch = ref("");
-const reservationRows = computed(() => reservations.value.slice(0, 10));
-const reservationColumns = computed<TableColumn<JackpotReservationRow>[]>(() => [
-  { key: "name", label: t('jackpot.name') },
-  { key: "jackpot", label: t('jackpot.jackpot') },
-  { key: "updated_at", label: t('jackpot.updatedAt') },
-  { key: "status", label: t('jackpot.status') },
-  { key: "status_id", label: t('jackpot.statusId') },
-  { key: "update", label: t('jackpot.update') },
-]);
+const playersLoading = ref(false);
+
+// Jackpot reservations/history (used for the winner-chip grid)
+const jackpotHistories = ref<JackpotHistoryItem[]>([]);
+const historiesLoading = ref(false);
+
+// Wrap the single JackpotCurrent record into an array so AppTable can render it as one row
+const jackpotTableItems = computed<JackpotCurrent[]>(() => (poolData.value ? [poolData.value] : []));
+
+const columnsReport = computed<TableColumn<ReportItem>[]>(() => [
+  { key: 'index', label: 'លេខរៀង', type: 'index' },
+  { key: 'member_name', label: t('members.member') },
+  { key: 'total_bet_amount', label: t('report.turnOver'), align: 'center' },
+  {
+    key: 'total_win_lose',
+    label: t('report.winLose'),
+    align: 'center',
+    cellClass: (item: ReportItem) => parseAmount(item.total_win_lose) >= 0 ? 'positive' : 'negative',
+  },
+  { key: 'bonus', label: t('report.bonus'), align: 'center' },
+])
+
+const columnsCurrentJackpot = computed<TableColumn<JackpotCurrent>[]>(() => [
+  { key: 'index', label: 'លេខរៀង', type: 'index' },
+  { key: 'current_amount', label: t('jackpot.current_amount') },
+  { key: 'threshold_amount', label: t('jackpot.threshold_amount'), align: 'center' },
+  { key: 'chance_denom', label: t('jackpot.chance_denom'), align: 'center' },
+])
+
+// --- Bonus dialog (per-player) ---
+const bonusDialog = ref(false)
+const selectedMember = ref<BonusMember | null>(null)
+const memberBonuses = ref<MemberBonusItem[]>([]);
+
+function openBonusDialog(item: ReportItem) {
+  selectedMember.value = { id: (item as any).member_id, name: item.member_name }
+  bonusDialog.value = true
+}
 
 function parseAmount(value: string | number | null | undefined): number {
   if (value === null || value === undefined || value === "") return 0;
   return Number.parseFloat(String(value)) || 0;
 }
-
-const getCurrentAmount = computed(() => parseAmount(poolData.value?.current_amount));
-const getThresholdAmount = computed(() => parseAmount(poolData.value?.threshold_amount));
-const getPayoutPercent = computed(() => parseAmount(poolData.value?.payout_percent));
-const getCompanyTopupAmount = computed(() => parseAmount(poolData.value?.company_topup_amount));
-const getFixedPayoutAmount = computed(() => parseAmount(poolData.value?.jackpot_fixed_payout_amount));
 
 function formatAmount(value: string | number | null | undefined): string {
   return formatDecimal(parseAmount(value), { maximumFractionDigits: 2 });
@@ -267,14 +86,8 @@ function formatAmount(value: string | number | null | undefined): string {
 function toAmountString(v: string | number | null | undefined): string {
   return parseAmount(v).toFixed(2);
 }
-function formatDateTime(value: string | null | undefined): string {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat("en-US", {
-    year: "numeric", month: "2-digit", day: "2-digit",
-    hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
-  }).format(date);
+function toPercentDecimalString(v: string | number | null | undefined): string {
+  return Number((parseAmount(v) / 100).toFixed(10)).toString();
 }
 
 async function fetchCurrentPool() {
@@ -294,22 +107,26 @@ async function fetchCurrentPool() {
   }
 }
 
-// --- DIALOG OPEN ---
 function openSettingsDialog() {
   showSettings.value = true;
 }
 
-// --- DIALOG SUBMIT (receives payload from dialog) ---
 async function onSettingsSubmit(form: JackpotSettingsForm) {
   const chanceDenom = Number.parseInt(form.chance_denom, 10) || 1;
+  const payoutPercent = parseAmount(form.payout_percent);
   const companyTopupAmount = parseAmount(form.company_topup_amount);
   const memberBonusAmount = parseAmount(form.member_bonus_amount);
   const memberName = form.member_name.trim();
 
+  if (payoutPercent < 0 || payoutPercent > 100) {
+    showError(t('gameConfig.mustBeBetween', { field: t('jackpot.payoutPercentLabel') }));
+    return;
+  }
+
   const payload: UpdateJackpotCurrentBody = {
     threshold_amount: toAmountString(form.threshold_amount),
     chance_denom: chanceDenom,
-    payout_percent: toAmountString(form.payout_percent),
+    payout_percent: toPercentDecimalString(payoutPercent),
     min_eligible_bet_amount: toAmountString(form.min_eligible_bet_amount),
     jackpot_fixed_payout_amount: toAmountString(form.jackpot_fixed_payout_amount),
   };
@@ -317,12 +134,6 @@ async function onSettingsSubmit(form: JackpotSettingsForm) {
   updateLoading.value = true;
   try {
     const response = await updateJackpotCurrent(payload);
-    if (companyTopupAmount > 0) {
-      await createJackpotCompanyTopup({
-        amount: toAmountString(companyTopupAmount),
-        note: "",
-      });
-    }
     if (memberName && memberBonusAmount > 0) {
       await createMemberBonus({
         member_name: memberName,
@@ -348,70 +159,412 @@ async function onSettingsSubmit(form: JackpotSettingsForm) {
   }
 }
 
-// reservations stubs
-async function fetchReservations() {
-  reservationsLoading.value = true;
-  try { /* your API */ } catch (e:any){ showError(e?.message || t('jackpot.failedToLoadReservations')); }
-  finally { reservationsLoading.value = false; }
+async function fetchJackpotHistories() {
+  historiesLoading.value = true;
+  errorMessage.value = "";
+  try {
+    const response = await getJackpotHistories(1, 10);
+    const payload = response?.data.value;
+    jackpotHistories.value = payload?.data?.histories ?? [];
+  } catch (e: any) {
+    jackpotHistories.value = [];
+    showError(e?.message || t('jackpot.failedToLoadReservations'));
+  } finally {
+    historiesLoading.value = false;
+  }
 }
-function resetReservationFilters() {
-  reservationSearch.value = "";
-  fetchReservations();
+
+async function fetchBonuses() {
+  try {
+    const response = await getMemberBonuses(1, 10, "", "", {
+      filters: [
+        {
+          property: "b.status_id",
+          operator: "eq",
+          value: 1,
+        },
+      ],
+    });
+    const payload = response?.data.value;
+    memberBonuses.value = payload?.data?.bonuses ?? [];
+  } catch (e: any) {
+    memberBonuses.value = [];
+    showError(e?.message || t('jackpot.failedToLoadReservations'));
+  }
 }
-function onUpdateReservation(row: JackpotReservationRow) {
-  console.log("update reservation", row);
+
+// --- player list ---
+async function fetchPlayers() {
+  playersLoading.value = true
+  errorMessage.value = ""
+
+  try {
+    const today = new Date().toISOString().split("T")[0] // YYYY-MM-DD
+
+    const response = await getReports(
+      1,        // page
+      10,       // page size
+      today,    // start date
+      today     // end date
+    )
+
+    const payload = response?.data.value
+
+    reportData.value = payload?.data?.reports ?? []
+    reportTotal.value = payload?.data?.total_report ?? null
+
+  } catch (e: any) {
+    reportData.value = []
+    reportTotal.value = null
+    showError(e?.message || t("report.failedToLoad"))
+  } finally {
+    playersLoading.value = false
+  }
 }
 
 onMounted(() => {
   fetchCurrentPool();
-  fetchReservations();
+  fetchBonuses();
+  fetchPlayers();
+  fetchJackpotHistories();
 });
 </script>
 
+<template>
+  <div class="jackpot flex flex-col gap-3">
+    <div class="page-header mt-3">
+      <h1 class="page-title text-2xl font-semibold">{{ t('jackpot.management') }}</h1>
+      <v-btn color="success" variant="flat" class="refresh-btn" :loading="isLoading" @click="fetchCurrentPool">
+        <v-icon size="16" class="mr-1">mdi-refresh</v-icon>
+        {{ t('gameConfig.refresh') }}
+      </v-btn>
+    </div>
+
+    <div class="jackpot-tabs">
+      <div class="settings-flex-row mt-3">
+        <v-card class="players-card" elevation="0">
+          <div class="winner_card__header">
+            <h2 class="winner_card__title">
+              <span class="text-2xl">🎮</span>
+              Member Bets
+            </h2>
+          </div>
+
+          <div class="table-scroll">
+            <AppTable :columns="columnsReport" :items="reportData" :loading="playersLoading" :error="errorMessage">
+              <template #cell-total_bet_amount="{ item }">
+                <span class="positive">{{ formatAmount(parseAmount(item.total_bet_amount)) }}</span>
+              </template>
+              <template #cell-total_win_lose="{ item }">
+                {{ formatAmount(parseAmount(item.total_win_lose)) }}
+              </template>
+              <template #cell-bonus="{ item }">
+                <v-btn size="small" variant="flat" color="create" class="bonus-btn" @click="openBonusDialog(item)">
+                  {{ t('report.addBonus') }}
+                </v-btn>
+              </template>
+            </AppTable>
+          </div>
+        </v-card>
+
+        <!-- Jackpot global config -->
+        <v-card class="winner_card" elevation="0">
+          <div class="winner_card__header">
+            <h2 class="winner_card__title">
+              <span class="text-2xl">🎰</span>
+              <span class="config-card__title">{{ t('jackpot.globalConfig') }}</span>
+            </h2>
+
+            <v-btn icon size="small" color="primary" variant="flat" class="config-card__settings-btn"
+              @click="openSettingsDialog">
+              <v-icon size="18">mdi-cog</v-icon>
+            </v-btn>
+          </div>
+          <div class="pool-summary">
+            <AppTable :columns="columnsCurrentJackpot" :items="jackpotTableItems" :loading="isLoading"
+              :error="errorMessage">
+              <template #cell-current_amount="{ item }">
+                <span class="positive">{{ formatAmount(item.current_amount) }}</span>
+              </template>
+              <template #cell-threshold_amount="{ item }">
+                {{ formatAmount(item.threshold_amount) }}
+              </template>
+              <template #cell-chance_denom="{ item }">
+                <v-chip size="small" variant="tonal" color="primary">
+                  1 / {{ item.chance_denom }}
+                </v-chip>
+              </template>
+            </AppTable>
+          </div>
+        </v-card>
+      </div>
+
+      <v-card class="reservations-jackpot-card mt-3" elevation="0">
+        <div class="recent-winners">
+          <h3 class="recent-winners__title">
+            <span class="text-2xl">👑</span>
+            {{ t('jackpot.jackpotReservations') }}
+          </h3>
+
+          <div class="recent-winners__grid">
+            <div v-for="(history, idx) in jackpotHistories" :key="`${history.id}-${history.payout_coin}-${idx}`"
+              class="winner-chip">
+              <v-icon size="14" color="amber-darken-2">mdi-ticket-confirmation-outline</v-icon>
+              <span class="winner-chip__id">ID: {{ history.member_name }}</span>
+
+              <span class="winner-chip__amount">
+                <v-icon size="14" color="success">mdi-cash-multiple</v-icon>
+                {{ formatAmount(history.payout_coin) }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </v-card>
+    </div>
+
+    <JackpotSettingsDialog v-model="showSettings" :pool-data="poolData" :update-loading="updateLoading"
+      @submit="onSettingsSubmit" @cancel="showSettings = false" />
+    <MemberBonusDialog v-model="bonusDialog" :member="selectedMember" @created="fetchPlayers" />
+  </div>
+</template>
 <style scoped>
-/* your original styles – unchanged, copy from your file */
-.page-header { display: flex; align-items: center; justify-content: space-between; }
-.page-title { color: rgb(var(--v-theme-primary)); }
-.refresh-btn { text-transform: none; }
-.summary-strip { margin: 0; }
-.strip-card { padding: 10px 14px; background: #fff; border: 1px solid #e5e7eb; border-left-width: 4px; border-radius: 8px; height: 100%; }
-.strip-label { font-size: 12px; color: #6b7280; }
-.strip-value { font-size: 18px; font-weight: 700; margin-top: 2px; }
-.strip-card--amber { border-left-color: #f59e0b; }
-.strip-card--amber .strip-value { color: #b45309; }
-.strip-card--green { border-left-color: #10b981; }
-.strip-card--green .strip-value { color: #047857; }
-.strip-card--blue { border-left-color: #3b82f6; }
-.strip-card--blue .strip-value { color: #1d4ed8; }
-.strip-card--violet { border-left-color: #8b5cf6; }
-.strip-card--violet .strip-value { color: #6d28d9; }
-.config-card { padding: 16px; border-radius: 10px; background: #fff; border: 1px solid #e5e7eb; }
-.config-card__header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-.config-card__title { font-size: 14px; font-weight: 600; color: #111827; }
-.config-card__settings-btn { background: #2563eb !important; }
-.config-grid { margin: 0; }
-.tile { border-radius: 8px; padding: 10px 12px; height: 100%; }
-.tile-label { display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.02em; margin-bottom: 4px; opacity: 0.85; }
-.tile-icon { opacity: 0.9; }
-.tile-value { font-size: 18px; font-weight: 700; line-height: 1.2; }
-.tile--blue { background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%); color: #1d4ed8; }
-.tile--purple { background: linear-gradient(135deg, #ede9fe 0%, #f5f3ff 100%); color: #7c3aed; }
-.tile--amber { background: linear-gradient(135deg, #fef3c7 0%, #fffbeb 100%); color: #b45309; }
-.tile--green { background: linear-gradient(135deg, #d1fae5 0%, #ecfdf5 100%); color: #047857; }
-.tile--red { background: linear-gradient(135deg, #fee2e2 0%, #fef2f2 100%); color: #b91c1c; }
-.tile--indigo { background: linear-gradient(135deg, #e0e7ff 0%, #eef2ff 100%); color: #4338ca; }
-.reservations-card { padding: 16px; border-radius: 10px; background: #fff; border: 1px solid #e5e7eb; }
-.reservations-card__header { margin-bottom: 12px; }
-.reservations-card__title { display: flex; align-items: center; font-size: 14px; font-weight: 600; color: #111827; }
-.reservations-card__subtitle { font-size: 12px; color: #6b7280; margin-top: 2px; }
-.reservations-card__filters { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
-.reservations-search { max-width: 280px; }
-.reset-btn { margin-left: auto; text-transform: none; }
-.reservations-table { border: 1px solid #e5e7eb; border-radius: 8px; }
-.reservations-table :deep(th) { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.02em; color: #6b7280; background: #f9fafb; }
-.empty-title { font-size: 13px; font-weight: 600; color: #374151; margin-top: 8px; }
-.empty-subtitle { font-size: 12px; color: #9ca3af; margin-top: 2px; }
-.jackpot-tabs__bar { border-bottom: 1px solid #e5e7eb; text-transform: capitalize !important; }
-.jackpot-tabs__window { padding-top: 12px; }
-.tab-item { text-transform: capitalize !important; font-weight: 600; }
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.page-title {
+  color: rgb(var(--v-theme-primary));
+}
+
+.refresh-btn {
+  text-transform: none;
+}
+
+.config-card__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.settings-flex-row {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  width: 100%;
+}
+
+.settings-flex-row>.players-card,
+.settings-flex-row>.winner_card {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+@media (max-width: 960px) {
+  .settings-flex-row {
+    flex-direction: column;
+  }
+
+  .settings-flex-row>.players-card,
+  .settings-flex-row>.winner_card {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+}
+
+/* Player list */
+.players-card {
+  padding: 16px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  min-width: 0;
+}
+
+.positive {
+  color: #047857;
+  font-weight: 600;
+}
+
+.negative {
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+.bonus-btn {
+  text-transform: none;
+  border-radius: 6px;
+}
+
+/* Winner / config card */
+.winner_card {
+  padding: 16px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  min-width: 0;
+}
+
+.winner_card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.winner_card__title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.pool-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pool-summary__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+}
+
+.pool-summary__row dt {
+  color: #6b7280;
+}
+
+.pool-summary__row dd {
+  font-weight: 700;
+  color: rgb(var(--v-theme-primary));
+}
+
+/* Filter row: search + refresh button, wraps on small screens */
+.winner_card__filters {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.reservations-search {
+  flex: 1 1 200px;
+  min-width: 0;
+  max-width: 280px;
+}
+
+.refresh-mini-btn {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+/* Small screens: stack search + refresh full width */
+@media (max-width: 480px) {
+  .winner_card__filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .reservations-search {
+    max-width: 100%;
+  }
+
+  .refresh-mini-btn {
+    width: 100%;
+  }
+}
+
+/* Let tables scroll horizontally instead of breaking layout */
+.table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.reservations-jackpot-card {
+  padding: 16px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+}
+
+.recent-winners__title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 10px;
+}
+
+.recent-winners__grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.winner-chip {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px 8px 16px;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px dashed rgba(var(--v-theme-primary), 0.4);
+  font-size: 12px;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+/* left accent bar like a stub edge */
+.winner-chip::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: 8px 0 0 8px;
+  background: rgb(var(--v-theme-primary));
+}
+
+.winner-chip__id {
+  color: #374151;
+  font-weight: 600;
+}
+
+.winner-chip__amount {
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(var(--v-theme-secondary), 0.12);
+  color: rgb(var(--v-theme-secondary));
+  font-weight: 800;
+}
+
+@media (max-width: 600px) {
+  .winner-chip {
+    flex: 1 1 calc(50% - 8px);
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 600px) {
+  .recent-winners__grid {
+    gap: 8px;
+  }
+}
 </style>

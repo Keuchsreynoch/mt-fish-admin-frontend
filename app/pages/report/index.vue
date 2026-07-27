@@ -48,42 +48,21 @@
     </div>
 
     <!-- Create Bonus Dialog -->
-    <v-dialog v-model="bonusDialog" max-width="420" persistent>
-      <v-card class="bonus-dialog-card">
-        <v-card-title class="bonus-dialog-title">
-          {{ t('report.addBonus') }}
-          <div class="bonus-dialog-subtitle">{{ selectedMember?.name }}</div>
-        </v-card-title>
-
-        <v-card-text class="pt-2">
-          <v-text-field v-model="bonusAmount" :label="t('report.amount')" persistent-hint
-            density="compact" hide-details="auto" variant="outlined" class="mb-3 slate-input" />
-          <v-textarea v-model="bonusNote" :label="t('report.note')" variant="outlined" density="comfortable" rows="2" hide-details
-            class="slate-input" />
-          <div v-if="bonusError" class="bonus-error">{{ bonusError }}</div>
-        </v-card-text>
-
-        <v-card-actions class="justify-end pb-4 pr-4">
-          <v-btn variant="outlined" color="cancel" :disabled="bonusSubmitting" @click="closeBonusDialog">
-            {{ t('common.cancel') }}
-          </v-btn>
-          <v-btn color="primary" class="bonus-confirm-btn" :loading="bonusSubmitting" @click="submitBonus">
-            {{ t('report.save') }}
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <MemberBonusDialog
+      v-model="bonusDialog"
+      :member="selectedMember"
+      @created="fetchReports"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import type { LocationQueryValue } from 'vue-router'
-import { toast } from 'vue-sonner'
 import AppTable, { type TableColumn, type TotalRow } from '~/components/DynamicTableStyle.vue'
+import MemberBonusDialog, { type BonusMember } from '~/components/MemberBonusDialog.vue'
 import { useFrontendI18n } from '~/composables/i18n'
 import { getReports, type ReportItem } from '~/composables/service/reportApi'
-import { createMemberBonus } from '~/composables/service/memberBonusApi'
 import PeriodFilterButtons from '~/components/PeriodFilterButtons.vue'
 import { formatDecimal } from '~/utils/numberFormat'
 
@@ -119,60 +98,12 @@ const activePeriod = ref<'custom' | 'today' | 'yesterday' | 'this_week'>('today'
 
 // --- Bonus dialog state ---
 const bonusDialog = ref(false)
-const selectedMember = ref<{ id: number; name: string } | null>(null)
-const bonusAmount = ref('')
-const bonusNote = ref('')
-const bonusSubmitting = ref(false)
-const bonusError = ref('')
-const bonusAmountError = ref('')
+const selectedMember = ref<BonusMember | null>(null)
 
 function openBonusDialog(item: ReportItem) {
   // NOTE: assumes ReportItem has `member_id`. Adjust if your field is named differently.
   selectedMember.value = { id: (item as any).member_id, name: item.member_name }
-  bonusAmount.value = ''
-  bonusNote.value = ''
-  bonusError.value = ''
-  bonusAmountError.value = ''
   bonusDialog.value = true
-}
-
-function closeBonusDialog() {
-  if (bonusSubmitting.value) return
-  bonusDialog.value = false
-  selectedMember.value = null
-}
-
-async function submitBonus() {
-  bonusError.value = ''
-  bonusAmountError.value = ''
-
-  const amountNum = parseAmount(bonusAmount.value)
-  if (!bonusAmount.value || amountNum <= 0) {
-    bonusAmountError.value = t('report.invalidAmount')
-    return
-  }
-  if (!selectedMember.value?.id) {
-    bonusError.value = t('report.invalidMember')
-    return
-  }
-
-  bonusSubmitting.value = true
-  try {
-    await createMemberBonus({
-      amount: bonusAmount.value,
-      member_id: selectedMember.value.id,
-      note: bonusNote.value,
-    })
-    toast.success(t('report.bonusCreated'))
-    bonusDialog.value = false
-    selectedMember.value = null
-    await fetchReports()
-  } catch (error: any) {
-    console.error('[bonus] failed to create', error)
-    bonusError.value = error?.message || t('jackpot.failedToCreateMemberBonus')
-  } finally {
-    bonusSubmitting.value = false
-  }
 }
 
 const totalPages = computed(() =>
@@ -456,34 +387,5 @@ watch([filterDate, currentPage, activePeriod], () => {
   font-size: 12px !important;
   text-transform: none !important;
   border-radius: 6px !important;
-}
-
-.bonus-dialog-card {
-  border-radius: 12px;
-}
-
-.bonus-dialog-title {
-  font-weight: 800;
-  color: #111827;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.bonus-dialog-subtitle {
-  font-size: 12px;
-  font-weight: 500;
-  color: rgba(17, 24, 39, 0.6);
-}
-
-.bonus-confirm-btn {
-  font-weight: 700 !important;
-  text-transform: none !important;
-}
-
-.bonus-error {
-  color: #EF4444;
-  font-size: 12px;
-  margin-top: 8px;
 }
 </style>

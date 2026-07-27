@@ -52,14 +52,15 @@
             <div class="form-group half">
               <label class="form-label">{{ t('members.member') }} <span class="required">*</span></label>
               <v-text-field
-                v-model="createForm.member_name"
+                :model-value="createForm.member_name"
                 type="text"
                 inputmode="text"
                 autocomplete="off"
                 density="compact"
                 variant="outlined"
                 hide-details="auto"
-                placeholder="Member Name"
+                :placeholder="t('common.memberNamePlaceholder')"
+                @update:model-value="createForm.member_name = normalizeMemberName($event)"
               />
             </div>
 
@@ -122,7 +123,7 @@ const { showError, showSuccess } = useSnackbar()
 const { t } = useFrontendI18n()
 
 const columns = computed<TableColumn<MemberBonusItem>[]>(() => [
-  { key: 'index',      label: 'លេខ',       type: 'index' },
+  { key: 'index',      label: t('members.no'),       type: 'index' },
   { key: 'member_name',  label: t('members.member') },
   { key: 'amount',     label: t('jackpot.amount') },
   { key: 'status_id',  label: t('gameConfig.status') },
@@ -156,6 +157,10 @@ function sanitizeDecimalInput(value: string | number | null | undefined): string
   if (cleaned.startsWith('.')) return fractionPart ? `0.${fractionPart}` : '0.'
   if (!fractionPart) return integerPart
   return `${integerPart || '0'}.${fractionPart}`
+}
+
+function normalizeMemberName(value: string | number | null | undefined): string {
+  return String(value ?? '').toUpperCase()
 }
 
 function blockNonDecimalKeys(event: KeyboardEvent) {
@@ -230,7 +235,7 @@ async function submitCreateBonus() {
   createLoading.value = true
   try {
     const response = await createMemberBonus({
-      member_name: createForm.value.member_name.trim(),
+      member_name: normalizeMemberName(createForm.value.member_name).trim(),
       amount:    createForm.value.amount,
       note:      createForm.value.note ?? '',
     })

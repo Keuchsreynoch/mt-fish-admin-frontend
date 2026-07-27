@@ -12,31 +12,32 @@
     </div>
 
     <div class="content-wepper flex flex-col gap-2">
-      <AppTable
-        :columns="columns"
-        :items="filteredMembers"
-        :loading="isLoading"
-        :error="errorMessage"
-        :page="currentPage"
-        :page-size="itemsPerPage"
-        :total-pages="totalPages"
-        @update:page="currentPage = $event"
-      >
+      <AppTable :columns="columns" :items="filteredMembers" :loading="isLoading" :error="errorMessage"
+        :page="currentPage" :page-size="itemsPerPage" :total-pages="totalPages" @update:page="currentPage = $event">
         <template #cell-user_name="{ item }">
           <div class="member-cell">
             <div class="member-name">{{ item.user_name }}</div>
           </div>
         </template>
 
+        <template #cell-bonus="{ item }">
+          <v-btn size="small" variant="flat" color="create" class="bonus-btn" @click="openBonusDialog(item)">
+            {{ t('report.addBonus') }}
+          </v-btn>
+        </template>
+
         <template #cell-is_online="{ item }">
-          <v-chip
-            :color="item.is_online ? 'success' : undefined"
-            :variant="item.is_online ? 'tonal' : 'outlined'"
-            size="small"
-            style="font-weight: 600;"
-          >
+          <v-chip :color="item.is_online ? 'success' : undefined" :variant="item.is_online ? 'tonal' : 'outlined'"
+            size="small" style="font-weight: 600;">
             {{ item.is_online ? t('members.online') : t('members.offline') }}
           </v-chip>
+        </template>
+        <template #cell-is_active="{ item }">
+          <div class="">
+            <v-switch :model-value="item.is_active" color="primary" density="compact" hide-details inset
+              :loading="jackpotUpdating[item.id]" :disabled="jackpotUpdating[item.id]"
+              @update:model-value="(val) => toggleJackpotStatus(item, val as boolean)" />
+          </div>
         </template>
 
         <template #cell-balances="{ item }">
@@ -53,13 +54,9 @@
             </template>
 
             <div class="balance-menu">
-              <div
-                v-for="b in item.balances"
-                :key="b.currency_id"
-                class="balance-menu__item"
+              <div v-for="b in item.balances" :key="b.currency_id" class="balance-menu__item"
                 :class="{ 'balance-menu__item--active': getSelectedCurrencyId(item.id) === b.currency_id }"
-                @click="selectCurrency(item.id, b.currency_id)"
-              >
+                @click="selectCurrency(item.id, b.currency_id)">
                 <span class="balance-menu__amount">{{ formatBalance(b.balance) }}</span>
                 <span class="balance-menu__symbol">{{ b.currency_symbol }}</span>
                 <v-icon v-if="getSelectedCurrencyId(item.id) === b.currency_id" size="13" class="balance-menu__check">
@@ -71,6 +68,33 @@
         </template>
       </AppTable>
     </div>
+
+    <!-- Create Bonus Dialog -->
+    <v-dialog v-model="bonusDialog" max-width="420">
+      <v-card class="bonus-dialog-card">
+        <v-card-title class="bonus-dialog-title">
+          {{ t('report.addBonus') }}
+          <div class="bonus-dialog-subtitle">{{ selectedMember?.name }}</div>
+        </v-card-title>
+
+        <v-card-text class="pt-2">
+          <v-text-field v-model="bonusAmount" :label="t('report.amount')" persistent-hint density="compact"
+            hide-details="auto" variant="outlined" class="mb-3 slate-input" />
+          <v-textarea v-model="bonusNote" :label="t('report.note')" variant="outlined" density="comfortable" rows="2"
+            hide-details class="slate-input" />
+          <div v-if="bonusError" class="bonus-error">{{ bonusError }}</div>
+        </v-card-text>
+
+        <v-card-actions class="justify-end pb-4 pr-4">
+          <v-btn variant="outlined" color="cancel" :disabled="bonusSubmitting" @click="closeBonusDialog">
+            {{ t('common.cancel') }}
+          </v-btn>
+          <v-btn color="primary" class="bonus-confirm-btn" :loading="bonusSubmitting" @click="submitBonus">
+            {{ t('report.save') }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -78,9 +102,16 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import AppTable, { type TableColumn } from '~/components/DynamicTableStyle.vue'
 import { useFrontendI18n } from '~/composables/i18n'
-import { getMembers, type MemberItem } from '~/composables/service/membersApi'
+import { useSnackbar } from '~/composables/useSnackbar'
+import { createMemberBonus } from '~/composables/service/memberBonusApi'
+import {
+  getMembers,
+  updateMemberJackpotStatus,
+  type MemberItem,
+} from '~/composables/service/membersApi'
 import { formatDecimal } from '~/utils/numberFormat'
 
+const { showSuccess, showError } = useSnackbar()
 const { t } = useFrontendI18n()
 
 const itemsPerPage = ref(20)
@@ -102,8 +133,9 @@ const columns = computed<TableColumn<MemberItem>[]>(() => [
   { key: 'coin_amount', label: t('members.coinAmount'), format: v => formatBalance(v), width: '120px' },
   { key: 'balances', label: t('members.balance'), width: '180px' },
   { key: 'is_online', label: t('members.status'), width: '100px' },
-  { key: 'timezone', label: t('members.timezone'), format: v => v || '-' },
   { key: 'created_at', label: t('members.created'), format: v => formatDate(v) },
+  { key: 'is_active', label: t('members.jackpotStatus'), width: '110px', align: 'center' },
+  { key: 'bonus', label: t('report.bonus'), width: '140px', align: 'center' },
 ])
 
 const totalPages = computed(() =>
@@ -143,6 +175,71 @@ function selectCurrency(memberId: number, currencyId: number) {
   selectedCurrencies.value[memberId] = currencyId
 }
 
+const bonusDialog = ref(false)
+const selectedMember = ref<{ id: number; name: string } | null>(null)
+const bonusAmount = ref('')
+const bonusNote = ref('')
+const bonusSubmitting = ref(false)
+const bonusError = ref('')
+const bonusAmountError = ref('')
+
+function openBonusDialog(item: MemberItem) {
+  selectedMember.value = { id: item.id, name: item.user_name }
+  bonusAmount.value = ''
+  bonusNote.value = ''
+  bonusError.value = ''
+  bonusAmountError.value = ''
+  bonusDialog.value = true
+}
+
+function closeBonusDialog() {
+  if (bonusSubmitting.value) return
+
+  bonusDialog.value = false
+  selectedMember.value = null
+}
+
+async function submitBonus() {
+  bonusError.value = ''
+  bonusAmountError.value = ''
+
+  const memberName = selectedMember.value?.name?.trim() ?? ''
+  const amountNum = Number.parseFloat(bonusAmount.value || '0') || 0
+
+  if (!bonusAmount.value || amountNum <= 0) {
+    bonusAmountError.value = t('report.invalidAmount')
+    return
+  }
+
+  if (!memberName || !selectedMember.value?.id) {
+    bonusError.value = t('report.invalidMember')
+    return
+  }
+
+  bonusSubmitting.value = true
+
+  try {
+    await createMemberBonus({
+      amount: bonusAmount.value,
+      member_id: selectedMember.value.id,
+      member_name: memberName,
+      note: bonusNote.value,
+    })
+
+    showSuccess(t('report.bonusCreated'))
+    bonusDialog.value = false
+    selectedMember.value = null
+  }
+  catch (e: any) {
+    const message = e?.message ?? t('jackpot.failedToCreateMemberBonus')
+    showError(message)
+    bonusError.value = message
+  }
+  finally {
+    bonusSubmitting.value = false
+  }
+}
+
 function formatBalance(value: string): string {
   const num = parseFloat(value)
   if (isNaN(num)) return '-'
@@ -177,7 +274,26 @@ async function fetchMembers() {
   }
 }
 
-watch(currentPage, fetchMembers)
+const jackpotUpdating = ref<Record<number, boolean>>({})
+
+async function toggleJackpotStatus(item: MemberItem, newValue: boolean) {
+  const prevValue = item.is_active
+  item.is_active = newValue // optimistic update
+  jackpotUpdating.value[item.id] = true
+
+  try {
+    const res = await updateMemberJackpotStatus(item.id, newValue)
+    const payload = res?.data.value as { data: { is_active: boolean } } | undefined
+    item.is_active = payload?.data?.is_active ?? newValue
+    showSuccess(t('members.jackpotStatusUpdated'))
+  } catch (e: any) {
+    item.is_active = prevValue // rollback on failure
+    showError(e?.message ?? t('members.failedToUpdateJackpotStatus'))
+  } finally {
+    jackpotUpdating.value[item.id] = false
+  }
+}
+
 onMounted(fetchMembers)
 </script>
 
@@ -229,6 +345,13 @@ onMounted(fetchMembers)
   font-weight: 600;
   font-size: 13px;
   color: #111827;
+}
+
+.bonus-btn {
+  font-weight: 700 !important;
+  font-size: 12px !important;
+  text-transform: none !important;
+  border-radius: 8px !important;
 }
 
 .balance-trigger {
@@ -326,5 +449,35 @@ onMounted(fetchMembers)
 .balance-menu__check {
   color: rgb(var(--v-theme-primary)) !important;
   flex-shrink: 0;
+}
+
+.bonus-dialog-card {
+  border-radius: 14px !important;
+  overflow: hidden;
+}
+
+.bonus-dialog-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-weight: 800;
+  color: rgb(var(--v-theme-on-surface));
+}
+
+.bonus-dialog-subtitle {
+  font-size: 12px;
+  font-weight: 500;
+  color: #9CA3AF;
+}
+
+.bonus-confirm-btn {
+  font-weight: 700 !important;
+  text-transform: none !important;
+}
+
+.bonus-error {
+  color: #EF4444;
+  font-size: 12px;
+  margin-top: 8px;
 }
 </style>

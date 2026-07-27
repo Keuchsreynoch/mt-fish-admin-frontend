@@ -137,7 +137,6 @@ export interface TotalRow {
   cols: { key: string; value: string; class?: string }[]
 }
 
-// ── Props ──────────────────────────────────────────────
 const props = withDefaults(defineProps<{
   columns:      TableColumn<T>[]
   items:        T[]
@@ -150,7 +149,6 @@ const props = withDefaults(defineProps<{
   subtotals?:   TotalRow
   grandTotals?: TotalRow
   onRowClick?:  (item: T) => void
-  /** Below this many rows, the table sizes to content instead of stretching to fill `height`. */
   minRowsForFixedHeight?: number
 }>(), {
   loading:    false,
@@ -165,11 +163,6 @@ const props = withDefaults(defineProps<{
 defineEmits<{ 'update:page': [page: number] }>()
 const { t } = useFrontendI18n()
 
-// ── Computed ───────────────────────────────────────────
-
-// When there isn't enough data to need a scrollable, fixed-height table
-// (loading / error / empty / few rows), let the table size naturally to
-// its content instead of stretching to fill the viewport height.
 const tableHeight = computed(() => {
   if (props.loading || props.error || !props.items.length) return 'auto'
   if (props.items.length < props.minRowsForFixedHeight) return 'auto'
@@ -261,9 +254,9 @@ function getBadgeClass(col: TableColumn<T>, item: T): string {
   font-weight: 700 !important;
 }
 
-.app-table :deep(tbody tr:nth-child(even) td) {
+/* .app-table :deep(tbody tr:nth-child(even) td) {
   background: rgba(var(--v-theme-primary), 0.05) !important;
-}
+} */
 
 .app-table :deep(tbody tr:hover td) {
   background: rgba(var(--v-theme-primary), 0.12) !important;

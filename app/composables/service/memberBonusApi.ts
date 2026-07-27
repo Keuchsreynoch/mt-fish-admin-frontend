@@ -40,6 +40,7 @@ export async function getMemberBonuses(
   perPage = 20,
   startDate = "",
   endDate = "",
+  extraParams: Record<string, QueryValue> = {},
 ) {
   const url = buildUrlWithParams("/jackpot/member-bonuses", {
     paging_options: {
@@ -57,6 +58,7 @@ export async function getMemberBonuses(
         ],
       }
       : {}),
+    ...extraParams,
   });
 
   return useApiInterceptor<ApiResponse<MemberBonusData>>(

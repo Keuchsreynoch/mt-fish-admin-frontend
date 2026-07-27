@@ -29,6 +29,13 @@
             {{ item.status_id }}
           </v-chip>
         </template>
+
+        <!-- transaction type badge -->
+        <template #cell-transaction_type_id="{ item }">
+          <v-chip :color="getTransactionTypeColor(item.transaction_type_id)" variant="outlined" size="small">
+            {{ getTransactionTypeLabel(item.transaction_type_id) }}
+          </v-chip>
+        </template>
       </AppTable>
     </div>
   </div>
@@ -79,10 +86,10 @@ const columns = computed<TableColumn<CoinTransactionItem>[]>(() => [
     format: (v: string) => formatAmount(parseAmount(v)),
     cellClass: (item: CoinTransactionItem) => getAmountClass(item.amount),
   },
-  { key: 'reference', label: t('report.note'), align: 'left', format: (v: string) => v || '-' },
-  { key: 'status_id', label: t('gameConfig.status') },
-  { key: 'order', label: t('report.bonus') },
-  { key: 'created_at', label: t('gameConfig.updatedAt'), format: (v: string) => formatDateTime(v) },
+  // { key: 'transaction_type_id', label: t('coinTransactions.type') },
+  // { key: 'reference', label: t('report.note'), align: 'left', format: (v: string) => v || '-' },
+  { key: 'remark', label: t('common.remark'), align: 'left', format: (v: string) => v || '-' },
+  { key: 'created_at',label: t('gameConfig.createAT'), format: (v: string) => formatDateTime(v) },
 ])
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -128,6 +135,24 @@ function formatDateTime(value: string): string {
     hour: '2-digit', minute: '2-digit', second: '2-digit',
     hour12: false,
   }).format(date)
+}
+
+function getTransactionTypeLabel(typeId: number | string): string {
+  const id = Number(typeId)
+  switch (id) {
+    case 1: return t('coinTransactions.exchange')
+    case 3: return t('coinTransactions.bet')
+    default: return `#${id}`
+  }
+}
+
+function getTransactionTypeColor(typeId: number | string): string {
+  const id = Number(typeId)
+  switch (id) {
+    case 1: return 'blue'
+    case 3: return 'orange'
+    default: return 'grey'
+  }
 }
 
 function normalizeQueryValue(value: LocationQueryValue | LocationQueryValue[] | null | undefined): string {
@@ -259,7 +284,7 @@ watch([filterDate, currentPage, activePeriod], () => {
 .filter-label {
   color: #111827 !important;
   font-weight: 600;
-  font-size: 13px;   /* ចុះពី text-xl */
+  font-size: 13px;
 }
 
 .filter-left {
@@ -294,10 +319,6 @@ watch([filterDate, currentPage, activePeriod], () => {
 .slate-input :deep(.v-field--focused .v-field__outline) {
   color: #1F2937 !important;
 }
-
-/* .slate-input :deep(input) {
-  color: #111827 !important;
-} */
 
 :deep(td.positive) {
   color: #1E9C07 !important;

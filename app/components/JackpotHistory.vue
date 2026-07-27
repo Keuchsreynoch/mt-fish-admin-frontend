@@ -42,8 +42,8 @@ const columns = computed<TableColumn<JackpotHistoryItem>[]>(() => [
   { key: 'fish_type_name',    label: t('fish.fishName') },
   { key: 'jackpot_type_name', label: t('jackpot.jackpot') },
   { key: 'payout_coin',       label: t('jackpot.amount') },
-  { key: 'pool_before',       label: t('jackpot.before') },
-  { key: 'pool_after',        label: t('jackpot.after') },
+  // { key: 'pool_before',       label: t('jackpot.before') },
+  // { key: 'pool_after',        label: t('jackpot.after') },
   { key: 'created_at',        label: t('gameConfig.updatedAt') },
 ])
 

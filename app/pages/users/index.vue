@@ -77,8 +77,14 @@
           <div class="form-grid">
             <div class="form-group half">
               <label class="form-label">{{ t('users.username') }} <span class="required">*</span></label>
-              <v-text-field v-model="userForm.user_name" placeholder="e.g. ADMIN006" density="compact"
-                variant="outlined" hide-details="auto" />
+              <v-text-field
+                v-model="userForm.user_name"
+                placeholder="e.g. ADMIN006"
+                density="compact"
+                variant="outlined"
+                hide-details="auto"
+                @update:model-value="value => { userForm.user_name = String(value ?? '').toUpperCase() }"
+              />
             </div>
 
             <div class="form-group half">
@@ -386,6 +392,8 @@ function toggleUserMenu(menuId: number) {
 }
 
 async function submitCreateUser() {
+  userForm.value.user_name = userForm.value.user_name.toUpperCase()
+
   const { user_name, login_id, password, email } = userForm.value
 
   if (!user_name || !login_id || !password || !email) {

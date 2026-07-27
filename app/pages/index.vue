@@ -1,118 +1,3 @@
-<template>
-    <div class="dashboard gap-3">
-
-        <!-- Header -->
-        <div class="dash-header mt-3">
-            <div>
-                <h1 class="dash-title">{{ t('dashboard.title') }}</h1>
-            </div>
-        </div>
-
-        <!-- KPI Cards -->
-        <div class="kpi-grid">
-            <div v-for="kpi in kpis" :key="kpi.label" class="kpi-card">
-                <div class="kpi-top">
-                    <span class="kpi-emoji">{{ kpi.emoji }}</span>
-                </div>
-                <div class="kpi-value" :style="{ fontSize: kpiFontSize(kpi.value) }">
-                    {{ formatCoins(kpi.value) }}
-                </div>
-                <div class="kpi-label">{{ kpi.label }}</div>
-            </div>
-        </div>
-
-        <!-- Middle row -->
-        <div class="mid-grid">
-            <!-- Quick Stats -->
-            <div class="ocean-card">
-                <div class="card-header">
-                    <div class="card-title">📊 {{ t('dashboard.profitBreakdown') }}</div>
-                </div>
-                <div class="stats-list">
-                    <div v-for="stat in quickStats" :key="stat.label" class="stat-row">
-                        <span class="stat-label">{{ stat.label }}</span>
-                        <div class="stat-bar-wrap">
-                            <div class="stat-bar" :style="{ width: stat.pct + '%' }" />
-                        </div>
-                        <span class="stat-val">{{ stat.value }}</span>
-                    </div>
-                </div>
-                <div class="divider-h" />
-                <div class="win-rate">
-                    <div class="wr-label">{{ t('dashboard.houseWinRate') }}</div>
-                    <div class="wr-ring">
-                        <svg viewBox="0 0 80 80" class="wr-svg">
-                            <circle cx="40" cy="40" r="32" fill="none" stroke="rgba(31,41,55,0.12)" stroke-width="7" />
-                            <circle cx="40" cy="40" r="32" fill="none" stroke="#0097A7" stroke-width="7"
-                                :stroke-dasharray="201" :stroke-dashoffset="201 - (201 * houseWinRate / 100)"
-                                stroke-linecap="round" transform="rotate(-90 40 40)" />
-                        </svg>
-                        <div class="wr-value">{{ formatPercent(houseWinRate, 1) }}%</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Top Players -->
-            <div class="ocean-card">
-                <div class="card-header">
-                    <div class="card-title">🏆 {{ t('dashboard.topWinMembers') }}</div>
-                </div>
-                <div v-if="pending" class="loading-state">{{ t('common.loading') }}</div>
-                <div v-else-if="topWinMembers.length === 0" class="empty-state">{{ t('common.noData') }}</div>
-                <div v-else class="player-list">
-                    <div v-for="(player, i) in topWinMembers" :key="player.member_id" class="player-row">
-                        <span class="player-rank">{{ i < 3 ? ['🥇', '🥈', '🥉'][i] : `#${i + 1}` }}</span>
-                                <div class="player-avatar-placeholder">
-                                    {{ player.username.slice(0, 2).toUpperCase() }}
-                                </div>
-                                <div class="player-info">
-                                    <div class="player-name">{{ player.username }}</div>
-                                    <div class="player-games">{{ t('dashboard.wins', { count: player.win_count }) }}
-                                    </div>
-                                </div>
-                                <div class="player-col">
-                                    <div class="player-win">+{{ formatCoins(player.total_win_amount) }}</div>
-                                    <div class="player-bet">{{ t('dashboard.bet', {
-                                        amount:
-                                            formatCoins(player.total_bet_amount)
-                                    }) }}</div>
-                                </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Jackpot Pool -->
-        <div class="ocean-card jackpot-card">
-            <div class="card-header">
-                <div class="card-title">🎰 {{ t('dashboard.jackpotPool') }}</div>
-            </div>
-            <div class="jackpot-body">
-                <div class="jackpot-stat">
-                    <div class="jackpot-stat-label">{{ t('dashboard.currentPool') }}</div>
-                    <div class="jackpot-stat-value pink">{{ formatCoins(dashData?.current_pool_jackpot) }}</div>
-                </div>
-                <div class="jackpot-divider" />
-                <div class="jackpot-stat">
-                    <div class="jackpot-stat-label">{{ t('dashboard.threshold') }}</div>
-                    <div class="jackpot-stat-value">{{ formatCoins(dashData?.threshold_amount) }}</div>
-                </div>
-                <div class="jackpot-divider" />
-                <div class="jackpot-progress-wrap">
-                    <div class="jackpot-progress-label">
-                        <span>{{ t('dashboard.poolProgress') }}</span>
-                        <span class="jackpot-pct">{{ formatPercent(jackpotPct, 2) }}%</span>
-                    </div>
-                    <div class="jackpot-bar-bg">
-                        <div class="jackpot-bar-fill" :style="{ width: jackpotPct + '%' }" />
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    </div>
-</template>
-
 <script setup lang="ts">
 import { useFrontendI18n } from "~/composables/i18n"
 import { getDashboard, type DashboardData } from "~/composables/service/dashboardApi"
@@ -205,18 +90,8 @@ const kpis = computed(() => [
         emoji: "💰",
     },
     {
-        label: t('dashboard.totalPayout'),
-        value: dashData.value?.total_payout,
-        emoji: "💸",
-    },
-    {
-        label: t('dashboard.rewardPoolAmount'),
-        value: dashData.value?.reward_pool,
-        emoji: "✨",
-    },
-    {
         label: t('dashboard.totalCompanyProfit'),
-        value: dashData.value?.total_company_profit,
+        value: dashData.value?.global_company_profit,
         emoji: "📈",
     },
     {
@@ -224,6 +99,11 @@ const kpis = computed(() => [
         value: dashData.value?.current_pool_jackpot,
         emoji: "🎰",
     },
+    {
+        label: "Member Active",
+        value: dashData.value?.member_active?.length ?? 0,
+        emoji: "👥",
+    }
 ])
 
 const topWinMembers = computed(() => dashData.value?.top_win_members ?? [])
@@ -279,6 +159,121 @@ const quickStats = computed(() => {
 })
 </script>
 
+<template>
+    <div class="dashboard gap-3">
+
+        <!-- Header -->
+        <div class="dash-header mt-3">
+            <div>
+                <h1 class="dash-title">{{ t('dashboard.title') }}</h1>
+            </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="kpi-grid">
+            <div v-for="kpi in kpis" :key="kpi.label" class="kpi-card">
+                <div class="kpi-top">
+                    <span class="kpi-emoji">{{ kpi.emoji }}</span>
+                </div>
+                <div class="kpi-value" :style="{ fontSize: kpiFontSize(kpi.value) }">
+                    {{ formatCoins(kpi.value) }}
+                </div>
+                <div class="kpi-label">{{ kpi.label }}</div>
+            </div>
+        </div>
+
+        <!-- Middle row -->
+        <div class="mid-grid">
+            <!-- Quick Stats -->
+            <div class="ocean-card">
+                <div class="card-header">
+                    <div class="card-title">📊 {{ t('dashboard.profitBreakdown') }}</div>
+                </div>
+                <div class="stats-list">
+                    <div v-for="stat in quickStats" :key="stat.label" class="stat-row">
+                        <span class="stat-label">{{ stat.label }}</span>
+                        <div class="stat-bar-wrap">
+                            <div class="stat-bar" :style="{ width: stat.pct + '%' }" />
+                        </div>
+                        <span class="stat-val">{{ stat.value }}</span>
+                    </div>
+                </div>
+                <!-- <div class="divider-h" />
+                <div class="win-rate">
+                    <div class="wr-label">{{ t('dashboard.houseWinRate') }}</div>
+                    <div class="wr-ring">
+                        <svg viewBox="0 0 80 80" class="wr-svg">
+                            <circle cx="40" cy="40" r="32" fill="none" stroke="rgba(31,41,55,0.12)" stroke-width="7" />
+                            <circle cx="40" cy="40" r="32" fill="none" stroke="#0097A7" stroke-width="7"
+                                :stroke-dasharray="201" :stroke-dashoffset="201 - (201 * houseWinRate / 100)"
+                                stroke-linecap="round" transform="rotate(-90 40 40)" />
+                        </svg>
+                        <div class="wr-value">{{ formatPercent(houseWinRate, 1) }}%</div>
+                    </div>
+                </div> -->
+            </div>
+
+            <!-- Top Players -->
+            <div class="ocean-card">
+                <div class="card-header">
+                    <div class="card-title">🏆 {{ t('dashboard.topWinMembers') }}</div>
+                </div>
+                <div v-if="pending" class="loading-state">{{ t('common.loading') }}</div>
+                <div v-else-if="topWinMembers.length === 0" class="empty-state">{{ t('common.noData') }}</div>
+                <div v-else class="player-list">
+                    <div v-for="(player, i) in topWinMembers" :key="player.member_id" class="player-row">
+                        <span class="player-rank">{{ i < 3 ? ['🥇', '🥈', '🥉'][i] : `#${i + 1}` }}</span>
+                                <div class="player-avatar-placeholder">
+                                    {{ player.username.slice(0, 2).toUpperCase() }}
+                                </div>
+                                <div class="player-info">
+                                    <div class="player-name">{{ player.username }}</div>
+                                    <div class="player-games">{{ t('dashboard.wins', { count: player.win_count }) }}
+                                    </div>
+                                </div>
+                                <div class="player-col">
+                                    <div class="player-win">+{{ formatCoins(player.total_win_amount) }}</div>
+                                    <div class="player-bet">{{ t('dashboard.bet', {
+                                        amount:
+                                            formatCoins(player.total_bet_amount)
+                                    }) }}</div>
+                                </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Jackpot Pool -->
+        <div class="ocean-card jackpot-card">
+            <div class="card-header">
+                <div class="card-title">🎰 {{ t('dashboard.jackpotPool') }}</div>
+            </div>
+            <div class="jackpot-body">
+                <div class="jackpot-stat">
+                    <div class="jackpot-stat-label">{{ t('dashboard.currentPool') }}</div>
+                    <div class="jackpot-stat-value pink">{{ formatCoins(dashData?.current_pool_jackpot) }}</div>
+                </div>
+                <div class="jackpot-divider" />
+                <div class="jackpot-stat">
+                    <div class="jackpot-stat-label">{{ t('dashboard.threshold') }}</div>
+                    <div class="jackpot-stat-value">{{ formatCoins(dashData?.threshold_amount) }}</div>
+                </div>
+                <div class="jackpot-divider" />
+                <div class="jackpot-progress-wrap">
+                    <div class="jackpot-progress-label">
+                        <span>{{ t('dashboard.poolProgress') }}</span>
+                        <span class="jackpot-pct">{{ formatPercent(jackpotPct, 2) }}%</span>
+                    </div>
+                    <div class="jackpot-bar-bg">
+                        <div class="jackpot-bar-fill" :style="{ width: jackpotPct + '%' }" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</template>
+
 <style scoped>
 /* ═══════════ LAYOUT ═══════════ */
 .dashboard {
@@ -298,17 +293,26 @@ const quickStats = computed(() => {
     font-size: 22px;
     font-weight: 800;
     letter-spacing: -0.5px;
-    /* color: #111827;
-     */
     color: rgb(var(--v-theme-primary)) !important;
-
 }
 
 /* ═══════════ KPI CARDS ═══════════ */
 .kpi-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    display: flex;
+    flex-wrap: nowrap;
     gap: 16px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+}
+
+.kpi-card {
+    flex: 1 1 0;
+    min-width: 140px;
+    padding: 16px;
+    border-radius: 14px;
+    background: rgb(var(--v-theme-surface));
+    border: 1px solid rgba(var(--v-theme-on-surface), 0.12);
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
 @media (max-width: 1100px) {
@@ -326,15 +330,15 @@ const quickStats = computed(() => {
 .kpi-card {
     padding: 16px;
     border-radius: 14px;
-    background: #FFFFFF;
-    border: 1px solid rgba(31, 41, 55, 0.12);
+    background: rgb(var(--v-theme-surface));
+    border: 1px solid rgba(var(--v-theme-on-surface), 0.12);
     transition: transform 0.2s, box-shadow 0.2s;
     min-width: 0;
 }
 
 .kpi-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 24px rgba(31, 41, 55, 0.1);
+    box-shadow: 0 6px 24px rgba(var(--v-theme-on-surface), 0.1);
 }
 
 .kpi-top {
@@ -347,7 +351,7 @@ const quickStats = computed(() => {
 
 .kpi-value {
     font-weight: 800;
-    color: #111827;
+    color: rgb(var(--v-theme-on-surface));
     letter-spacing: -0.5px;
     line-height: 1.1;
     white-space: nowrap;
@@ -358,7 +362,7 @@ const quickStats = computed(() => {
 
 .kpi-label {
     font-size: 12px;
-    color: rgba(31, 41, 55, 0.45);
+    color: rgba(var(--v-theme-on-surface), 0.45);
     margin-top: 6px;
     font-weight: 500;
     white-space: nowrap;
@@ -383,8 +387,8 @@ const quickStats = computed(() => {
 .ocean-card {
     border-radius: 14px;
     padding: 20px;
-    background: #FFFFFF;
-    border: 1px solid rgba(31, 41, 55, 0.1);
+    background: rgb(var(--v-theme-surface));
+    border: 1px solid rgba(var(--v-theme-on-surface), 0.1);
 }
 
 .card-header {
@@ -397,7 +401,7 @@ const quickStats = computed(() => {
 .card-title {
     font-size: 14px;
     font-weight: 700;
-    color: #111827;
+    color: rgb(var(--v-theme-on-surface));
 }
 
 /* ═══════════ STATS ═══════════ */
@@ -416,7 +420,7 @@ const quickStats = computed(() => {
 
 .stat-label {
     font-size: 12px;
-    color: rgba(31, 41, 55, 0.55);
+    color: rgba(var(--v-theme-on-surface), 0.55);
     width: 90px;
     flex-shrink: 0;
 }
@@ -426,20 +430,20 @@ const quickStats = computed(() => {
     height: 6px;
     border-radius: 3px;
     overflow: hidden;
-    background: rgba(31, 41, 55, 0.08);
+    background: rgba(var(--v-theme-on-surface), 0.08);
 }
 
 .stat-bar {
     height: 100%;
     border-radius: 3px;
-    background: #0097A7;
+    background: rgb(var(--v-theme-primary));
     transition: width 0.6s ease;
 }
 
 .stat-val {
     font-size: 12px;
     font-weight: 700;
-    color: #111827;
+    color: rgb(var(--v-theme-on-surface));
     width: 40px;
     text-align: right;
     flex-shrink: 0;
@@ -447,7 +451,7 @@ const quickStats = computed(() => {
 
 .divider-h {
     height: 1px;
-    background: rgba(31, 41, 55, 0.08);
+    background: rgba(var(--v-theme-on-surface), 0.08);
     margin: 4px 0 16px;
 }
 
@@ -461,7 +465,7 @@ const quickStats = computed(() => {
 .wr-label {
     font-size: 13px;
     font-weight: 600;
-    color: #111827;
+    color: rgb(var(--v-theme-on-surface));
 }
 
 .wr-ring {
@@ -484,14 +488,14 @@ const quickStats = computed(() => {
     justify-content: center;
     font-size: 14px;
     font-weight: 800;
-    color: #111827;
+    color: rgb(var(--v-theme-on-surface));
 }
 
 /* ═══════════ PLAYERS ═══════════ */
 .loading-state,
 .empty-state {
     font-size: 13px;
-    color: rgba(31, 41, 55, 0.4);
+    color: rgba(var(--v-theme-on-surface), 0.4);
     text-align: center;
     padding: 24px 0;
 }
@@ -512,7 +516,7 @@ const quickStats = computed(() => {
 }
 
 .player-row:hover {
-    background: rgba(31, 41, 55, 0.04);
+    background: rgba(var(--v-theme-on-surface), 0.04);
 }
 
 .player-rank {
@@ -526,8 +530,8 @@ const quickStats = computed(() => {
     width: 30px;
     height: 30px;
     border-radius: 50%;
-    background: rgba(0, 151, 167, 0.12);
-    color: #006978;
+    background: rgba(var(--v-theme-primary), 0.12);
+    color: rgb(var(--v-theme-primary));
     font-size: 11px;
     font-weight: 700;
     display: flex;
@@ -544,12 +548,12 @@ const quickStats = computed(() => {
 .player-name {
     font-size: 13px;
     font-weight: 600;
-    color: #111827;
+    color: rgb(var(--v-theme-on-surface));
 }
 
 .player-games {
     font-size: 10.5px;
-    color: rgba(31, 41, 55, 0.4);
+    color: rgba(var(--v-theme-on-surface), 0.4);
 }
 
 .player-col {
@@ -559,12 +563,12 @@ const quickStats = computed(() => {
 .player-win {
     font-size: 13px;
     font-weight: 700;
-    color: #0097A7;
+    color: rgb(var(--v-theme-primary));
 }
 
 .player-bet {
     font-size: 10.5px;
-    color: rgba(31, 41, 55, 0.35);
+    color: rgba(var(--v-theme-on-surface), 0.35);
 }
 
 /* ═══════════ JACKPOT ═══════════ */
@@ -583,7 +587,7 @@ const quickStats = computed(() => {
 
 .jackpot-stat-label {
     font-size: 11px;
-    color: rgba(31, 41, 55, 0.45);
+    color: rgba(var(--v-theme-on-surface), 0.45);
     font-weight: 500;
     margin-bottom: 4px;
 }
@@ -591,18 +595,18 @@ const quickStats = computed(() => {
 .jackpot-stat-value {
     font-size: 22px;
     font-weight: 800;
-    color: #111827;
+    color: rgb(var(--v-theme-on-surface));
     letter-spacing: -0.5px;
 }
 
 .jackpot-stat-value.pink {
-    color: #0097A7;
+    color: rgb(var(--v-theme-primary));
 }
 
 .jackpot-divider {
     width: 1px;
     height: 40px;
-    background: rgba(31, 41, 55, 0.1);
+    background: rgba(var(--v-theme-on-surface), 0.1);
     flex-shrink: 0;
 }
 
@@ -615,26 +619,26 @@ const quickStats = computed(() => {
     display: flex;
     justify-content: space-between;
     font-size: 12px;
-    color: rgba(31, 41, 55, 0.5);
+    color: rgba(var(--v-theme-on-surface), 0.5);
     margin-bottom: 8px;
 }
 
 .jackpot-pct {
     font-weight: 700;
-    color: #0097A7;
+    color: rgb(var(--v-theme-primary));
 }
 
 .jackpot-bar-bg {
     height: 8px;
     border-radius: 4px;
-    background: rgba(0, 151, 167, 0.12);
+    background: rgba(var(--v-theme-primary), 0.12);
     overflow: hidden;
 }
 
 .jackpot-bar-fill {
     height: 100%;
     border-radius: 4px;
-    background: linear-gradient(90deg, #0097A7, #006978);
+    background: linear-gradient(90deg, rgb(var(--v-theme-primary)), rgb(var(--v-theme-secondary)));
     transition: width 0.8s ease;
 }
 </style>

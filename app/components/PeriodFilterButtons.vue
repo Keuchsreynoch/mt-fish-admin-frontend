@@ -67,17 +67,17 @@ const buttons = computed<{ period: Period; label: string; color: string }[]>(() 
   {
     period: 'today',
     label: t('common.today'),
-    color: '#00C2D4',
+    color: '#326690', // pgAdmin slate blue (primary)
   },
   {
     period: 'yesterday',
     label: t('common.yesterday'),
-    color: '#FFD54F',
+    color: '#5C7A99', // muted steel blue (secondary)
   },
   {
     period: 'this_week',
     label: t('common.week'),
-    color: '#FF6B35',
+    color: '#E9A100', // pgAdmin's muted amber (warning)
   },
 ])
 

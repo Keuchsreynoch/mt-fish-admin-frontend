@@ -17,13 +17,22 @@ export interface TopWinMember {
   win_count: number;
 }
 
+export interface MemberActive {
+  member_id: number;
+  user_uuid: string;
+  user_name: string;
+  is_active: boolean;
+}
+
 export interface DashboardData {
   total_turnover: string;
   total_payout: string;
   total_company_profit: string;
   current_pool_jackpot: string;
+  global_company_profit: string;
   threshold_amount: string;
-  reward_pool:  string;
+  reward_pool: string;
+  member_active: MemberActive[]
   top_win_members: TopWinMember[];
 }
 

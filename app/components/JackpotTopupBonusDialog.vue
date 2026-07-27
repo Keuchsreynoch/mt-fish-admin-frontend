@@ -187,14 +187,15 @@
             <div class="form-group half">
               <label class="form-label">{{ t('members.member') }} </label>
               <v-text-field
-                v-model="createForm.member_name"
+                :model-value="createForm.member_name"
                 type="text"
                 inputmode="text"
                 autocomplete="off"
                 density="compact"
                 variant="outlined"
                 hide-details="auto"
-                placeholder="Member Name"
+                :placeholder="t('common.memberNamePlaceholder')"
+                @update:model-value="createForm.member_name = normalizeMemberName($event)"
               />
             </div>
 
@@ -279,12 +280,13 @@ const poolProgress = computed(() => {
 const display = computed(() => ({
   threshold_amount: formatAmount(props.poolData?.threshold_amount),
   chance_denom: `1 in ${props.poolData?.chance_denom ?? 0}`,
-  payout_percent: `${formatAmount(props.poolData?.payout_percent)}%`,
+  payout_percent: `${formatPercent(props.poolData?.payout_percent)}%`,
   min_eligible_bet_amount: formatAmount(props.poolData?.min_eligible_bet_amount) + " KHR",
   jackpot_fixed_payout_amount: formatAmount(props.fixedPayout) + " KHR",
 }));
 
 function formatAmount(v:any){ const n = Number.parseFloat(String(v ?? 0))||0; return formatDecimal(n, { maximumFractionDigits: 2 }); }
+function formatPercent(v:any){ const n = Number.parseFloat(String(v ?? 0))||0; return formatDecimal(n * 100, { maximumFractionDigits: 2 }); }
 
 function blockNonDecimalKeys(e: KeyboardEvent){
   const ok = ["Backspace","Delete","Tab","ArrowLeft","ArrowRight","Home","End","."];
@@ -295,6 +297,9 @@ function blockNonDecimalKeys(e: KeyboardEvent){
 function handleDecimalPaste(e: ClipboardEvent){
   const t = e.clipboardData?.getData("text") || "";
   if (!/^\d*\.?\d*$/.test(t)) e.preventDefault();
+}
+function normalizeMemberName(value: string | number | null | undefined): string {
+  return String(value ?? "").toUpperCase();
 }
 
 function submitTopup(){
@@ -311,10 +316,11 @@ function openCreateBonus(){ createDialog.value = true; }
 function closeCreateDialog(){ if(!createLoading.value) createDialog.value=false; }
 
 async function submitCreateBonus(){
+  createForm.member_name = normalizeMemberName(createForm.member_name);
   if (!createForm.member_name.trim() || !(parseFloat(createForm.amount)>0)) return;
   createLoading.value = true;
   try {
-    emit("create-bonus", { ...createForm });
+    emit("create-bonus", { ...createForm, member_name: createForm.member_name.trim() });
     // parent should close - we optimistically close
     createDialog.value = false;
     createForm.member_name=""; createForm.amount=""; createForm.note="";

@@ -1,95 +1,3 @@
-<template>
-  <div class="game-config flex flex-col gap-3">
-    <div class="page-header mt-3">
-      <h1 class="page-title text-2xl font-semibold">
-        {{ t('gameConfig.title') }}
-      </h1>
-    </div>
-
-    <v-row dense class="summary-strip">
-      <v-col cols="6" md="4">
-        <div class="strip-card strip-card--cyan">
-          <div class="strip-label">{{ t('gameConfig.gameName') }}</div>
-          <div class="strip-value">{{ poolData?.game_name || '-' }}</div>
-        </div>
-      </v-col>
-
-      <v-col cols="6" md="4">
-        <div class="strip-card strip-card--amber">
-          <div class="strip-label">{{ t('gameConfig.rtpTarget') }}</div>
-          <div class="strip-value">{{ formatAmount(poolData?.rtp_target) }}%</div>
-        </div>
-      </v-col>
-
-      <v-col cols="6" md="4">
-        <div class="strip-card strip-card--green">
-          <div class="strip-label">{{ t('gameConfig.rtpRange') }}</div>
-          <div class="strip-value">
-            {{ formatAmount(poolData?.rtp_floor) }}% -
-            {{ formatAmount(poolData?.rtp_ceiling) }}%
-          </div>
-        </div>
-      </v-col>
-
-      <v-col cols="6" md="4">
-        <div class="strip-card strip-card--blue">
-          <div class="strip-label">{{ t('gameConfig.jackpotRate') }}</div>
-          <div class="strip-value">{{ formatAmount(poolData?.jackpot_rate) }}%</div>
-        </div>
-      </v-col>
-
-      <v-col cols="6" md="4">
-        <div class="strip-card strip-card--pink">
-          <div class="strip-label">{{ t('gameConfig.companyProfitRate') }}</div>
-          <div class="strip-value">{{ formatAmount(poolData?.company_profit_rate) }}%</div>
-        </div>
-      </v-col>
-
-      <v-col cols="6" md="4">
-        <div class="strip-card strip-card--violet">
-          <div class="strip-label">{{ t('gameConfig.status') }}</div>
-          <div class="strip-value flex items-center gap-2">
-            <span class="status-dot"
-              :class="poolData?.status_id === 1 ? 'status-dot--active' : 'status-dot--inactive'" />
-            {{ poolData?.status_id === 1 ? t('common.active') : t('common.inactive') }}
-          </div>
-        </div>
-      </v-col>
-    </v-row>
-
-    <div class="game-config-tabs">
-      <v-card class="history-card" elevation="0">
-        <div class="history-card__header">
-          <div>
-            <h2 class="history-card__title">
-              {{ t('gameConfig.configurationHistory') }}
-            </h2>
-          </div>
-
-          <v-btn icon size="small" color="primary" variant="flat" class="config-card__settings-btn"
-            @click="showSettings = true">
-            <v-icon size="18">mdi-cog</v-icon>
-          </v-btn>
-        </div>
-
-        <template v-if="gameConfigurationData.length">
-          <AppTable :columns="historyColumns" :items="gameConfigurationData" height="auto" />
-        </template>
-
-        <div v-else class="history-empty">
-          <v-icon size="32" color="grey-lighten-1">mdi-cog-outline</v-icon>
-          <div class="empty-title">{{ t('gameConfig.noHistory') }}</div>
-          <div class="empty-subtitle">{{ t('gameConfig.historySubtitle') }}</div>
-        </div>
-      </v-card>
-    </div>
-
-    <GameConfigSettingsForm v-model="showSettings" :pool-data="poolData" :update-loading="updateLoading"
-      @submit="onSettingsSubmit" @cancel="showSettings = false" />
-
-  </div>
-</template>
-
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useFrontendI18n } from '~/composables/i18n'
@@ -127,15 +35,15 @@ const gameConfigurationData = computed<GameConfigurationRow[]>(() => {
   return [
     {
       game_name: poolData.value.game_name || '-',
-      rtp_target: `${formatAmount(poolData.value.rtp_target)}%`,
-      rtp_floor: `${formatAmount(poolData.value.rtp_floor)}%`,
-      rtp_ceiling: `${formatAmount(poolData.value.rtp_ceiling)}%`,
-      jackpot_rate: `${formatAmount(poolData.value.jackpot_rate)}%`,
+      rtp_target: `${formatPercent(poolData.value.rtp_target)}%`,
+      rtp_floor: `${formatPercent(poolData.value.rtp_floor)}%`,
+      rtp_ceiling: `${formatPercent(poolData.value.rtp_ceiling)}%`,
+      jackpot_rate: `${formatPercent(poolData.value.jackpot_rate)}%`,
       status:
         poolData.value.status_id === 1
           ? t('common.active')
           : t('common.inactive'),
-      updated_at: poolData.value.updated_at || '-',
+      updated_at: formatDateTime(poolData.value.updated_at),
       updated_by: poolData.value.updated_by_username || '-',
     },
   ]
@@ -186,10 +94,26 @@ function parseAmount(value: string | number | null | undefined): number {
   return parseFloat(String(value)) || 0
 }
 
-function formatAmount(value: string | number | null | undefined): string {
-  return formatDecimal(parseAmount(value), {
+function formatPercent(value: string | number | null | undefined): string {
+  return formatDecimal(parseAmount(value) * 100, {
     maximumFractionDigits: 2,
   })
+}
+
+function formatDateTime(value: string | number | null | undefined): string {
+  if (!value) return '-'
+
+  const date = new Date(value)
+  if (isNaN(date.getTime())) return '-'
+
+  return new Intl.DateTimeFormat('en-GB', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(date)
 }
 
 async function fetchGameConfig() {
@@ -250,6 +174,70 @@ onMounted(() => {
 })
 </script>
 
+<template>
+  <div class="game-config flex flex-col gap-3">
+    <div class="page-header mt-3">
+      <h1 class="page-title text-2xl font-semibold">
+        {{ t('gameConfig.title') }}
+      </h1>
+    </div>
+
+    <v-row dense class="summary-strip">
+      <v-col cols="6" md="4">
+        <div class="strip-card strip-card--amber">
+          <div class="strip-label">{{ t('gameConfig.rtpTarget') }}</div>
+          <div class="strip-value">{{ formatPercent(poolData?.rtp_target) }}%</div>
+        </div>
+      </v-col>
+
+      <v-col cols="6" md="4">
+        <div class="strip-card strip-card--blue">
+          <div class="strip-label">{{ t('gameConfig.jackpotRate') }}</div>
+          <div class="strip-value">{{ formatPercent(poolData?.jackpot_rate) }}%</div>
+        </div>
+      </v-col>
+
+      <v-col cols="6" md="4">
+        <div class="strip-card strip-card--pink">
+          <div class="strip-label">{{ t('gameConfig.companyProfitRate') }}</div>
+          <div class="strip-value">{{ formatPercent(poolData?.company_profit_rate) }}%</div>
+        </div>
+      </v-col>
+    </v-row>
+
+    <div class="game-config-tabs">
+      <v-card class="history-card" elevation="0">
+        <div class="history-card__header">
+          <div>
+            <h2 class="history-card__title">
+              {{ t('gameConfig.configurationHistory') }}
+            </h2>
+          </div>
+
+          <v-btn icon size="small" color="primary" variant="flat" class="config-card__settings-btn"
+            @click="showSettings = true">
+            <v-icon size="18">mdi-cog</v-icon>
+          </v-btn>
+        </div>
+
+        <template v-if="gameConfigurationData.length">
+          <AppTable :columns="historyColumns" :items="gameConfigurationData" height="auto" />
+        </template>
+
+        <div v-else class="history-empty">
+          <v-icon size="32" color="grey-lighten-1">mdi-cog-outline</v-icon>
+          <div class="empty-title">{{ t('gameConfig.noHistory') }}</div>
+          <div class="empty-subtitle">{{ t('gameConfig.historySubtitle') }}</div>
+        </div>
+      </v-card>
+    </div>
+
+    <GameConfigSettingsForm v-model="showSettings" :pool-data="poolData" :update-loading="updateLoading"
+      @submit="onSettingsSubmit" @cancel="showSettings = false" />
+
+  </div>
+</template>
+
 <style scoped>
 .page-header {
   display: flex;
@@ -263,65 +251,6 @@ onMounted(() => {
 
 .refresh-btn {
   text-transform: none;
-}
-
-.summary-strip {
-  margin: 0;
-}
-
-.strip-card {
-  padding: 10px 14px;
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-left-width: 4px;
-  border-radius: 8px;
-  height: 100%;
-}
-
-.strip-label {
-  font-size: 12px;
-  color: #6b7280;
-}
-
-.strip-value {
-  font-size: 18px;
-  font-weight: 700;
-  margin-top: 2px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.strip-card--amber {
-  border-left-color: #f59e0b;
-}
-
-.strip-card--amber .strip-value {
-  color: #b45309;
-}
-
-.strip-card--blue {
-  border-left-color: #3b82f6;
-}
-
-.strip-card--blue .strip-value {
-  color: #1d4ed8;
-}
-
-.strip-card--green {
-  border-left-color: #10b981;
-}
-
-.strip-card--green .strip-value {
-  color: #047857;
-}
-
-.strip-card--violet {
-  border-left-color: #8b5cf6;
-}
-
-.strip-card--violet .strip-value {
-  color: #6d28d9;
 }
 
 .status-dot {
@@ -359,69 +288,7 @@ onMounted(() => {
 }
 
 .config-card__settings-btn {
-  background: #2563eb !important;
-}
-
-.config-grid {
-  margin: 0;
-}
-
-.tile {
-  border-radius: 8px;
-  padding: 10px 12px;
-  height: 100%;
-}
-
-.tile-label {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  margin-bottom: 4px;
-  opacity: 0.85;
-}
-
-.tile-icon {
-  opacity: 0.9;
-}
-
-.tile-value {
-  font-size: 18px;
-  font-weight: 700;
-  line-height: 1.2;
-}
-
-.tile--blue {
-  background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%);
-  color: #1d4ed8;
-}
-
-.tile--purple {
-  background: linear-gradient(135deg, #ede9fe 0%, #f5f3ff 100%);
-  color: #7c3aed;
-}
-
-.tile--amber {
-  background: linear-gradient(135deg, #fef3c7 0%, #fffbeb 100%);
-  color: #b45309;
-}
-
-.tile--green {
-  background: linear-gradient(135deg, #d1fae5 0%, #ecfdf5 100%);
-  color: #047857;
-}
-
-.tile--red {
-  background: linear-gradient(135deg, #fee2e2 0%, #fef2f2 100%);
-  color: #b91c1c;
-}
-
-.tile--indigo {
-  background: linear-gradient(135deg, #e0e7ff 0%, #eef2ff 100%);
-  color: #4338ca;
+  background: rgb(var(--v-theme-primary)) !important;
 }
 
 .status-card {
@@ -561,3 +428,7 @@ onMounted(() => {
   margin-top: 2px;
 }
 </style>
+
+
+
+

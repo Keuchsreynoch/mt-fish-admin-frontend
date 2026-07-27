@@ -68,14 +68,15 @@
                 <label class="field-label">{{ t('members.member') }}</label>
                 <div class="input-with-stepper">
                   <v-text-field
-                    v-model="localForm.member_name"
+                    :model-value="localForm.member_name"
                     type="text"
                     inputmode="text"
                     density="compact"
                     variant="outlined"
                     hide-details
-                    placeholder="Member Name"
+                    :placeholder="t('common.memberNamePlaceholder')"
                     class="stepper-input"
+                    @update:model-value="localForm.member_name = normalizeMemberName($event)"
                   />
                 </div>
               </div>
@@ -130,7 +131,7 @@
         </div>
 
         <!-- Payout Settings -->
-        <div class="section-card section-card--green">
+        <!-- <div class="section-card section-card--green">
           <div class="section-title">
             <div class="section-icon section-icon--green">
               <v-icon size="14" color="#fff">mdi-cash-multiple</v-icon>
@@ -170,7 +171,7 @@
               </div>
             </div>
           </div>
-        </div>
+        </div> -->
       </div>
 
       <!-- Footer -->
@@ -248,7 +249,7 @@ function syncFromPool(data: JackpotCurrent | null) {
   if (!data) return;
   localForm.threshold_amount = trimTrailingZeros(data.threshold_amount, { fallback: "0" });
   localForm.chance_denom = String(data.chance_denom ?? "5000");
-  localForm.payout_percent = trimTrailingZeros(data.payout_percent, { fallback: "0" });
+  localForm.payout_percent = formatPercentValue(data.payout_percent);
   localForm.min_eligible_bet_amount = trimTrailingZeros(data.min_eligible_bet_amount, { fallback: "0" });
   localForm.jackpot_fixed_payout_amount = trimTrailingZeros(data.jackpot_fixed_payout_amount, { fallback: "0" });
   localForm.company_topup_amount = "";
@@ -297,6 +298,10 @@ function formatAmount(value: string | number | null | undefined): string {
   });
 }
 
+function formatPercentValue(value: string | number | null | undefined): string {
+  return trimTrailingZeros(Number((parseAmount(value) * 100).toFixed(10)), { fallback: "0" });
+}
+
 function blockNonDecimalKeys(event: KeyboardEvent) {
   const allowed = ["Backspace", "Delete", "Tab", "ArrowLeft", "ArrowRight", "Home", "End", "."];
   if (allowed.includes(event.key) || event.ctrlKey || event.metaKey) return;
@@ -321,13 +326,16 @@ function handleIntegerPaste(e: ClipboardEvent) {
   const pasted = e.clipboardData?.getData("text") || "";
   if (!/^\d+$/.test(pasted)) e.preventDefault();
 }
+function normalizeMemberName(value: string | number | null | undefined): string {
+  return String(value ?? "").toUpperCase();
+}
 
 function closeDialog() {
   emit("update:modelValue", false);
   emit("cancel");
 }
 function handleSave() {
-  emit("submit", { ...localForm });
+  emit("submit", { ...localForm, member_name: normalizeMemberName(localForm.member_name).trim() });
   // parent decides when to close (after successful save)
 }
 </script>

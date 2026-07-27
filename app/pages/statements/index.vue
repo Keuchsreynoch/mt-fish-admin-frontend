@@ -10,38 +10,18 @@
       <div class="filter-row">
         <div class="filter-left">
           <span class="filter-label">{{ t('statements.date') }}</span>
-          <v-text-field
-            v-model="filterDate"
-            type="date"
-            density="compact"
-            hide-details
-            variant="outlined"
-            style="max-width: 180px"
-            class="slate-input"
-            @update:model-value="handleDateChange"
-          />
+          <v-text-field v-model="filterDate" type="date" density="compact" hide-details variant="outlined"
+            style="max-width: 180px" class="slate-input" @update:model-value="handleDateChange" />
         </div>
 
         <div class="filter-right">
-          <PeriodFilterButtons
-            :active-period="activePeriod"
-            @update:active-period="setQuickPeriod"
-          />
+          <PeriodFilterButtons :active-period="activePeriod" @update:active-period="setQuickPeriod" />
         </div>
       </div>
 
-      <AppTable
-        :columns="columns"
-        :items="reportData"
-        :loading="isLoading"
-        :error="errorMessage"
-        :page="currentPage"
-        :page-size="itemsPerPage"
-        :total-pages="totalPages"
-        :subtotals="subtotalsRow"
-        :grand-totals="grandTotalsRow"
-        @update:page="currentPage = $event"
-      >
+      <AppTable :columns="columns" :items="reportData" :loading="isLoading" :error="errorMessage" :page="currentPage"
+        :page-size="itemsPerPage" :total-pages="totalPages" :subtotals="subtotalsRow" :grand-totals="grandTotalsRow"
+        @update:page="currentPage = $event">
         <template #cell-is_kill="{ item }">
           <span :style="{ color: item.is_kill ? '#1E9C07' : '#EF4444', fontWeight: 700 }">
             {{ item.is_kill ? t('statements.yes') : t('statements.no') }}
@@ -85,7 +65,6 @@ const allWinLoseTotal = ref(0)
 
 const validPeriods = ['custom', 'today', 'yesterday', 'this_week'] as const
 
-// ── Columns ────────────────────────────────────────────
 const columns = computed<TableColumn<StatementItem>[]>(() => [
   { key: 'index', label: 'លេខរៀង', type: 'index' },
   { key: 'session_no', label: t('statements.sessionNo') },
@@ -97,9 +76,21 @@ const columns = computed<TableColumn<StatementItem>[]>(() => [
   { key: 'bet_invalid', label: t('statements.invalidBet'), format: (v: string) => formatAmount(parseAmount(v)) },
   { key: 'is_kill', label: t('statements.kill') },
   {
-    key: 'reward',
-    label: t('statements.reward'),
-    format: (_v: string, item: StatementItem) => formatAmount(getRewardAmount(item)),
+    key: 'kill_reward',
+    label: t('statements.killReward'),
+    format: (_v: string, item: StatementItem) => formatAmount(getKillReward(item)),
+    cellClass: (item: StatementItem) => item.is_kill ? 'positive' : '',
+  },
+  {
+    key: 'miss_reward',
+    label: t('statements.missReward'),
+    format: (_v: string, item: StatementItem) => formatAmount(getMissReward(item)),
+    cellClass: (item: StatementItem) => getMissReward(item) > 0 ? 'positive' : '',
+  },
+  {
+    key: 'jackpot_win_amount',
+    label: "Jackpot win amount",
+    format: (v: string) => formatAmount(parseAmount(v)),
   },
   {
     key: 'total_win_lose',
@@ -113,6 +104,15 @@ const columns = computed<TableColumn<StatementItem>[]>(() => [
     format: (v: string) => formatDateTime(v),
   },
 ])
+
+function getKillReward(item: StatementItem): number {
+  return item.is_kill ? parseAmount(item.kill_reward) : 0
+}
+
+function getMissReward(item: StatementItem): number {
+  return item.is_kill ? 0 : parseAmount(item.miss_reward)
+}
+
 
 const pageBetTotal = computed(() =>
   reportData.value.reduce((s, i) => s + parseAmount(i.bet_amount), 0),
@@ -173,7 +173,6 @@ const grandTotalsRow = computed<TotalRow | undefined>(() => {
 
 const totalPages = computed(() => Math.max(1, Math.ceil(totalItems.value / itemsPerPage)))
 
-// ── Helpers ────────────────────────────────────────────
 function parseAmount(value: string | undefined | null): number {
   return Number.parseFloat(value ?? '0') || 0
 }
@@ -197,9 +196,6 @@ function getSevenDaysAgoDate() {
   const d = new Date(); d.setDate(d.getDate() - 6); return formatDateForInput(d)
 }
 
-function getRewardAmount(item: StatementItem): number {
-  return parseAmount(item.is_kill ? item.kill_reward : item.miss_reward) + parseAmount(item.jackpot)
-}
 
 function formatDateTime(value: string): string {
   const date = new Date(value)

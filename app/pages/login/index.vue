@@ -46,6 +46,17 @@
             @click:append-inner="togglePasswordVisibility"
           />
 
+          <div class="login-form__remember">
+            <v-checkbox
+              v-model="rememberMe"
+              :label="t('login.rememberMe')"
+              density="compact"
+              color="primary"
+              hide-details
+              class="login-form__remember-checkbox"
+            />
+          </div>
+
           <v-btn
             type="submit"
             color="primary"
@@ -64,7 +75,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useAuthStore } from "~/stores/authStore";
 import { sonnerToast } from "~/utils/sonnerToast";
 import { useFrontendI18n } from "~/composables/i18n";
@@ -78,11 +89,22 @@ definePageMeta({
   layout: false,
 });
 
+const REMEMBER_KEY = "aqua_remembered_username";
+
 const showPassword = ref(false);
 const isLoggingIn = ref(false);
+const rememberMe = ref(false);
 const authStore = useAuthStore();
 const errors = ref<Errors>({});
 const { t } = useFrontendI18n();
+
+onMounted(() => {
+  const savedUsername = localStorage.getItem(REMEMBER_KEY);
+  if (savedUsername) {
+    authStore.user.user_name = savedUsername;
+    rememberMe.value = true;
+  }
+});
 
 function extractErrorMessage(error: unknown): string {
   if (typeof error === "string") return error;
@@ -164,6 +186,13 @@ async function handleLogin() {
     }
 
     await authStore.fetchLogin();
+
+    if (rememberMe.value) {
+      localStorage.setItem(REMEMBER_KEY, user_name.value);
+    } else {
+      localStorage.removeItem(REMEMBER_KEY);
+    }
+
     sonnerToast(t("login.successTitle"), t("login.successMessage"), "login");
   } catch (error: unknown) {
     sonnerToast(t("login.failedTitle"), extractErrorMessage(error), "error");
@@ -272,6 +301,19 @@ async function handleLogin() {
 
 .login-form :deep(.v-field--variant-outlined .v-field__outline) {
   color: rgba(165, 214, 241, 0.28);
+}
+
+.login-form__remember {
+  margin: -4px 0 4px;
+}
+
+.login-form__remember-checkbox :deep(.v-label) {
+  color: rgba(217, 237, 247, 0.85);
+  font-size: 0.9rem;
+}
+
+.login-form__remember-checkbox :deep(.v-selection-control__input .v-icon) {
+  color: rgba(165, 214, 241, 0.7);
 }
 
 .login-form__submit {

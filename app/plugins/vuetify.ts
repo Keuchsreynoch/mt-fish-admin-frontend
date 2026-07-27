@@ -10,41 +10,47 @@ export default defineNuxtPlugin((nuxtApp) => {
   const vuetify = createVuetify({
     components,
     directives,
-    defaults: {
-      VTextField: {
-        color: "primary",
-        variant: "outlined",
-      },
-    },
+
     theme: {
-      defaultTheme: "crystalLagoon",
+      defaultTheme: "light",
+
       themes: {
-        crystalLagoon: {
+        light: {
           dark: false,
+
           colors: {
-            primary: "#0097A7",
-            secondary: "#00BCD4",
-            create: "#0CED0C",
-            cancel: "#FF2C2C",
-            background: "#F0FBFF",
+            primary: "#326690",
+            secondary: "#5C7A99",
+
+            background: "#F4F6F8",
             surface: "#FFFFFF",
-            accent: "#FF8F00",
-            success: "#0CED0C",
-            warning: "#E53935",
-            error: "#E53935",
-            info: "#0097A7",
-            "on-background": "#1A3A4A",
-            "on-surface": "#1A3A4A",
-            "on-primary": "#E0F7FA",
+
+            accent: "#2C7BE5",
+            success: "#28A745",
+            warning: "#E9A100",
+            error: "#DC3545",
+            info: "#326690",
+
+            create: "#28A745",   // green, matches pgAdmin's "Save/Create" affordance
+            cancel: "#6C757D",   // neutral gray, pgAdmin's secondary button gray
+
+            "on-background": "#26333F",
+            "on-surface": "#26333F",
+
+            "on-primary": "#FFFFFF",
             "on-secondary": "#FFFFFF",
-            "on-create": "#FFFFFF",
-            "on-cancel": "#FFFFFF",
             "on-accent": "#FFFFFF",
             "on-success": "#FFFFFF",
             "on-warning": "#FFFFFF",
             "on-error": "#FFFFFF",
             "on-info": "#FFFFFF",
-            "close-btn": "#E53935",
+            "on-create": "#FFFFFF",
+            "on-cancel": "#FFFFFF",
+
+            "on-lose": "#EF4444",
+            "on-win": "#1E9C07",
+
+            "close-btn": "#DC3545",
           },
         },
       },
