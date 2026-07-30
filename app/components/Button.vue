@@ -71,7 +71,12 @@ const resolvedIcon = computed(() => props.icon ?? actionIconMap[props.action])
 .app-btn {
   font-weight: 600 !important;
   letter-spacing: 0.5px;
-  color: white !important;
   border-width: 1.5px !important;
+}
+
+/* Only force white text on solid-background variants */
+.app-btn.v-btn--variant-flat,
+.app-btn.v-btn--variant-elevated {
+  color: white !important;
 }
 </style>

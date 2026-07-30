@@ -19,6 +19,7 @@ export interface ReportItem {
   total_valid_bet: string;
   total_win_lose: string;
   jackpot_win_amount: string;
+  jackpot_member_bonus_amount: string;
 }
 
 export interface ReportData {

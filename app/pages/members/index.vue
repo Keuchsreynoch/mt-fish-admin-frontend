@@ -12,7 +12,7 @@
     </div>
 
     <div class="content-wepper flex flex-col gap-2">
-      <AppTable :columns="columns" :items="filteredMembers" :loading="isLoading" :error="errorMessage"
+      <AppTable :columns="columns" :items="filteredMembers" :loading="isLoading" :error="errorMessage" height="calc(100vh - 125px)"
         :page="currentPage" :page-size="itemsPerPage" :total-pages="totalPages" @update:page="currentPage = $event">
         <template #cell-user_name="{ item }">
           <div class="member-cell">

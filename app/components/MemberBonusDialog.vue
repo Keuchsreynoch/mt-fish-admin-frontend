@@ -15,6 +15,7 @@
           density="compact"
           hide-details="auto"
           variant="outlined"
+          color="error"
           class="mb-3 slate-input"
         />
         <v-textarea
@@ -30,10 +31,10 @@
       </v-card-text>
 
       <v-card-actions class="justify-end pb-4 pr-4">
-        <v-btn variant="outlined" color="cancel" :disabled="submitting" @click="close">
+        <v-btn variant="outlined" color="error" :disabled="submitting" @click="close">
           {{ t('common.cancel') }}
         </v-btn>
-        <v-btn color="primary" class="bonus-confirm-btn" :loading="submitting" @click="submit">
+        <v-btn variant="flat" color="create" class="bonus-confirm-btn" :loading="submitting" @click="submit">
           {{ t('report.save') }}
         </v-btn>
       </v-card-actions>

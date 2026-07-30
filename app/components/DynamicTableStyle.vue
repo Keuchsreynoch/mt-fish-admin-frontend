@@ -3,7 +3,7 @@
     <v-table class="app-table" fixed-header :height="tableHeight">
       <thead>
         <tr>
-          <th v-for="col in columns" :key="col.key" :style="col.width ? `width: ${col.width}` : ''">
+          <th v-for="col in columns" :key="col.key" :class="{ 'sticky-col': col.sticky }" :style="getColStyle(col)">
             {{ col.label }}
           </th>
         </tr>
@@ -34,11 +34,8 @@
         <tr v-else-if="!items.length" class="no-hover">
           <td :colspan="columns.length" class="empty-cell">
             <div class="empty-state">
-              <img
-                src="https://assets-v2.lottiefiles.com/a/8f195bf4-1179-11ee-88da-277f023b0f0c/z4c7jIndmE.gif"
-                :alt="t('common.noData')"
-                class="empty-img"
-              />
+              <img src="/emptyData/empty_data.svg"
+                :alt="t('common.noData')" class="empty-img" />
               <div class="empty-text">{{ t('common.noData') }}</div>
             </div>
           </td>
@@ -46,18 +43,10 @@
 
         <!-- Rows -->
         <template v-else>
-          <tr
-            v-for="(item, rowIndex) in items"
-            :key="rowIndex"
-            :class="{ 'clickable-row': !!onRowClick }"
-            @click="onRowClick?.(item)"
-          >
-            <td
-              v-for="col in columns"
-              :key="col.key"
-              :class="getCellClass(col, item)"
-              :style="col.align ? `text-align: ${col.align}` : ''"
-            >
+          <tr v-for="(item, rowIndex) in items" :key="rowIndex" :class="{ 'clickable-row': !!onRowClick }"
+            @click="onRowClick?.(item)">
+            <td v-for="col in columns" :key="col.key" :class="[getCellClass(col, item), { 'sticky-col': col.sticky }]"
+              :style="getColStyle(col, true)">
               <slot :name="`cell-${col.key}`" :item="item" :value="item[col.key]" :index="rowIndex">
                 <!-- Badge -->
                 <span v-if="col.type === 'badge'" class="cell-badge" :class="getBadgeClass(col, item)">
@@ -100,14 +89,8 @@
 
     <!-- Pagination -->
     <div v-if="totalPages > 1" class="pagination">
-      <v-pagination
-        :model-value="page"
-        :length="totalPages"
-        :total-visible="5"
-        density="compact"
-        rounded="circle"
-        @update:model-value="$emit('update:page', $event)"
-      />
+      <v-pagination :model-value="page" :length="totalPages" :total-visible="5" density="compact" rounded="circle"
+        @update:model-value="$emit('update:page', $event)" />
     </div>
   </div>
 </template>
@@ -123,6 +106,7 @@ export interface TableColumn<T = any> {
   type?: 'text' | 'index' | 'badge'
   align?: 'left' | 'center' | 'right'
   width?: string
+  sticky?: boolean
   format?: (value: any, item: T) => string
   cellClass?: string | ((item: T) => string)
   badge?: {
@@ -138,38 +122,38 @@ export interface TotalRow {
 }
 
 const props = withDefaults(defineProps<{
-  columns:      TableColumn<T>[]
-  items:        T[]
-  loading?:     boolean
-  error?:       string
-  height?:      string
-  page?:        number
-  pageSize?:    number
-  totalPages?:  number
-  subtotals?:   TotalRow
+  columns: TableColumn<T>[]
+  items: T[]
+  loading?: boolean
+  error?: string
+  height?: string
+  emptyHeight?: string
+  page?: number
+  pageSize?: number
+  totalPages?: number
+  subtotals?: TotalRow
   grandTotals?: TotalRow
-  onRowClick?:  (item: T) => void
+  onRowClick?: (item: T) => void
   minRowsForFixedHeight?: number
 }>(), {
-  loading:    false,
-  error:      '',
-  height:     'calc(100vh - 125px)',
-  page:       1,
-  pageSize:   10,
+  loading: false,
+  error: '',
+  height: 'auto',
+  emptyHeight: 'calc(100vh - 125px)',
+  page: 1,
+  pageSize: 10,
   totalPages: 1,
   minRowsForFixedHeight: 8,
 })
 
-defineEmits<{ 'update:page': [page: number] }>()
-const { t } = useFrontendI18n()
-
 const tableHeight = computed(() => {
-  if (props.loading || props.error || !props.items.length) return 'auto'
+  if (props.loading || props.error || !props.items.length) return props.emptyHeight
   if (props.items.length < props.minRowsForFixedHeight) return 'auto'
   return props.height
 })
+defineEmits<{ 'update:page': [page: number] }>()
+const { t } = useFrontendI18n()
 
-// ── Helpers ────────────────────────────────────────────
 function formatCell(col: TableColumn<T>, item: T): string {
   const val = item[col.key]
   if (col.format) return col.format(val, item)
@@ -185,17 +169,38 @@ function getBadgeClass(col: TableColumn<T>, item: T): string {
   const val = String(item[col.key] ?? '').toLowerCase()
   return col.badge?.map?.[val] ?? col.badge?.default ?? ''
 }
+
+const STICKY_FALLBACK_WIDTH = 80
+
+function parseWidthPx(width?: string): number {
+  if (!width) return STICKY_FALLBACK_WIDTH
+  const match = width.match(/[\d.]+/)
+  return match ? parseFloat(match[0]) : STICKY_FALLBACK_WIDTH
+}
+
+function getStickyLeft(col: TableColumn<T>): number {
+  let left = 0
+  for (const c of props.columns) {
+    if (c.key === col.key) break
+    if (c.sticky) left += parseWidthPx(c.width)
+  }
+  return left
+}
+
+function getColStyle(col: TableColumn<T>, isBody = false): string {
+  const parts: string[] = []
+  if (col.width) parts.push(`width: ${col.width}`)
+  if (isBody && col.align) parts.push(`text-align: ${col.align}`)
+  if (col.sticky) {
+    parts.push(`left: ${getStickyLeft(col)}px`)
+    if (!col.width) parts.push(`width: ${STICKY_FALLBACK_WIDTH}px`)
+  }
+  return parts.join('; ')
+}
 </script>
 
 <style scoped>
-/* ── Wrapper ── */
-.app-table-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
 
-/* ── Table ── */
 .app-table {
   background: transparent !important;
   border-radius: 12px;
@@ -204,16 +209,24 @@ function getBadgeClass(col: TableColumn<T>, item: T): string {
 }
 
 .app-table :deep(table) {
-  border-collapse: collapse;
-  width: 100%;
   height: 100%;
 }
 
-/* Cap the scroll wrapper to the intended max height even when the table
-   itself is sized to 'auto' — prevents runaway growth if rows are added
-   dynamically, while still letting small tables shrink to fit content. */
-.app-table :deep(.v-table__wrapper) {
-  max-height: v-bind('height');
+.app-table :deep(tbody) {
+  height: 100%;
+}
+
+.app-table-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.app-table {
+  background: transparent !important;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(var(--v-theme-secondary), 0.3);
 }
 
 .app-table :deep(thead th) {
@@ -229,10 +242,6 @@ function getBadgeClass(col: TableColumn<T>, item: T): string {
   height: 36px !important;
 }
 
-.app-table :deep(tbody) {
-  height: 100%;
-}
-
 .app-table :deep(tbody td) {
   background: rgb(var(--v-theme-surface)) !important;
   color: rgb(var(--v-theme-on-surface)) !important;
@@ -241,7 +250,10 @@ function getBadgeClass(col: TableColumn<T>, item: T): string {
   font-size: 12px !important;
   padding: 4px 10px !important;
   line-height: 1.2 !important;
+  box-sizing: border-box;
   height: 36px !important;
+  max-height: 36px !important;
+  overflow: hidden;
 }
 
 .app-table :deep(tbody td.positive) {
@@ -254,51 +266,15 @@ function getBadgeClass(col: TableColumn<T>, item: T): string {
   font-weight: 700 !important;
 }
 
-/* .app-table :deep(tbody tr:nth-child(even) td) {
-  background: rgba(var(--v-theme-primary), 0.05) !important;
-} */
-
 .app-table :deep(tbody tr:hover td) {
   background: rgba(var(--v-theme-primary), 0.12) !important;
   transition: background 0.2s ease;
-}
-
-.app-table :deep(tbody tr.clickable-row) {
-  cursor: pointer;
 }
 
 /* ── No hover for state rows ── */
 .app-table :deep(tbody tr.no-hover:hover td) {
   background: rgb(var(--v-theme-surface)) !important;
   cursor: default;
-}
-
-/* ── Summary rows ── */
-.app-table :deep(tbody tr.summary-row td) {
-  background: rgba(var(--v-theme-primary), 0.10) !important;
-  font-weight: 700 !important;
-}
-
-.app-table :deep(tbody tr.grand-total-row td) {
-  background: rgba(var(--v-theme-primary), 0.20) !important;
-}
-
-.app-table :deep(tbody tr.summary-row td.summary-label) {
-  text-align: right !important;
-  color: rgb(var(--v-theme-primary)) !important;
-  padding-right: 12px !important;
-}
-
-.app-table :deep(tbody tr.summary-row td.positive),
-.app-table :deep(tbody tr.grand-total-row td.positive) {
-  color: rgb(var(--v-theme-success)) !important;
-  font-weight: 700 !important;
-}
-
-.app-table :deep(tbody tr.summary-row td.negative),
-.app-table :deep(tbody tr.grand-total-row td.negative) {
-  color: rgb(var(--v-theme-warning)) !important;
-  font-weight: 700 !important;
 }
 
 /* ── Empty state ── */
@@ -309,6 +285,14 @@ function getBadgeClass(col: TableColumn<T>, item: T): string {
   height: 1px;
 }
 
+
+.empty-cell {
+  background: rgb(var(--v-theme-surface)) !important;
+  padding: 0 !important;
+  border: none !important;
+  height: 100%; /* was height: 1px */
+}
+
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -317,14 +301,13 @@ function getBadgeClass(col: TableColumn<T>, item: T): string {
   gap: 12px;
   padding: 48px 24px;
   background: rgb(var(--v-theme-surface));
-  height: 100%;
-  min-height: 340px;
+  height: 100%; /* was min-height: 340px */
   box-sizing: border-box;
 }
 
 .empty-img {
-  width: 140px;
-  height: 140px;
+  width: 240px;
+  height: 240px;
   object-fit: contain;
   opacity: 0.85;
 }
@@ -335,28 +318,6 @@ function getBadgeClass(col: TableColumn<T>, item: T): string {
   color: rgb(var(--v-theme-primary));
   opacity: 0.7;
 }
-
-.error-text {
-  color: rgb(var(--v-theme-error)) !important;
-  opacity: 1;
-}
-
-/* ── Badge cells ── */
-.cell-badge {
-  display: inline-flex;
-  align-items: center;
-  font-size: 10px;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-}
-
-:deep(.badge--green)  { background: rgba(30, 156, 7, 0.12); color: #1E9C07; }
-:deep(.badge--red)    { background: rgba(var(--v-theme-error), 0.12); color: rgb(var(--v-theme-error)); }
-:deep(.badge--yellow) { background: rgba(var(--v-theme-success), 0.12); color: rgb(var(--v-theme-success)); }
-:deep(.badge--grey)   { background: rgba(var(--v-theme-secondary), 0.12); color: rgb(var(--v-theme-primary)); }
 
 /* ── Pagination ── */
 .pagination {
@@ -400,10 +361,31 @@ function getBadgeClass(col: TableColumn<T>, item: T): string {
 .pagination :deep(.v-pagination__next .v-icon) {
   font-size: 16px !important;
 }
+/* ── Summary rows ── */
+.app-table :deep(tbody tr.summary-row td) {
+  background: rgba(var(--v-theme-primary), 0.10) !important;
+  font-weight: 700 !important;
+}
 
-/* ── Scrollbar ── */
-.app-table :deep(.v-table__wrapper)::-webkit-scrollbar       { width: 5px; height: 5px; }
-.app-table :deep(.v-table__wrapper)::-webkit-scrollbar-track { background: rgba(var(--v-theme-secondary), 0.1); border-radius: 10px; }
-.app-table :deep(.v-table__wrapper)::-webkit-scrollbar-thumb { background: rgb(var(--v-theme-secondary)); border-radius: 10px; }
-.app-table :deep(.v-table__wrapper)::-webkit-scrollbar-thumb:hover { background: rgb(var(--v-theme-primary)); }
+.app-table :deep(tbody tr.grand-total-row td) {
+  background: rgba(var(--v-theme-primary), 0.20) !important;
+}
+
+.app-table :deep(tbody tr.summary-row td.summary-label) {
+  text-align: right !important;
+  color: rgb(var(--v-theme-primary)) !important;
+  padding-right: 12px !important;
+}
+
+.app-table :deep(tbody tr.summary-row td.positive),
+.app-table :deep(tbody tr.grand-total-row td.positive) {
+  color: rgb(var(--v-theme-success)) !important;
+  font-weight: 700 !important;
+}
+
+.app-table :deep(tbody tr.summary-row td.negative),
+.app-table :deep(tbody tr.grand-total-row td.negative) {
+  color: rgb(var(--v-theme-warning)) !important;
+  font-weight: 700 !important;
+}
 </style>

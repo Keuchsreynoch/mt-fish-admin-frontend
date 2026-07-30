@@ -400,7 +400,7 @@ function handleSave() {
 /* Dialog Content */
 .dialog-content {
   padding: 0 20px 16px;
-  max-height: 52vh;
+  max-height: 80vh;
   overflow-y: auto;
   display: flex;
   flex-direction: column;

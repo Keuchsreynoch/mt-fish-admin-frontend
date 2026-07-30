@@ -6,6 +6,7 @@
         :items="historyData.slice(0, 10)"
         :loading="isLoading"
         :error="errorMessage"
+        height="calc(100vh - 125px)"
       >
         <template #cell-payout_coin="{ item }">
           <span class="positive">{{ formatAmount(parseAmount(item.payout_coin)) }}</span>

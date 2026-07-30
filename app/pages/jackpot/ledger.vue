@@ -35,6 +35,7 @@
         :items="ledgerData.slice(0, 10)"
         :loading="isLoading"
         :error="errorMessage"
+        height="calc(100vh - 125px)"
       >
         <template #cell-global_contribution_coin="{ item }">
           <span class="positive">{{ formatAmount(parseAmount(item.global_contribution_coin)) }}</span>

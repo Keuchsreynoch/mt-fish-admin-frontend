@@ -2,7 +2,7 @@
   <div class="min-h-screen flex items-center justify-center px-6">
     <div class="max-w-lg text-center">
       <img
-        src="https://png.pngtree.com/png-vector/20201123/ourmid/pngtree-404-not-found-or-page-error-flat-line-concept-png-image_2468879.jpg"
+        src="/emptyData/notfound.svg"
         :alt="t('notFound.title')"
         class="w-full max-w-md mx-auto"
       />
@@ -40,6 +40,10 @@
 
 <script setup lang="ts">
 import { useFrontendI18n } from '~/composables/i18n'
+
+definePageMeta({
+  layout: false
+})
 
 const { t } = useFrontendI18n()
 </script>

@@ -12,20 +12,9 @@
             </v-card-text>
 
             <v-card-actions class="logout-actions">
-                <AppButton
-                    action="cancel"
-                    variant="outlined"
-                    :label="t('common.cancel')"
-                    class="logout-btn"
-                    @click="model = false"
-                />
-                <AppButton
-                    action="logout"
-                    variant="flat"
-                    :label="t('logout.action')"
-                    class="logout-btn"
-                    @click="confirmLogout"
-                />
+                <AppButton variant="outlined" :label="t('common.cancel')" class="logout-btn" @click="model = false" />
+                <AppButton action="logout" variant="flat" color="error" :label="t('logout.action')" class="logout-btn"
+                    @click="confirmLogout" />
             </v-card-actions>
         </v-card>
     </v-dialog>

@@ -28,7 +28,7 @@
         </v-btn>
       </div>
 
-      <AppTable :columns="userColumns" :items="filteredUsers" :loading="userLoading" :error="userError" :page="userPage"
+      <AppTable :columns="userColumns" :items="filteredUsers" :loading="userLoading" :error="userError" :page="userPage" height="calc(100vh - 125px)"
         :page-size="userPageSize" :total-pages="userTotalPages" @update:page="userPage = $event">
         <template #cell-username="{ item }">
           <div class="user-cell">

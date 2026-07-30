@@ -100,7 +100,7 @@ const kpis = computed(() => [
         emoji: "🎰",
     },
     {
-        label: "Member Active",
+        label: t('dashboard.memberActive'),
         value: dashData.value?.member_active?.length ?? 0,
         emoji: "👥",
     }

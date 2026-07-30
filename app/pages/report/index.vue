@@ -21,8 +21,8 @@
       </div>
 
       <AppTable :columns="columns" :items="reportData" :loading="isLoading" :error="errorMessage" :page="currentPage"
-        :page-size="itemsPerPage" :total-pages="totalPages" :subtotals="subtotalsRow" :grand-totals="grandTotalsRow"
-        @update:page="currentPage = $event">
+        height="calc(100vh - 125px)" :page-size="itemsPerPage" :total-pages="totalPages" :subtotals="subtotalsRow"
+        :grand-totals="grandTotalsRow" @update:page="currentPage = $event">
         <template #cell-total_bet_amount="{ item }">
           <span class="positive">{{ formatAmount(parseAmount(item.total_bet_amount)) }}</span>
         </template>
@@ -48,11 +48,7 @@
     </div>
 
     <!-- Create Bonus Dialog -->
-    <MemberBonusDialog
-      v-model="bonusDialog"
-      :member="selectedMember"
-      @created="fetchReports"
-    />
+    <MemberBonusDialog v-model="bonusDialog" :member="selectedMember" @created="fetchReports" />
   </div>
 </template>
 
@@ -71,23 +67,24 @@ const router = useRouter()
 const { t } = useFrontendI18n()
 
 const columns = computed<TableColumn<ReportItem>[]>(() => [
-  { key: 'index', label: 'លេខរៀង', type: 'index' },
-  { key: 'member_name', label: t('members.member') },
-  { key: 'total_bet_amount', label: t('report.turnOver'), align: 'right' },
-  { key: 'total_valid_bet', label: t('report.validBet'), align: 'right' },
+  { key: 'index', label: 'លេខរៀង', type: 'index', width: '60px' },
+  { key: 'member_name', label: t('members.member'), width: '160px' },
+  { key: 'total_bet_amount', label: t('report.turnOver'), align: 'right', width: '120px' },
+  { key: 'total_valid_bet', label: t('report.validBet'), align: 'right', width: '120px' },
   {
     key: 'total_win_lose',
     label: t('report.winLose'),
     align: 'right',
+    width: '120px',
     cellClass: (item: ReportItem) => parseAmount(item.total_win_lose) >= 0 ? 'positive' : 'negative',
   },
-  { key: 'jackpot_win_amount', label: t('report.jackpotWin'), align: 'right' },
-  { key: 'bonus', label: t('report.bonus'), align: 'center' },
+  { key: 'jackpot_win_amount', label: t('report.jackpotWin'), align: 'right', width: '120px' },
+  { key: 'bonus', label: t('report.bonus'), align: 'center', width: '130px' },
 ])
 
 const filterDate = ref(formatDateForInput(new Date()))
 const currentPage = ref(1)
-const itemsPerPage = 10
+const itemsPerPage = 20
 const totalItems = ref(0)
 const reportData = ref<ReportItem[]>([])
 const reportTotal = ref<{ total_bet: string; total_valid_bet: string; total_winlose: string } | null>(null)
@@ -305,22 +302,11 @@ watch([filterDate, currentPage, activePeriod], () => {
   color: rgb(var(--v-theme-primary));
 }
 
-.page-subtitle {
-  margin-top: 4px;
-  color: rgba(17, 24, 39, 0.7);
-  font-size: 13px;
-}
-
-.content-wepper {
-  margin-top: 8px;
-}
-
 .filter-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 12px;
 }
 
 .filter-left {
@@ -328,18 +314,6 @@ watch([filterDate, currentPage, activePeriod], () => {
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
-}
-
-.filter-right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.filter-label {
-  color: #111827 !important;
-  font-weight: 600;
-  font-size: 13px;
 }
 
 .slate-input :deep(.v-field) {
@@ -363,10 +337,6 @@ watch([filterDate, currentPage, activePeriod], () => {
   padding: 2px 6px !important;
 }
 
-.analytics-chip {
-  font-weight: 700;
-}
-
 :deep(td.positive) {
   color: #1E9C07 !important;
   font-weight: 700 !important;
@@ -375,11 +345,6 @@ watch([filterDate, currentPage, activePeriod], () => {
 :deep(td.negative) {
   color: #EF4444 !important;
   font-weight: 700 !important;
-}
-
-:deep(td.uuid-cell) {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-  font-size: 12px;
 }
 
 .bonus-btn {

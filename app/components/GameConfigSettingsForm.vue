@@ -6,7 +6,7 @@
           <v-icon size="18" class="mr-2">mdi-cog</v-icon>
           {{ t('gameConfig.title') }}
         </h2>
-        <v-btn icon size="small" variant="text" @click="onCancel">
+        <v-btn icon size="small" variant="text" color="error" @click="onCancel">
           <v-icon size="20">mdi-close</v-icon>
         </v-btn>
       </div>
@@ -37,10 +37,10 @@
 
       <v-card-actions class="settings-dialog__actions">
         <v-spacer />
-        <v-btn variant="outlined" color="cancel" @click="onCancel" :disabled="updateLoading">
+        <v-btn variant="outlined" color="error" @click="onCancel" :disabled="updateLoading">
           {{ t('common.cancel') }}
         </v-btn>
-        <v-btn color="primary" variant="flat" :loading="updateLoading" @click="onSubmit">
+        <v-btn color="create" variant="flat" :loading="updateLoading" @click="onSubmit">
           <v-icon size="16" class="mr-1">mdi-content-save</v-icon>
           {{ t('common.save') }}
         </v-btn>
@@ -222,8 +222,10 @@ function onCancel() {
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  background: rgb(var(--v-theme-primary)) !important;
-  color: white !important;
+  background: white !important;
+  color: rgb(var(--v-theme-primary)) !important;
+  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+
 }
 
 .settings-dialog__title {

@@ -19,38 +19,46 @@ export default defineNuxtPlugin((nuxtApp) => {
           dark: false,
 
           colors: {
-            primary: "#326690",
-            secondary: "#5C7A99",
-
+            primary: "#326690",     
+            secondary: "#848EA0",  
             background: "#F4F6F8",
             surface: "#FFFFFF",
 
-            accent: "#2C7BE5",
-            success: "#28A745",
-            warning: "#E9A100",
-            error: "#DC3545",
-            info: "#326690",
+            accent: "#D6EFFC",      
+            success: "#43A047",
+            warning: "#EEA236",
+            error: "#E53935",
+            info: "#326690",       
 
-            create: "#28A745",   // green, matches pgAdmin's "Save/Create" affordance
-            cancel: "#6C757D",   // neutral gray, pgAdmin's secondary button gray
+            create: "#75BCE5",      
+            cancel: "#848EA0",      
+
+            navy: "#213448",
+            slate: "#547792",
+            steel: "#94B4C1",
+            beige: "#EAE0CF",
 
             "on-background": "#26333F",
             "on-surface": "#26333F",
 
             "on-primary": "#FFFFFF",
             "on-secondary": "#FFFFFF",
-            "on-accent": "#FFFFFF",
-            "on-success": "#FFFFFF",
+            "on-accent": "#26333F",   
             "on-warning": "#FFFFFF",
             "on-error": "#FFFFFF",
             "on-info": "#FFFFFF",
             "on-create": "#FFFFFF",
             "on-cancel": "#FFFFFF",
 
+            "on-navy": "#FFFFFF",
+            "on-slate": "#FFFFFF",
+            "on-steel": "#26333F",
+            "on-beige": "#26333F",
+
             "on-lose": "#EF4444",
             "on-win": "#1E9C07",
 
-            "close-btn": "#DC3545",
+            "close-btn": "#E53935",
           },
         },
       },

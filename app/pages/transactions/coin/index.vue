@@ -21,7 +21,7 @@
       </div>
 
       <!-- AppTable -->
-      <AppTable :columns="columns" :items="reportData" :loading="isLoading" :error="errorMessage" :page="currentPage"
+      <AppTable :columns="columns" :items="reportData" :loading="isLoading" :error="errorMessage" :page="currentPage" height="calc(100vh - 125px)"
         :page-size="itemsPerPage" :total-pages="totalPages" @update:page="currentPage = $event">
         <!-- status badge -->
         <template #cell-status_id="{ item }">

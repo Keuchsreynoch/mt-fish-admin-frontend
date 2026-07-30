@@ -39,6 +39,7 @@
         :page-size="itemsPerPage"
         :total-pages="totalPages"
         @update:page="currentPage = $event"
+        height="calc(100vh - 125px)"
       >
         <template #cell-amount="{ item }">
           <span class="positive">{{ formatAmount(item.amount) }}</span>

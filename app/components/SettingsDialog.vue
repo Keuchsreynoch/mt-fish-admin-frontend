@@ -82,7 +82,7 @@
         </v-card-text>
 
         <v-card-actions class="settings-dialog__actions">
-          <v-btn variant="outlined" color="cancel" @click="dialog = false">
+          <v-btn variant="outlined" color="error" @click="dialog = false">
             {{ t('common.close') }}
           </v-btn>
         </v-card-actions>

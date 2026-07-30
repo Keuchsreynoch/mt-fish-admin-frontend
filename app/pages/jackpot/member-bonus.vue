@@ -232,7 +232,7 @@ watch(filterDate, fetchBonuses)
         </div>
       </div>
 
-      <AppTable :columns="columns" :items="bonusData.slice(0, 10)" :loading="isLoading" :error="errorMessage">
+      <AppTable :columns="columns" :items="bonusData.slice(0, 10)" :loading="isLoading" :error="errorMessage" height="calc(100vh - 125px)">
         <template #cell-amount="{ item }">
           <span class="positive">{{ formatAmount(parseAmount(item.amount)) }}</span>
         </template>
