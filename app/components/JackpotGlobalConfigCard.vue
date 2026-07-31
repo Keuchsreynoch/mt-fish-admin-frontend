@@ -262,7 +262,6 @@ function syncFormFromPool(data: JackpotCurrent | null) {
 
 watch(() => props.poolData, (val) => syncFormFromPool(val), { immediate: true });
 
-// ── Computed ─────────────────────────────────────────────
 const winProbability = computed(() => {
   const denom = Number.parseInt(form.value.chance_denom, 10);
   if (!denom || denom <= 0) return "0";

@@ -26,13 +26,13 @@ import {
 const { showSuccess, showError } = useSnackbar();
 const { t } = useFrontendI18n();
 
-// ── Jackpot pool state ──────────────────────────────────
+//  Jackpot pool state 
 const poolData = ref<JackpotCurrent | null>(null);
 const isLoading = ref(false);
 const errorMessage = ref("");
 const updateLoading = ref(false);
 
-// ── Member bets / report table state ────────────────────
+//  Member bets / report table state 
 const reportData = ref<ReportItem[]>([]);
 const reportTotal = ref<{ total_bet: string; total_valid_bet: string; total_winlose: string } | null>(null);
 const currentPage = ref(1);
@@ -41,16 +41,16 @@ const totalReportPages = ref(1);
 const playersLoading = ref(false);
 const memberSearch = ref("");
 
-// ── Jackpot reservations/history state ──────────────────
+//  Jackpot reservations/history state 
 const jackpotHistories = ref<JackpotHistoryItem[]>([]);
 const historiesLoading = ref(false);
 
-// ── Bonus dialog (per-player) ───────────────────────────
+//  Bonus dialog 
 const bonusDialog = ref(false);
 const selectedMember = ref<BonusMember | null>(null);
 const memberBonuses = ref<MemberBonusItem[]>([]);
 
-// ── Computed ─────────────────────────────────────────────
+//  Computed 
 const columnsReport = computed<TableColumn<ReportItem>[]>(() => [
   { key: "index", label: "លេខរៀង", type: "index" },
   { key: "member_name", label: t("members.member") },
@@ -75,7 +75,7 @@ const sortedJackpotHistories = computed<JackpotHistoryItem[]>(() => {
     .slice(0, 20);
 });
 
-// ── Helpers ──────────────────────────────────────────────
+//  Helpers 
 function parseAmount(value: string | number | null | undefined): number {
   if (value === null || value === undefined || value === "") return 0;
   return Number.parseFloat(String(value)) || 0;
@@ -98,7 +98,7 @@ function openBonusDialog(item: ReportItem) {
   bonusDialog.value = true;
 }
 
-// ── Jackpot pool ─────────────────────────────────────────
+//  Jackpot pool 
 async function fetchCurrentPool() {
   isLoading.value = true;
   errorMessage.value = "";
@@ -163,7 +163,7 @@ async function onSettingsSubmit(form: JackpotSettingsForm) {
   }
 }
 
-// ── Jackpot reservations/history ────────────────────────
+//  Jackpot reservations/history 
 async function fetchJackpotHistories() {
   historiesLoading.value = true;
   errorMessage.value = "";
@@ -179,7 +179,7 @@ async function fetchJackpotHistories() {
   }
 }
 
-// ── Member bonuses ──────────────────────────────────────
+//  Member bonuses 
 async function fetchBonuses() {
   try {
     const response = await getMemberBonuses(1, 10, "", "", {
@@ -193,7 +193,7 @@ async function fetchBonuses() {
   }
 }
 
-// ── Player / report list ────────────────────────────────
+//  Player / report list 
 async function fetchPlayers(page = 1) {
   playersLoading.value = true;
   errorMessage.value = "";
