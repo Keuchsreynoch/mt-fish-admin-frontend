@@ -20,7 +20,7 @@
       </div>
 
       <AppTable :columns="columns" :items="reportData" :loading="isLoading" :error="errorMessage" :page="currentPage"
-        height="calc(100vh - 125px)" :page-size="itemsPerPage" :total-pages="totalPages" :subtotals="subtotalsRow"
+        :page-size="itemsPerPage" :total-pages="totalPages" :subtotals="subtotalsRow"
         :grand-totals="grandTotalsRow" @update:page="currentPage = $event">
         <template #cell-is_kill="{ item }">
           <span :style="{ color: item.is_kill ? '#1E9C07' : '#EF4444', fontWeight: 700 }">

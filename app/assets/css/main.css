@@ -115,3 +115,25 @@ html, body { overflow: hidden !important; height: 100% !important; }
 
 .strip-card--pink { border-left-color: #ec4899; }
 .strip-card--pink .strip-value { color: #be185d; }
+
+
+.filters-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.member-search {
+  flex: 1 1 220px;
+  min-width: 0;
+  max-width: 200px;
+}
+
+.refresh-mini-btn {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  text-transform: none;
+}

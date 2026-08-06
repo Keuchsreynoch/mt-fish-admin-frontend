@@ -1,5 +1,5 @@
 <template>
-  <div class="app-table-wrapper">
+  <div class="app-table-wrapper ">
     <v-table class="app-table" fixed-header :height="tableHeight">
       <thead>
         <tr>
@@ -10,15 +10,15 @@
       </thead>
 
       <tbody>
-        <!-- Loading -->
-        <tr v-if="loading" class="no-hover">
-          <td :colspan="columns.length" class="empty-cell">
-            <div class="empty-state">
-              <v-progress-circular indeterminate color="#0097A7" size="36" width="3" />
-              <div class="empty-text">{{ t('common.loading') }}</div>
-            </div>
-          </td>
-        </tr>
+        <!-- Loading: skeleton rows -->
+        <template v-if="loading">
+          <tr v-for="n in skeletonRowCount" :key="`skeleton-${n}`" class="no-hover skeleton-row">
+            <td v-for="col in columns" :key="col.key" :class="{ 'sticky-col': col.sticky }"
+              :style="getColStyle(col, true)">
+              <v-skeleton-loader type="text" class="skeleton-cell" />
+            </td>
+          </tr>
+        </template>
 
         <!-- Error -->
         <tr v-else-if="error" class="no-hover">
@@ -135,6 +135,7 @@ const props = withDefaults(defineProps<{
   grandTotals?: TotalRow
   onRowClick?: (item: T) => void
   minRowsForFixedHeight?: number
+  skeletonRows?: number
 }>(), {
   loading: false,
   error: '',
@@ -146,8 +147,13 @@ const props = withDefaults(defineProps<{
   minRowsForFixedHeight: 8,
 })
 
+// how many skeleton rows to render while loading — defaults to pageSize
+const skeletonRowCount = computed(() => props.skeletonRows ?? props.pageSize ?? 8)
+
 const tableHeight = computed(() => {
-  if (props.loading || props.error || !props.items.length) return props.emptyHeight
+  // while loading, keep the table sized like real content (skeleton rows), don't collapse to emptyHeight
+  if (props.loading) return props.height
+  if (props.error || !props.items.length) return props.emptyHeight
   if (props.items.length < props.minRowsForFixedHeight) return 'auto'
   return props.height
 })
@@ -277,6 +283,22 @@ function getColStyle(col: TableColumn<T>, isBody = false): string {
   cursor: default;
 }
 
+/* ── Skeleton loading rows ── */
+.skeleton-row td {
+  padding: 8px 10px !important;
+}
+
+.skeleton-cell {
+  background: transparent !important;
+}
+
+.skeleton-cell :deep(.v-skeleton-loader__bone) {
+  background: rgba(var(--v-theme-secondary), 0.18) !important;
+  margin: 0 auto;
+  height: 14px;
+  border-radius: 4px;
+}
+
 /* ── Empty state ── */
 .empty-cell {
   background: rgb(var(--v-theme-surface)) !important;
@@ -321,6 +343,7 @@ function getColStyle(col: TableColumn<T>, isBody = false): string {
 
 /* ── Pagination ── */
 .pagination {
+  margin-top: 10px;
   display: flex;
   justify-content: center;
 }

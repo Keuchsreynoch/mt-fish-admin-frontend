@@ -64,3 +64,53 @@ export async function getReports(
     { method: "GET" },
   );
 }
+
+export interface TotalPayoutItem {
+  member_id: number;
+  member_uuid: string;
+  member_name: string;
+  total_payout_amount: string;
+}
+
+export interface TotalPayoutData {
+  payouts: TotalPayoutItem[];
+  total: number;
+}
+
+export async function getTotalPayout(
+  page = 1,
+  perPage = 10,
+  startDate = "",
+  endDate = "",
+  memberName = "",
+  extraParams: Record<string, QueryValue> = {},
+) {
+  const filters: QueryValue[] = [];
+
+  if (startDate && endDate) {
+    filters.push({
+      property: "created_at",
+      operator: "between",
+      value: [startDate, endDate],
+    });
+  }
+
+  if (memberName) {
+    filters.push({
+      property: "member_name",
+      operator: "ilike",
+      value: `%${memberName}%`,
+    });
+  }
+
+  const url = buildUrlWithParams("/reports/payout", {
+    paging_options: {
+      page,
+      per_page: perPage,
+    },
+    ...(filters.length ? { filters } : {}),
+    ...extraParams,
+  });
+
+  return useApiInterceptor<ApiResponse<TotalPayoutData>>(url, { method: "GET" });
+}

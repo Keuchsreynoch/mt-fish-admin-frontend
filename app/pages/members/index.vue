@@ -4,16 +4,21 @@
       <div>
         <h1 class="page-title">{{ t('members.title') }}</h1>
       </div>
-      <div class="header-chips">
-        <v-chip size="small" variant="tonal">
-          {{ t('members.total', { total: totalItems }) }}
-        </v-chip>
+
+      <div class="filters-row flex justify-between items-center">
+        <v-text-field density="compact" variant="outlined" hide-details clearable prepend-inner-icon="mdi-magnify"
+          :placeholder="t('jackpot.searchMemberName')" class="member-search" />
+
+        <v-btn color="success" variant="flat" class="refresh-mini-btn">
+          <v-icon size="16" class="mr-1">mdi-refresh</v-icon>
+          {{ t('gameConfig.refresh') }}
+        </v-btn>
       </div>
     </div>
 
     <div class="content-wepper flex flex-col gap-2">
-      <AppTable :columns="columns" :items="filteredMembers" :loading="isLoading" :error="errorMessage" height="calc(100vh - 125px)"
-        :page="currentPage" :page-size="itemsPerPage" :total-pages="totalPages" @update:page="currentPage = $event">
+      <AppTable :columns="columns" :items="filteredMembers" :loading="isLoading" :error="errorMessage"
+        :page="currentPage" :page-size="itemsPerPage" :total-pages="totalPages" @update:page="currentPage = $event" >
         <template #cell-user_name="{ item }">
           <div class="member-cell">
             <div class="member-name">{{ item.user_name }}</div>

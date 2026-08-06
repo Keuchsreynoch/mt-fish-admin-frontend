@@ -21,7 +21,7 @@
       </div>
 
       <AppTable :columns="columns" :items="reportData" :loading="isLoading" :error="errorMessage" :page="currentPage"
-        height="calc(100vh - 125px)" :page-size="itemsPerPage" :total-pages="totalPages" :subtotals="subtotalsRow"
+      :page-size="itemsPerPage" :total-pages="totalPages" :subtotals="subtotalsRow"
         :grand-totals="grandTotalsRow" @update:page="currentPage = $event">
         <template #cell-total_bet_amount="{ item }">
           <span class="positive">{{ formatAmount(parseAmount(item.total_bet_amount)) }}</span>

@@ -1,165 +1,17 @@
-<template>
-  <v-card class="winner_card jackpot-config-card settings-dialog" elevation="0">
-    <div class="settings-dialog__header">
-      <div class="dialog-title">
-        <div class="title-icon">
-          <v-icon size="16" color="#fff">mdi-crown</v-icon>
-        </div>
-        <span>{{ t('jackpot.globalConfig') }}</span>
-      </div>
-    </div>
-
-    <!-- Current pool banner -->
-    <div class="current-pool-banner">
-      <div class="banner-label">{{ t('jackpot.currentAmount') }}</div>
-      <div class="banner-value">{{ formatAmount(poolData?.current_amount) }}</div>
-    </div>
-
-    <div class="dialog-content">
-      <!-- Pool Configuration -->
-      <div class="section-card section-card--blue">
-        <div class="section-title">
-          <div class="section-icon section-icon--blue">
-            <v-icon size="14" color="#fff">mdi-cog</v-icon>
-          </div>
-          <span>{{ t('jackpot.globalConfig') }}</span>
-        </div>
-
-        <div class="section-fields">
-          <div class="field-row">
-            <div class="field-col">
-              <label class="field-label">{{ t('jackpot.companyTopup') }}</label>
-              <v-text-field v-model="form.company_topup_amount" type="text" inputmode="decimal" density="compact"
-                variant="outlined" hide-details placeholder="0" class="stepper-input" @keydown="blockNonDecimalKeys"
-                @paste.prevent="handleDecimalPaste" />
-            </div>
-
-            <div class="field-col">
-              <label class="field-label">{{ t('jackpot.threshold') }}</label>
-              <v-text-field v-model="form.threshold_amount" type="text" inputmode="decimal" density="compact"
-                variant="outlined" hide-details placeholder="0" class="stepper-input" @keydown="blockNonDecimalKeys"
-                @paste.prevent="handleDecimalPaste" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Win Probability -->
-      <div class="section-card section-card--purple">
-        <div class="section-title">
-          <div class="section-icon section-icon--purple">
-            <v-icon size="14" color="#fff">mdi-dice-multiple</v-icon>
-          </div>
-          <span>{{ t('jackpot.winChance') }}</span>
-        </div>
-
-        <div class="section-fields">
-          <div class="chance-input-wrapper">
-            <span class="chance-prefix">{{ t('common.oneIn') }}</span>
-            <v-text-field v-model="form.chance_denom" type="text" inputmode="numeric" density="compact"
-              variant="outlined" hide-details placeholder="5,000" class="stepper-input" @keydown="blockNonIntegerKeys"
-              @paste.prevent="handleIntegerPaste" />
-          </div>
-
-          <div class="probability-info">
-            <span class="probability-label">{{ t('jackpot.winChance') }}:</span>
-            <span class="probability-value">{{ winProbability }}% {{ t('common.perSpin') }}</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Create Member Bonus -->
-      <div class="section-card section-card--amber">
-        <div class="section-title">
-          <div class="section-icon section-icon--amber">
-            <v-icon size="14" color="#fff">mdi-gift-outline</v-icon>
-          </div>
-          <span>{{ t('jackpot.createMemberBonus') }}</span>
-        </div>
-
-        <div class="section-fields">
-          <div class="field-row">
-            <div class="field-col">
-              <label class="field-label">{{ t('members.member') }}</label>
-              <v-text-field :model-value="form.member_name" type="text" density="compact" variant="outlined"
-                hide-details :placeholder="t('common.memberNamePlaceholder')" class="stepper-input"
-                @update:model-value="form.member_name = normalizeMemberName($event)" />
-            </div>
-
-            <div class="field-col">
-              <label class="field-label">{{ t('jackpot.amount') }}</label>
-              <v-text-field v-model="form.member_bonus_amount" type="text" inputmode="decimal" density="compact"
-                variant="outlined" hide-details placeholder="0.00" class="stepper-input" @keydown="blockNonDecimalKeys"
-                @paste.prevent="handleDecimalPaste" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Payout Settings -->
-      <!-- <div class="section-card section-card--green">
-        <div class="section-title">
-          <div class="section-icon section-icon--green">
-            <v-icon size="14" color="#fff">mdi-cash-multiple</v-icon>
-          </div>
-          <span>{{ t('jackpot.payoutSettings') }}</span>
-        </div>
-
-        <div class="section-fields">
-          <div class="field-row">
-            <div class="field-col">
-              <label class="field-label">{{ t('jackpot.payoutPercentLabel') }}</label>
-              <v-text-field v-model="form.payout_percent" type="text" inputmode="decimal"
-                density="compact" variant="outlined" hide-details placeholder="0.00" class="stepper-input"
-                @keydown="blockNonDecimalKeys" @paste.prevent="handleDecimalPaste" />
-            </div>
-
-            <div class="field-col">
-              <label class="field-label">{{ t('jackpot.fixedPayout') }}</label>
-              <v-text-field v-model="form.jackpot_fixed_payout_amount" type="text" inputmode="decimal"
-                density="compact" variant="outlined" hide-details placeholder="0.00" class="stepper-input"
-                @keydown="blockNonDecimalKeys" @paste.prevent="handleDecimalPaste" />
-            </div>
-          </div>
-
-          <div class="field-row-single mt-2">
-            <div class="field-col">
-              <label class="field-label">{{ t('jackpot.minEligibleBetAmount') }}</label>
-              <v-text-field v-model="form.min_eligible_bet_amount" type="text" inputmode="decimal"
-                density="compact" variant="outlined" hide-details placeholder="0.00" class="stepper-input"
-                @keydown="blockNonDecimalKeys" @paste.prevent="handleDecimalPaste" />
-            </div>
-          </div>
-        </div>
-      </div> -->
-    </div>
-
-    <!-- Footer -->
-    <div class="dialog-footer dialog-footer--split">
-      <span class="meta-label">{{ t('gameConfig.updatedAt') }} {{ lastUpdatedLabel }}</span>
-      <div class="footer-actions">
-        <v-btn variant="outlined" color="error" @click="onCancel" :disabled="updateLoading">
-          {{ t('common.cancel') }}
-        </v-btn>
-        <v-btn color="create" :loading="updateLoading" @click="onSave">
-          {{ t('common.save') }}
-        </v-btn>
-      </div>
-    </div>
-  </v-card>
-</template>
-
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import { useFrontendI18n } from "~/composables/i18n";
 import { formatDecimal } from "~/utils/numberFormat";
 import type { JackpotCurrent } from "~/composables/service/jackpotCurrentPoolApi";
+import {
+  ReservedJackpotStatus,
+  type ReservedJackpot,
+  type ReserveJackpotPayload,
+} from "~/composables/service/reservedJackpotApi";
 
 export interface JackpotSettingsForm {
   company_topup_amount: string;
   threshold_amount: string;
-  member_name: string;
-  member_bonus_amount: string;
   chance_denom: string;
   payout_percent: string;
   jackpot_fixed_payout_amount: string;
@@ -169,29 +21,60 @@ export interface JackpotSettingsForm {
 interface Props {
   poolData: JackpotCurrent | null;
   updateLoading: boolean;
+  reservedJackpots?: ReservedJackpot[];
+  reserveLoading?: boolean;
+  togglingId?: number | null;
 }
 
 interface Emits {
   (e: "submit", form: JackpotSettingsForm): void;
   (e: "cancel"): void;
+  (e: "reserve", payload: ReserveJackpotPayload): void;
+  (e: "toggle-status", item: ReservedJackpot): void;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+  reservedJackpots: () => [],
+  reserveLoading: false,
+  togglingId: null,
+});
 const emit = defineEmits<Emits>();
 const { t } = useFrontendI18n();
 
 const form = ref<JackpotSettingsForm>({
   company_topup_amount: "",
   threshold_amount: "",
-  member_name: "",
-  member_bonus_amount: "",
   chance_denom: "",
   payout_percent: "",
   jackpot_fixed_payout_amount: "",
   min_eligible_bet_amount: "",
 });
 
-// ── Helpers ──────────────────────────────────────────────
+const reserveForm = ref<ReserveJackpotPayload>({
+  member_name: "",
+  amount: "",
+});
+
+// Inline threshold editing 
+const thresholdEditing = ref(false);
+const thresholdInputRef = ref<HTMLInputElement | null>(null);
+
+async function startEditThreshold() {
+  thresholdEditing.value = true;
+  await nextTick();
+  thresholdInputRef.value?.focus();
+  thresholdInputRef.value?.select();
+}
+
+function focusThreshold() {
+  if (!thresholdEditing.value) startEditThreshold();
+}
+
+function stopEditThreshold() {
+  thresholdEditing.value = false;
+  form.value.threshold_amount = toAmountString(form.value.threshold_amount);
+}
+
 function parseAmount(value: string | number | null | undefined): number {
   if (value === null || value === undefined || value === "") return 0;
   return Number.parseFloat(String(value)) || 0;
@@ -251,8 +134,6 @@ function syncFormFromPool(data: JackpotCurrent | null) {
   form.value = {
     company_topup_amount: "",
     threshold_amount: toAmountString(data.threshold_amount),
-    member_name: "",
-    member_bonus_amount: "",
     chance_denom: String(data.chance_denom ?? ""),
     payout_percent: normalizePercentValue((data as any).payout_percent),
     jackpot_fixed_payout_amount: toAmountString((data as any).jackpot_fixed_payout_amount),
@@ -278,6 +159,34 @@ const lastUpdatedLabel = computed(() => {
   }
 });
 
+// ── Reserved Jackpot ─────────────────────────────────────
+const visibleReservedJackpots = computed(() =>
+  (props.reservedJackpots ?? []).filter(
+    (item) =>
+      item.status_id === ReservedJackpotStatus.Active ||
+      item.status_id === ReservedJackpotStatus.Inactive
+  )
+);
+
+const canReserve = computed(() => {
+  const nameOk = reserveForm.value.member_name.trim().length > 0;
+  const amountOk = parseAmount(reserveForm.value.amount) > 0;
+  return nameOk && amountOk;
+});
+
+function onReserve() {
+  if (!canReserve.value) return;
+  emit("reserve", {
+    member_name: reserveForm.value.member_name.trim(),
+    amount: toAmountString(reserveForm.value.amount),
+  });
+  reserveForm.value = { member_name: "", amount: "" };
+}
+
+function onToggleStatus(item: ReservedJackpot) {
+  emit("toggle-status", item);
+}
+
 // ── Actions ──────────────────────────────────────────────
 function onSave() {
   const payoutPercent = parseAmount(form.value.payout_percent);
@@ -287,9 +196,176 @@ function onSave() {
 
 function onCancel() {
   syncFormFromPool(props.poolData);
+  thresholdEditing.value = false;
   emit("cancel");
 }
 </script>
+
+<template>
+  <v-card class="winner_card jackpot-config-card setti Let me findngs-dialog" elevation="0">
+    <div class="settings-dialog__header">
+      <div class="dialog-title">
+        <div class="title-icon">
+          <v-icon size="16" color="#fff">mdi-crown</v-icon>
+        </div>
+        <span>{{ t('jackpot.globalConfig') }}</span>
+      </div>
+    </div>
+
+    <!-- Current pool banner -->
+    <div class="current-pool-banner">
+      <div class="banner-stat">
+        <div class="banner-label">{{ t('jackpot.currentAmount') }}</div>
+        <div class="banner-value">{{ formatAmount(poolData?.current_amount) }}</div>
+      </div>
+
+      <div class="banner-divider" />
+
+      <div class="banner-stat">
+        <div class="banner-label banner-label--editable" @click="focusThreshold">
+          {{ t('jackpot.threshold') }}
+          <v-icon size="11" class="edit-pencil">mdi-pencil</v-icon>
+        </div>
+
+        <div class="banner-edit-wrapper" :class="{ 'is-editing': thresholdEditing }">
+          <span v-if="!thresholdEditing" class="banner-value banner-value--editable" @click="startEditThreshold">
+            {{ formatAmount(form.threshold_amount) }}
+          </span>
+          <input v-else ref="thresholdInputRef" v-model="form.threshold_amount" type="text" inputmode="decimal"
+            class="banner-inline-input" @keydown="blockNonDecimalKeys" @paste.prevent="handleDecimalPaste"
+            @blur="stopEditThreshold" @keydown.enter="stopEditThreshold" />
+        </div>
+      </div>
+    </div>
+
+    <div class="dialog-content">
+      <!-- Pool Configuration -->
+      <div class="section-card section-card--blue">
+        <div class="section-title">
+          <div class="section-icon section-icon--blue">
+            <v-icon size="14" color="#fff">mdi-cog</v-icon>
+          </div>
+          <span>{{ t('jackpot.globalConfig') }}</span>
+        </div>
+
+        <div class="section-fields">
+          <div class="field-row">
+            <div class="field-col">
+              <label class="field-label">{{ t('jackpot.companyTopup') }}</label>
+              <v-text-field v-model="form.company_topup_amount" type="text" inputmode="decimal" density="compact"
+                variant="outlined" hide-details placeholder="0" class="stepper-input" @keydown="blockNonDecimalKeys"
+                @paste.prevent="handleDecimalPaste" />
+            </div>
+
+            <div class="field-col">
+              <label class="field-label">{{ t('jackpot.winChance') }}</label>
+              <div class="chance-input-wrapper">
+                <span class="chance-prefix">{{ t('common.oneIn') }}</span>
+                <v-text-field v-model="form.chance_denom" type="text" inputmode="numeric" density="compact"
+                  variant="outlined" hide-details placeholder="5,000" class="stepper-input"
+                  @keydown="blockNonIntegerKeys" @paste.prevent="handleIntegerPaste" />
+              </div>
+            </div>
+          </div>
+
+          <!-- <div class="probability-info">
+            <span class="probability-label">{{ t('jackpot.winChance') }}:</span>
+            <span class="probability-value">{{ winProbability }}% {{ t('common.perSpin') }}</span>
+          </div> -->
+        </div>
+        <div class="dialog-footer">
+          <div class="footer-actions">
+            <!-- <v-btn variant="outlined" color="error" @click="onCancel" :disabled="updateLoading">
+              {{ t('common.cancel') }}
+            </v-btn> -->
+            <v-btn color="create" :loading="updateLoading" @click="onSave">
+              {{ t('common.save') }}
+            </v-btn>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reserved Jackpot -->
+      <div class="section-card section-card--amber">
+        <div class="section-title">
+          <div class="section-icon section-icon--amber">
+            <v-icon size="14" color="#fff">mdi-treasure-chest</v-icon>
+          </div>
+          <span>{{ t('jackpot.reservedJackpot') }}</span>
+        </div>
+
+        <div class="section-fields">
+          <div class="field-row">
+            <div class="field-col">
+              <label class="field-label">{{ t('members.member') }}</label>
+              <v-text-field :model-value="reserveForm.member_name" type="text" density="compact" variant="outlined"
+                hide-details :placeholder="t('common.memberNamePlaceholder')" class="stepper-input"
+                @update:model-value="reserveForm.member_name = normalizeMemberName($event)" />
+            </div>
+
+            <div class="field-col">
+              <label class="field-label">{{ t('jackpot.amount') }}</label>
+              <v-text-field v-model="reserveForm.amount" type="text" inputmode="decimal" density="compact"
+                variant="outlined" hide-details placeholder="0.00" class="stepper-input" @keydown="blockNonDecimalKeys"
+                @paste.prevent="handleDecimalPaste" />
+            </div>
+          </div>
+
+          <div class="reserve-action">
+            <v-btn color="create" size="small" :loading="reserveLoading" :disabled="!canReserve" @click="onReserve">
+              <!-- {{ t('jackpot.addReservation') }} -->
+              {{ t('common.save') }}
+            </v-btn>
+
+            <!-- <v-btn color="create" size="small" :loading="reserveLoading" :disabled="!canReserve">
+              {{ t('common.save') }}
+            </v-btn> -->
+          </div>
+
+          <!-- Reserved jackpot chips (Active / Inactive only, Claimed hidden) -->
+          <div v-if="visibleReservedJackpots.length" class="reserved-chip-list">
+            <div v-for="item in visibleReservedJackpots" :key="item.id" class="reserved-chip"
+              :class="{ 'reserved-chip--inactive': item.status_id === ReservedJackpotStatus.Inactive }">
+              <div class="chip-icon">
+                <v-icon size="12" color="#fff">mdi-treasure-chest</v-icon>
+              </div>
+              <span class="chip-id">ID: {{ item.member_name }}</span> <span class="chip-amount">
+                <v-icon size="11" color="#16a34a">mdi-cash-multiple</v-icon>
+                {{ formatAmount(item.amount) }}
+              </span>
+
+              <button v-if="item.status_id === ReservedJackpotStatus.Active" type="button"
+                class="chip-action chip-action--inactive" :disabled="togglingId === item.id"
+                @click="onToggleStatus(item)">
+                <v-icon size="12">mdi-pause-circle-outline</v-icon>
+              </button>
+              <button v-else-if="item.status_id === ReservedJackpotStatus.Inactive" type="button"
+                class="chip-action chip-action--reactivate" :disabled="togglingId === item.id"
+                @click="onToggleStatus(item)">
+                <v-icon size="12">mdi-refresh</v-icon>
+              </button>
+            </div>
+          </div>
+          <div v-else class="reserved-empty">
+            {{ t('jackpot.noActiveReservations') }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <!-- <div class="dialog-footer dialog-footer--split">
+      <div class="footer-actions">
+        <v-btn variant="outlined" color="error" @click="onCancel" :disabled="updateLoading">
+          {{ t('common.cancel') }}
+        </v-btn>
+        <v-btn color="create" :loading="updateLoading" @click="onSave">
+          {{ t('common.save') }}
+        </v-btn>
+      </div>
+    </div> -->
+  </v-card>
+</template>
 
 <style scoped>
 .settings-dialog {
@@ -307,7 +383,6 @@ function onCancel() {
   border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.08);
 }
 
-/* Header */
 .dialog-header {
   display: flex;
   align-items: center;
@@ -336,7 +411,6 @@ function onCancel() {
   box-shadow: 0 2px 8px rgba(124, 58, 237, .25);
 }
 
-/* Current Pool Banner */
 .current-pool-banner {
   margin: 12px 20px;
   padding: 14px 18px;
@@ -345,24 +419,82 @@ function onCancel() {
   box-shadow: 0 4px 14px rgba(124, 58, 237, 0.25);
   display: flex;
   align-items: center;
-  justify-content: space-between;
+}
+
+.banner-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.banner-divider {
+  width: 1px;
+  align-self: stretch;
+  background: rgba(255, 255, 255, 0.25);
+  margin: 0 16px;
 }
 
 .banner-label {
-  font-size: 16px;
-  color: #fff;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.85);
   margin-bottom: 4px;
-  font-weight: 720;
+  font-weight: 620;
+}
+
+.banner-label--editable {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  width: fit-content;
+}
+
+.edit-pencil {
+  opacity: 0.65;
 }
 
 .banner-value {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 720;
   color: #ffffff;
   letter-spacing: -0.015em;
 }
 
-/* Dialog Content */
+.banner-value--editable {
+  cursor: text;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.4);
+  padding-bottom: 1px;
+}
+
+.banner-value--editable:hover {
+  border-bottom-color: rgba(255, 255, 255, 0.8);
+}
+
+.banner-edit-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+.banner-inline-input {
+  width: 100%;
+  max-width: 140px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 20px;
+  font-weight: 720;
+  color: #ffffff;
+  letter-spacing: -0.015em;
+  outline: none;
+}
+
+.banner-inline-input:focus {
+  border-color: #ffffff;
+  background: rgba(255, 255, 255, 0.18);
+}
+
 .dialog-content {
   padding: 0 20px 16px;
   max-height: 80vh;
@@ -386,7 +518,6 @@ function onCancel() {
   border-radius: 3px;
 }
 
-/* Section Cards */
 .section-card {
   border-radius: 12px;
   padding: 14px 16px;
@@ -447,7 +578,6 @@ function onCancel() {
   background: #f59e0b;
 }
 
-/* Fields */
 .section-fields {
   display: flex;
   flex-direction: column;
@@ -469,6 +599,7 @@ function onCancel() {
 .field-row-single {
   display: flex;
   flex-direction: column;
+  gap: 5px;
 }
 
 .field-col {
@@ -481,21 +612,6 @@ function onCancel() {
   font-size: 11px;
   font-weight: 500;
   color: #6b7280;
-}
-
-/* Input with Stepper */
-.input-with-stepper {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: #fff;
-  border-radius: 10px;
-  padding: 5px 6px;
-  border: 1px solid #e5e7eb;
-}
-
-.input-with-stepper--wide {
-  flex-direction: row;
 }
 
 .stepper-input {
@@ -514,7 +630,6 @@ function onCancel() {
   font-size: 13.5px;
 }
 
-/* Chance Input */
 .chance-input-wrapper {
   display: flex;
   align-items: center;
@@ -529,7 +644,6 @@ function onCancel() {
   white-space: nowrap;
 }
 
-/* Probability Info */
 .probability-info {
   margin-top: 8px;
   font-size: 12px;
@@ -545,14 +659,104 @@ function onCancel() {
   color: #7c3aed;
 }
 
-/* Footer */
+.reserve-action {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 2px;
+}
+
+.reserved-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.reserved-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px 6px 10px;
+  background: #ffffff;
+  border: 1px dashed #fbbf24;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+.reserved-chip--inactive {
+  opacity: 0.6;
+  border-style: solid;
+  border-color: #d1d5db;
+}
+
+.chip-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.chip-id {
+  font-weight: 600;
+  color: #374151;
+  white-space: nowrap;
+}
+
+.chip-amount {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #dcfce7;
+  color: #16a34a;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.chip-action {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.chip-action--inactive {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.chip-action--reactivate {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.chip-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.reserved-empty {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 2px;
+}
+
 .dialog-footer {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 14px 20px;
+  justify-content: end;
+  padding: 14px 0px;
   border-top: 1px solid #f3f4f6;
-  /* background: #fafafa; */
 }
 
 .footer-meta {
@@ -568,5 +772,9 @@ function onCancel() {
 
 .mt-2 {
   margin-top: 8px;
+}
+.player-tabs :deep(.v-slide-group__prev),
+.player-tabs :deep(.v-slide-group__next) {
+  display: none !important;
 }
 </style>

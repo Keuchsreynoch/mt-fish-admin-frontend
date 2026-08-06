@@ -149,6 +149,9 @@ export const frontendMessages = {
       cannotBeGreaterThan: "{left} cannot be greater than {right}",
     },
     jackpot: {
+      memberBet: "Member Bets",
+      topWinner: "Top Winner",
+      blacklistMember: "Members",
       management: "Jackpot Management",
       currentAmount: "Current Amount",
       threshold: "Threshold",
@@ -166,7 +169,7 @@ export const frontendMessages = {
       recentWinners: "Recent Jackpot Winners",
       showingFirst10: "Showing first 10 rows",
       memberName: "Member Name",
-      searchMemberName: "Search member name",
+      searchMemberName: "Search member",
       name: "Name",
       jackpot: "Jackpot",
       updatedAt: "Updated At",
@@ -569,6 +572,9 @@ export const frontendMessages = {
       cannotBeGreaterThan: "{left} មិនអាចធំជាង {right} បានទេ",
     },
     jackpot: {
+      memberBet: "សមាជិកដែលបានភ្នាល់",
+      topWinner: "អ្នកឈ្នះច្រើនជាងគេ",
+      blacklistMember: "សមាជិកក្នុងបញ្ជីខ្មៅ",
       management: "គ្រប់គ្រង Jackpot",
       currentAmount: "ចំនួនបច្ចុប្បន្ន",
       threshold: "កម្រិតកំណត់",
