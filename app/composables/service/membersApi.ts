@@ -57,11 +57,14 @@ export interface UpdateJackpotStatusData {
   updated_by: number;
 }
 
-export async function getMembers(page = 1, perPage = 10) {
+export async function getMembers(options: {
+  filters?: QueryFilter[];
+  sorts?: QuerySort[];
+  paging?: PagingOption;
+}) {
+  const params = buildQueryParams(options) as Record<string, QueryValue>
   return useApiInterceptor<ApiResponse<MemberData>>(
-    buildUrlWithParams("/members", {
-      paging_options: { page, per_page: perPage },
-    }),
+    buildUrlWithParams(`/members`, params),
     { method: "GET" },
   );
 }
@@ -70,7 +73,7 @@ export async function updateMemberJackpotStatus(memberId: number, isActive: bool
   return useApiInterceptor<ApiResponse<UpdateJackpotStatusData>>(
     `/members/${memberId}/jackpot-status`,
     {
-      method: "PATCH", 
+      method: "PATCH",
       body: { is_active: isActive },
     },
   );

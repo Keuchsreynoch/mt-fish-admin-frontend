@@ -70,8 +70,7 @@ function formatPercent(value: number, maximumFractionDigits: number): string {
     return formatDecimal(value, { maximumFractionDigits })
 }
 
-// The longer the formatted number, the smaller the font — keeps big
-// totals (e.g. total_turnover) from overflowing the KPI card.
+
 function kpiFontSize(val?: string | number): string {
     const formatted = formatCoins(val)
     const len = formatted.length

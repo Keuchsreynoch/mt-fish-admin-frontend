@@ -279,7 +279,7 @@ const poolProgress = computed(() => {
 
 const display = computed(() => ({
   threshold_amount: formatAmount(props.poolData?.threshold_amount),
-  chance_denom: `1 in ${props.poolData?.chance_denom ?? 0}`,
+  chance_denom: ` ${props.poolData?.chance_denom ?? 0}`,
   payout_percent: `${formatPercent(props.poolData?.payout_percent)}%`,
   min_eligible_bet_amount: formatAmount(props.poolData?.min_eligible_bet_amount) + " KHR",
   jackpot_fixed_payout_amount: formatAmount(props.fixedPayout) + " KHR",

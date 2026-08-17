@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { useFrontendI18n } from "~/composables/i18n";
 import { formatDecimal } from "~/utils/numberFormat";
 import type { JackpotCurrent } from "~/composables/service/jackpotCurrentPoolApi";
@@ -10,12 +10,15 @@ import {
 } from "~/composables/service/reservedJackpotApi";
 
 export interface JackpotSettingsForm {
-  company_topup_amount: string;
   threshold_amount: string;
   chance_denom: string;
   payout_percent: string;
   jackpot_fixed_payout_amount: string;
   min_eligible_bet_amount: string;
+}
+
+export interface CompanyTopupPayload {
+  amount: string;
 }
 
 interface Props {
@@ -24,6 +27,7 @@ interface Props {
   reservedJackpots?: ReservedJackpot[];
   reserveLoading?: boolean;
   togglingId?: number | null;
+  topupLoading?: boolean;
 }
 
 interface Emits {
@@ -31,18 +35,19 @@ interface Emits {
   (e: "cancel"): void;
   (e: "reserve", payload: ReserveJackpotPayload): void;
   (e: "toggle-status", item: ReservedJackpot): void;
+  (e: "topup", payload: CompanyTopupPayload): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   reservedJackpots: () => [],
   reserveLoading: false,
   togglingId: null,
+  topupLoading: false,
 });
 const emit = defineEmits<Emits>();
 const { t } = useFrontendI18n();
 
 const form = ref<JackpotSettingsForm>({
-  company_topup_amount: "",
   threshold_amount: "",
   chance_denom: "",
   payout_percent: "",
@@ -55,24 +60,15 @@ const reserveForm = ref<ReserveJackpotPayload>({
   amount: "",
 });
 
-// Inline threshold editing 
-const thresholdEditing = ref(false);
-const thresholdInputRef = ref<HTMLInputElement | null>(null);
+//  Inline company top-up (no dialog) 
+const topupAmount = ref("");
 
-async function startEditThreshold() {
-  thresholdEditing.value = true;
-  await nextTick();
-  thresholdInputRef.value?.focus();
-  thresholdInputRef.value?.select();
-}
+const canTopup = computed(() => parseAmount(topupAmount.value) > 0);
 
-function focusThreshold() {
-  if (!thresholdEditing.value) startEditThreshold();
-}
-
-function stopEditThreshold() {
-  thresholdEditing.value = false;
-  form.value.threshold_amount = toAmountString(form.value.threshold_amount);
+function onTopup() {
+  if (!canTopup.value) return;
+  emit("topup", { amount: toAmountString(topupAmount.value) });
+  topupAmount.value = "";
 }
 
 function parseAmount(value: string | number | null | undefined): number {
@@ -128,11 +124,10 @@ function handleIntegerPaste(e: ClipboardEvent) {
   if (!/^\d*$/.test(next)) e.preventDefault();
 }
 
-// ── Sync form from incoming poolData ────────────────────
+//  Sync form from incoming poolData 
 function syncFormFromPool(data: JackpotCurrent | null) {
   if (!data) return;
   form.value = {
-    company_topup_amount: "",
     threshold_amount: toAmountString(data.threshold_amount),
     chance_denom: String(data.chance_denom ?? ""),
     payout_percent: normalizePercentValue((data as any).payout_percent),
@@ -149,17 +144,7 @@ const winProbability = computed(() => {
   return (100 / denom).toFixed(4);
 });
 
-const lastUpdatedLabel = computed(() => {
-  const updatedAt = (props.poolData as any)?.updated_at;
-  if (!updatedAt) return "-";
-  try {
-    return new Date(updatedAt).toLocaleString();
-  } catch {
-    return "-";
-  }
-});
-
-// ── Reserved Jackpot ─────────────────────────────────────
+//  Reserved Jackpot 
 const visibleReservedJackpots = computed(() =>
   (props.reservedJackpots ?? []).filter(
     (item) =>
@@ -187,102 +172,83 @@ function onToggleStatus(item: ReservedJackpot) {
   emit("toggle-status", item);
 }
 
-// ── Actions ──────────────────────────────────────────────
+//  Actions 
 function onSave() {
   const payoutPercent = parseAmount(form.value.payout_percent);
   if (payoutPercent < 0 || payoutPercent > 100) return;
+  form.value.threshold_amount = toAmountString(form.value.threshold_amount);
   emit("submit", { ...form.value });
 }
 
 function onCancel() {
   syncFormFromPool(props.poolData);
-  thresholdEditing.value = false;
   emit("cancel");
 }
 </script>
 
 <template>
-  <v-card class="winner_card jackpot-config-card setti Let me findngs-dialog" elevation="0">
-    <div class="settings-dialog__header">
-      <div class="dialog-title">
-        <div class="title-icon">
-          <v-icon size="16" color="#fff">mdi-crown</v-icon>
-        </div>
-        <span>{{ t('jackpot.globalConfig') }}</span>
-      </div>
-    </div>
-
-    <!-- Current pool banner -->
-    <div class="current-pool-banner">
-      <div class="banner-stat">
-        <div class="banner-label">{{ t('jackpot.currentAmount') }}</div>
-        <div class="banner-value">{{ formatAmount(poolData?.current_amount) }}</div>
-      </div>
-
-      <div class="banner-divider" />
-
-      <div class="banner-stat">
-        <div class="banner-label banner-label--editable" @click="focusThreshold">
-          {{ t('jackpot.threshold') }}
-          <v-icon size="11" class="edit-pencil">mdi-pencil</v-icon>
-        </div>
-
-        <div class="banner-edit-wrapper" :class="{ 'is-editing': thresholdEditing }">
-          <span v-if="!thresholdEditing" class="banner-value banner-value--editable" @click="startEditThreshold">
-            {{ formatAmount(form.threshold_amount) }}
-          </span>
-          <input v-else ref="thresholdInputRef" v-model="form.threshold_amount" type="text" inputmode="decimal"
-            class="banner-inline-input" @keydown="blockNonDecimalKeys" @paste.prevent="handleDecimalPaste"
-            @blur="stopEditThreshold" @keydown.enter="stopEditThreshold" />
-        </div>
-      </div>
-    </div>
-
-    <div class="dialog-content">
+  <v-card class="winner_card jackpot-config-card settings-dialog" elevation="0">
+    <div class="dialog-content mt-3">
       <!-- Pool Configuration -->
-      <div class="section-card section-card--blue">
-        <div class="section-title">
-          <div class="section-icon section-icon--blue">
-            <v-icon size="14" color="#fff">mdi-cog</v-icon>
+      <div class="pool-pill-group">
+        <div class="pool-pill pool-pill--green pool-pill--current">
+          <div class="pool-pill-text">
+            <span class="pool-pill-label">{{ t('jackpot.currentAmount') }}</span>
+            <span class="pool-pill-value">{{ formatAmount(poolData?.current_amount) }}</span>
           </div>
-          <span>{{ t('jackpot.globalConfig') }}</span>
-        </div>
-
-        <div class="section-fields">
-          <div class="field-row">
-            <div class="field-col">
-              <label class="field-label">{{ t('jackpot.companyTopup') }}</label>
-              <v-text-field v-model="form.company_topup_amount" type="text" inputmode="decimal" density="compact"
-                variant="outlined" hide-details placeholder="0" class="stepper-input" @keydown="blockNonDecimalKeys"
-                @paste.prevent="handleDecimalPaste" />
-            </div>
-
-            <div class="field-col">
-              <label class="field-label">{{ t('jackpot.winChance') }}</label>
-              <div class="chance-input-wrapper">
-                <span class="chance-prefix">{{ t('common.oneIn') }}</span>
-                <v-text-field v-model="form.chance_denom" type="text" inputmode="numeric" density="compact"
-                  variant="outlined" hide-details placeholder="5,000" class="stepper-input"
-                  @keydown="blockNonIntegerKeys" @paste.prevent="handleIntegerPaste" />
-              </div>
-            </div>
-          </div>
-
-          <!-- <div class="probability-info">
-            <span class="probability-label">{{ t('jackpot.winChance') }}:</span>
-            <span class="probability-value">{{ winProbability }}% {{ t('common.perSpin') }}</span>
-          </div> -->
-        </div>
-        <div class="dialog-footer">
-          <div class="footer-actions">
-            <!-- <v-btn variant="outlined" color="error" @click="onCancel" :disabled="updateLoading">
-              {{ t('common.cancel') }}
-            </v-btn> -->
-            <v-btn color="create" :loading="updateLoading" @click="onSave">
-              {{ t('common.save') }}
-            </v-btn>
+          <div class="topup-inline">
+            <v-text-field v-model="topupAmount" type="text" inputmode="decimal" density="compact" variant="plain"
+              hide-details placeholder="0.00" class="pool-pill-input topup-inline-input"
+              :title="t('jackpot.companyTopup')" @keydown.enter="onTopup" @keydown="blockNonDecimalKeys"
+              @paste.prevent="handleDecimalPaste" />
+            <button type="button" class="topup-inline-btn" :title="t('jackpot.companyTopup')"
+              :disabled="!canTopup || topupLoading" @click="onTopup">
+              <v-icon size="18">mdi-plus-circle</v-icon>
+            </button>
           </div>
         </div>
+
+        <div class="pool-pill pool-pill--blue">
+          <div class="pool-pill-text">
+            <span class="pool-pill-label">{{ t('jackpot.threshold') }}</span>
+            <v-text-field v-model="form.threshold_amount" type="text" inputmode="decimal" density="compact"
+              variant="plain" hide-details placeholder="0" class="pool-pill-input" @keydown="blockNonDecimalKeys"
+              @paste.prevent="handleDecimalPaste" />
+          </div>
+        </div>
+
+        <div class="pool-pill pool-pill--indigo">
+          <div class="pool-pill-text">
+            <span class="pool-pill-label">{{ t('jackpot.winChance') }}</span>
+            <span class="unit-text">{{ t('common.oneIn') }}</span>
+            <v-text-field v-model="form.chance_denom" type="text" inputmode="numeric" density="compact" variant="plain"
+              hide-details placeholder="5000" class="pool-pill-input"
+              @keydown="blockNonIntegerKeys" @paste.prevent="handleIntegerPaste" />
+          </div>
+        </div>
+
+        <div class="pool-pill pool-pill--pink">
+          <div class="pool-pill-text">
+            <span class="pool-pill-label">{{ t('jackpot.payoutPercent') }}</span>
+            <v-text-field v-model="form.payout_percent" type="text" inputmode="decimal" density="compact"
+              variant="plain" hide-details placeholder="0" class="pool-pill-input"
+              @keydown="blockNonDecimalKeys" @paste.prevent="handleDecimalPaste" />
+            <span class="unit-text">%</span>
+          </div>
+        </div>
+        <div class="pool-pill pool-pill--purple">
+          <div class="pool-pill-text">
+            <span class="pool-pill-label">{{ t('jackpot.fixedPayout') }}</span>
+            <v-text-field v-model="form.jackpot_fixed_payout_amount" type="text" inputmode="decimal" density="compact"
+              variant="plain" hide-details placeholder="0" class="pool-pill-input" @keydown="blockNonDecimalKeys"
+              @paste.prevent="handleDecimalPaste" />
+          </div>
+        </div>
+
+        <button type="button" class="pool-pill pool-pill--save" :disabled="updateLoading" @click="onSave">
+          <v-icon size="20">mdi-content-save-outline</v-icon>
+          <span class="pool-pill-save-text">{{ t('common.save') }}</span>
+        </button>
       </div>
 
       <!-- Reserved Jackpot -->
@@ -313,13 +279,8 @@ function onCancel() {
 
           <div class="reserve-action">
             <v-btn color="create" size="small" :loading="reserveLoading" :disabled="!canReserve" @click="onReserve">
-              <!-- {{ t('jackpot.addReservation') }} -->
               {{ t('common.save') }}
             </v-btn>
-
-            <!-- <v-btn color="create" size="small" :loading="reserveLoading" :disabled="!canReserve">
-              {{ t('common.save') }}
-            </v-btn> -->
           </div>
 
           <!-- Reserved jackpot chips (Active / Inactive only, Claimed hidden) -->
@@ -329,7 +290,8 @@ function onCancel() {
               <div class="chip-icon">
                 <v-icon size="12" color="#fff">mdi-treasure-chest</v-icon>
               </div>
-              <span class="chip-id">ID: {{ item.member_name }}</span> <span class="chip-amount">
+              <span class="chip-id">ID: {{ item.member_name }}</span>
+              <span class="chip-amount">
                 <v-icon size="11" color="#16a34a">mdi-cash-multiple</v-icon>
                 {{ formatAmount(item.amount) }}
               </span>
@@ -352,18 +314,6 @@ function onCancel() {
         </div>
       </div>
     </div>
-
-    <!-- Footer -->
-    <!-- <div class="dialog-footer dialog-footer--split">
-      <div class="footer-actions">
-        <v-btn variant="outlined" color="error" @click="onCancel" :disabled="updateLoading">
-          {{ t('common.cancel') }}
-        </v-btn>
-        <v-btn color="create" :loading="updateLoading" @click="onSave">
-          {{ t('common.save') }}
-        </v-btn>
-      </div>
-    </div> -->
   </v-card>
 </template>
 
@@ -371,128 +321,6 @@ function onCancel() {
 .settings-dialog {
   border-radius: 12px !important;
   overflow: hidden;
-}
-
-.settings-dialog__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
-  background: white !important;
-  color: rgb(var(--v-theme-primary)) !important;
-  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.08);
-}
-
-.dialog-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
-  border-bottom: 1px solid #f3f4f6;
-}
-
-.dialog-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 15.5px;
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.title-icon {
-  width: 26px;
-  height: 26px;
-  border-radius: 7px;
-  background: #7c3aed;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 8px rgba(124, 58, 237, .25);
-}
-
-.current-pool-banner {
-  margin: 12px 20px;
-  padding: 14px 18px;
-  background: linear-gradient(135deg, rgb(var(--v-theme-navy)), rgb(var(--v-theme-slate)));
-  border-radius: 12px;
-  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.25);
-  display: flex;
-  align-items: center;
-}
-
-.banner-stat {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.banner-divider {
-  width: 1px;
-  align-self: stretch;
-  background: rgba(255, 255, 255, 0.25);
-  margin: 0 16px;
-}
-
-.banner-label {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.85);
-  margin-bottom: 4px;
-  font-weight: 620;
-}
-
-.banner-label--editable {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  cursor: pointer;
-  width: fit-content;
-}
-
-.edit-pencil {
-  opacity: 0.65;
-}
-
-.banner-value {
-  font-size: 20px;
-  font-weight: 720;
-  color: #ffffff;
-  letter-spacing: -0.015em;
-}
-
-.banner-value--editable {
-  cursor: text;
-  border-bottom: 1px dashed rgba(255, 255, 255, 0.4);
-  padding-bottom: 1px;
-}
-
-.banner-value--editable:hover {
-  border-bottom-color: rgba(255, 255, 255, 0.8);
-}
-
-.banner-edit-wrapper {
-  display: flex;
-  align-items: center;
-}
-
-.banner-inline-input {
-  width: 100%;
-  max-width: 140px;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  border-radius: 6px;
-  padding: 2px 8px;
-  font-size: 20px;
-  font-weight: 720;
-  color: #ffffff;
-  letter-spacing: -0.015em;
-  outline: none;
-}
-
-.banner-inline-input:focus {
-  border-color: #ffffff;
-  background: rgba(255, 255, 255, 0.18);
 }
 
 .dialog-content {
@@ -518,24 +346,239 @@ function onCancel() {
   border-radius: 3px;
 }
 
+/* ── Pool Configuration — bordered badge/pill style ── */
+.pool-pill-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.pool-pill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f8fafc;
+  border: 1.5px solid transparent;
+  border-radius: 10px;
+  padding: 12px;
+  box-shadow: none;
+  flex: 0 0 auto;
+  width: auto;
+  transition: border-color .18s ease, transform .18s ease;
+}
+
+.pool-pill :deep(.v-icon) {
+  flex-shrink: 0;
+}
+
+.pool-pill-text {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pool-pill--current {
+  position: relative;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.topup-inline {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  padding-left: 8px;
+  border-left: 1px dashed #bbf7d0;
+}
+
+.topup-inline-input {
+  max-width: 80px;
+}
+
+.topup-inline-input :deep(input) {
+  text-align: right;
+}
+
+.topup-inline-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #16a34a;
+  padding: 2px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: background .15s ease, transform .15s ease;
+}
+
+.topup-inline-btn:hover:not(:disabled) {
+  background: rgba(22, 163, 74, .12);
+  transform: scale(1.05);
+}
+
+.topup-inline-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pool-pill-label {
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.pool-pill-value {
+  font-size: 14.5px;
+  font-weight: 500;
+}
+
+.pool-pill--green {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.pool-pill--green :deep(.v-icon) {
+  color: #16a34a;
+}
+
+.pool-pill--green .pool-pill-label {
+  color: #16a34a;
+}
+
+.pool-pill--green .pool-pill-value {
+  color: #15803d;
+}
+
+.pool-pill--blue {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.pool-pill--blue :deep(.v-icon) {
+  color: #2563eb;
+}
+
+.pool-pill--blue .pool-pill-label {
+  color: #2563eb;
+}
+
+.pool-pill--indigo {
+  background: #eef2ff;
+  border-color: #c7d2fe;
+}
+
+.pool-pill--indigo :deep(.v-icon) {
+  color: #4f46e5;
+}
+
+.pool-pill--indigo .pool-pill-label {
+  color: #4f46e5;
+}
+
+.pool-pill--pink {
+  background: #fdf2f8;
+  border-color: #fbcfe8;
+}
+
+.pool-pill--pink :deep(.v-icon) {
+  color: #db2777;
+}
+
+.pool-pill--pink .pool-pill-label {
+  color: #db2777;
+}
+
+.pool-pill--purple {
+  background: #faf5ff;
+  border-color: #e9d5ff;
+}
+
+.pool-pill--purple :deep(.v-icon) {
+  color: #7c3aed;
+}
+
+.pool-pill--purple .pool-pill-label {
+  color: #7c3aed;
+}
+
+.unit-text {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: currentColor;
+  opacity: 0.7;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.pool-pill-input {
+  margin: 0;
+  flex: 0 1 auto;
+  width: auto;
+  min-width: 0;
+}
+
+.pool-pill-input :deep(.v-field) {
+  display: inline-flex;
+  width: auto;
+  box-shadow: none !important;
+  padding: 0 !important;
+  min-height: 20px !important;
+  background: transparent !important;
+}
+
+.pool-pill-input :deep(.v-field__field) {
+  display: inline-flex;
+  width: auto;
+}
+
+.pool-pill-input :deep(.v-field__input) {
+  padding: 0 !important;
+  font-size: 14.5px;
+  font-weight: 600;
+  min-height: 20px;
+  width: auto;
+  flex: 0 0 auto;
+}
+
+.pool-pill-input :deep(input) {
+  /* Grow/shrink to fit whatever is typed, instead of filling the pill */
+  field-sizing: content;
+  min-width: 2ch;
+  max-width: 100%;
+  width: auto;
+}
+
+.pool-pill--save {
+  cursor: pointer;
+  background: rgb(var(--v-theme-primary));
+  border-color: rgb(var(--v-theme-primary));
+}
+
+.pool-pill--save :deep(.v-icon) {
+  color: #fff;
+}
+
+.pool-pill-save-text {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.pool-pill--save:hover {
+  filter: brightness(1.05);
+}
+
+.pool-pill--save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .section-card {
   border-radius: 12px;
   padding: 14px 16px;
-}
-
-.section-card--blue {
-  background: #eef2ff;
-  border: 1px solid #e0e7ff;
-}
-
-.section-card--purple {
-  background: #faf5ff;
-  border: 1px solid #f3e8ff;
-}
-
-.section-card--green {
-  background: #f0fdf4;
-  border: 1px solid #dcfce7;
 }
 
 .section-card--amber {
@@ -562,18 +605,6 @@ function onCancel() {
   justify-content: center;
 }
 
-.section-icon--blue {
-  background: #3b82f6;
-}
-
-.section-icon--purple {
-  background: #7c3aed;
-}
-
-.section-icon--green {
-  background: #10b981;
-}
-
 .section-icon--amber {
   background: #f59e0b;
 }
@@ -587,19 +618,13 @@ function onCancel() {
 .field-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 8px;
 }
 
 @media (max-width: 560px) {
   .field-row {
     grid-template-columns: 1fr;
   }
-}
-
-.field-row-single {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
 }
 
 .field-col {
@@ -628,35 +653,6 @@ function onCancel() {
 .stepper-input :deep(.v-field__input) {
   padding: 2px 4px !important;
   font-size: 13.5px;
-}
-
-.chance-input-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
-}
-
-.chance-prefix {
-  font-size: 12px;
-  font-weight: 700;
-  color: #6b7280;
-  white-space: nowrap;
-}
-
-.probability-info {
-  margin-top: 8px;
-  font-size: 12px;
-  color: #6b7280;
-}
-
-.probability-label {
-  color: #9ca3af;
-}
-
-.probability-value {
-  font-weight: 650;
-  color: #7c3aed;
 }
 
 .reserve-action {
@@ -749,32 +745,5 @@ function onCancel() {
   font-size: 12px;
   color: #9ca3af;
   margin-top: 2px;
-}
-
-.dialog-footer {
-  display: flex;
-  align-items: center;
-  justify-content: end;
-  padding: 14px 0px;
-  border-top: 1px solid #f3f4f6;
-}
-
-.footer-meta {
-  font-size: 12px;
-  color: #9ca3af;
-}
-
-.footer-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.mt-2 {
-  margin-top: 8px;
-}
-.player-tabs :deep(.v-slide-group__prev),
-.player-tabs :deep(.v-slide-group__next) {
-  display: none !important;
 }
 </style>

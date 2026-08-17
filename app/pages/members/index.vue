@@ -6,10 +6,10 @@
       </div>
 
       <div class="filters-row flex justify-between items-center">
-        <v-text-field density="compact" variant="outlined" hide-details clearable prepend-inner-icon="mdi-magnify"
+        <v-text-field density="compact" v-model="searchQuery" @update:model-value="onSearchChange" variant="outlined" hide-details clearable prepend-inner-icon="mdi-magnify"
           :placeholder="t('jackpot.searchMemberName')" class="member-search" />
 
-        <v-btn color="success" variant="flat" class="refresh-mini-btn">
+        <v-btn color="success" variant="flat" class="refresh-mini-btn" @click="fetchMembers">
           <v-icon size="16" class="mr-1">mdi-refresh</v-icon>
           {{ t('gameConfig.refresh') }}
         </v-btn>
@@ -17,8 +17,8 @@
     </div>
 
     <div class="content-wepper flex flex-col gap-2">
-      <AppTable :columns="columns" :items="filteredMembers" :loading="isLoading" :error="errorMessage"
-        :page="currentPage" :page-size="itemsPerPage" :total-pages="totalPages" @update:page="currentPage = $event" >
+      <AppTable :columns="columns" :items="members" :loading="isLoading" :error="errorMessage"
+        :page="currentPage" :page-size="itemsPerPage" :total-pages="totalPages" @update:page="currentPage = $event">
         <template #cell-user_name="{ item }">
           <div class="member-cell">
             <div class="member-name">{{ item.user_name }}</div>
@@ -127,6 +127,7 @@ const isLoading = ref(false)
 const errorMessage = ref('')
 const searchQuery = ref('')
 
+
 const selectedCurrencies = ref<Record<number, number>>({})
 
 const columns = computed<TableColumn<MemberItem>[]>(() => [
@@ -147,19 +148,18 @@ const totalPages = computed(() =>
   Math.max(1, Math.ceil(totalItems.value / itemsPerPage.value))
 )
 
-const filteredMembers = computed(() => {
-  const q = searchQuery.value.trim().toLowerCase()
-  if (!q) return members.value
-  return members.value.filter(m =>
-    m.user_name?.toLowerCase().includes(q) ||
-    m.login_id?.toLowerCase().includes(q) ||
-    m.phone_number?.toLowerCase().includes(q)
-  )
-})
-
-function onSearchChange() {
-  currentPage.value = 1
+function debounce<T extends (...args: any[]) => void>(fn: T, delay: number) {
+  let timer: ReturnType<typeof setTimeout> | null = null
+  return (...args: Parameters<T>) => {
+    if (timer) clearTimeout(timer)
+    timer = setTimeout(() => fn(...args), delay)
+  }
 }
+
+const onSearchChange = debounce(() => {
+  currentPage.value = 1
+  fetchMembers()
+}, 400)
 
 function getSelectedCurrencyId(memberId: number): number {
   return selectedCurrencies.value[memberId] ?? 1
@@ -265,15 +265,29 @@ async function fetchMembers() {
   isLoading.value = true
   errorMessage.value = ''
   try {
-    const res = await getMembers(currentPage.value, itemsPerPage.value)
+    const filters = searchQuery.value
+      ? [{ property: 'username', op: 'like', value: `%${searchQuery.value}%` }]
+      : []
+
+    console.log('[members] fetchMembers filters:', filters)
+    console.log('[members] fetchMembers paging:', { page: currentPage.value, per_page: itemsPerPage.value })
+
+    const res = await getMembers({
+      paging: { page: currentPage.value, per_page: itemsPerPage.value },
+      // filters,
+    })
     const payload = res?.data.value as
       { data: { members: MemberItem[] }; total: number } | undefined
+
+    console.log('[members] fetchMembers response:', payload)
+
     members.value = payload?.data?.members ?? []
     totalItems.value = payload?.total ?? 0
   } catch (e: any) {
     members.value = []
     totalItems.value = 0
     errorMessage.value = e?.message || t('members.failedToLoad')
+    console.error('[members] fetchMembers error:', e)
   } finally {
     isLoading.value = false
   }
@@ -298,6 +312,8 @@ async function toggleJackpotStatus(item: MemberItem, newValue: boolean) {
     jackpotUpdating.value[item.id] = false
   }
 }
+
+watch(currentPage, fetchMembers)
 
 onMounted(fetchMembers)
 </script>

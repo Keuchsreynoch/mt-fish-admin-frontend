@@ -149,6 +149,8 @@ export const frontendMessages = {
       cannotBeGreaterThan: "{left} cannot be greater than {right}",
     },
     jackpot: {
+      playerActivity: "Member Activity",
+      reservedJackpot: "Reserved Jackpot",
       memberBet: "Member Bets",
       topWinner: "Top Winner",
       blacklistMember: "Members",
@@ -346,7 +348,7 @@ export const frontendMessages = {
       maintenanceMessage: "Scheduled maintenance tonight at 02:00 AM.",
     },
     login: {
-      title: "Welcome Back",
+      title: "Login",
       subtitle: "Log in to continue your dashboard",
       username: "Username",
       usernamePlaceholder: "Enter username",
@@ -572,6 +574,8 @@ export const frontendMessages = {
       cannotBeGreaterThan: "{left} មិនអាចធំជាង {right} បានទេ",
     },
     jackpot: {
+      playerActivity: "សកម្មភាពរបស់អ្នកលេង",
+      reservedJackpot: "រង្វាន់ដែលបានបម្រុងទុក",
       memberBet: "សមាជិកដែលបានភ្នាល់",
       topWinner: "អ្នកឈ្នះច្រើនជាងគេ",
       blacklistMember: "សមាជិកក្នុងបញ្ជីខ្មៅ",

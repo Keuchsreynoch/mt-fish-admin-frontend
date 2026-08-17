@@ -45,19 +45,8 @@
             class="login-form__field"
             @click:append-inner="togglePasswordVisibility"
           />
-
-          <div class="login-form__remember">
-            <v-checkbox
-              v-model="rememberMe"
-              :label="t('login.rememberMe')"
-              density="compact"
-              color="primary"
-              hide-details
-              class="login-form__remember-checkbox"
-            />
-          </div>
-
-          <v-btn
+          
+          <v-btn  
             type="submit"
             color="primary"
             size="x-large"

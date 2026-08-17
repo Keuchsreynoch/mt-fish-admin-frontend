@@ -1,9 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
-import JackpotGlobalConfigCard, {
-  type JackpotSettingsForm,
-  type CompanyTopupPayload,
-} from "~/components/JackpotGlobalConfigCard.vue";
+import JackpotGlobalConfigCard, { type JackpotSettingsForm } from "~/components/JackpotGlobalConfigCard.vue";
 import MemberBonusDialog, { type BonusMember } from "~/components/MemberBonusDialog.vue";
 import MemberBetTab from "~/components/MemberBetTab.vue";
 import TopWinnerTab from "~/components/TopWinnerTab.vue";
@@ -22,7 +19,6 @@ import {
   type JackpotCurrent,
   type UpdateJackpotCurrentBody,
   updateJackpotCurrent,
-  createJackpotCompanyTopup,
 } from "~/composables/service/jackpotCurrentPoolApi";
 import {
   getJackpotHistories,
@@ -153,6 +149,7 @@ async function fetchCurrentPool() {
 async function onSettingsSubmit(form: JackpotSettingsForm) {
   const chanceDenom = Number.parseInt(form.chance_denom, 10) || 1;
   const payoutPercent = parseAmount(form.payout_percent);
+  const companyTopupAmount = parseAmount(form.company_topup_amount);
 
   if (payoutPercent < 0 || payoutPercent > 100) {
     showError(t("gameConfig.mustBeBetween", { field: t("jackpot.payoutPercentLabel") }));
@@ -173,40 +170,17 @@ async function onSettingsSubmit(form: JackpotSettingsForm) {
 
     const data = response?.data.value?.data ?? null;
     if (data) poolData.value = data;
-    showSuccess(response?.data.value?.message || t("jackpot.updatedSuccessfully"));
+    showSuccess(
+      companyTopupAmount > 0
+        ? t("jackpot.updatedAndTopup")
+        : response?.data.value?.message || t("jackpot.updatedSuccessfully"),
+    );
     await fetchCurrentPool();
   } catch (error: any) {
     console.error("[jackpot-pool] update failed", error);
     showError(error?.message || t("jackpot.failedToUpdate"));
   } finally {
     updateLoading.value = false;
-  }
-}
-
-//  Company Top-up 
-const topupLoading = ref(false);
-
-async function onCompanyTopup(payload: CompanyTopupPayload) {
-  topupLoading.value = true;
-  try {
-    const response = await createJackpotCompanyTopup({
-      amount: payload.amount,
-      note: "",
-    });
-    const result = response?.data.value;
-
-    if (!result?.success) {
-      showError(result?.message || t("jackpot.failedToTopup"));
-      return;
-    }
-
-    showSuccess(result.message || t("jackpot.topupSuccessful"));
-    await fetchCurrentPool();
-  } catch (error: any) {
-    console.error("[jackpot-pool] company topup failed", error);
-    showError(error?.message || t("jackpot.failedToTopup"));
-  } finally {
-    topupLoading.value = false;
   }
 }
 
@@ -369,11 +343,10 @@ onMounted(() => {
     <div class="jackpot-tabs">
       <div class="settings-flex-row">
         <!-- Jackpot global config -->
-        <div class="settings-left-col flex flex-col gap-3">
+        <div class="flex flex-col gap-3">
           <JackpotGlobalConfigCard :pool-data="poolData" :update-loading="updateLoading"
             :reserved-jackpots="reservedJackpots" :reserve-loading="reserveLoading" :toggling-id="togglingId"
-            :topup-loading="topupLoading" @submit="onSettingsSubmit" @reserve="onReserveJackpot"
-            @toggle-status="onToggleReservedStatus" @topup="onCompanyTopup" />
+            @submit="onSettingsSubmit" @reserve="onReserveJackpot" @toggle-status="onToggleReservedStatus" />
           <v-card class="reservations-jackpot-card" elevation="0">
             <div class="recent-winners">
               <h3 class="recent-winners__title">
@@ -414,7 +387,7 @@ onMounted(() => {
             <v-tab class="text-capitalize text-body-medium " value="members">{{ t('jackpot.memberBet') }}</v-tab>
             <v-tab class="text-capitalize text-body-medium " value="winners">{{ t('jackpot.topWinner') }}</v-tab>
             <v-tab class="text-capitalize text-body-medium " value="blacklist">{{ t('jackpot.blacklistMember')
-              }}</v-tab>
+            }}</v-tab>
           </v-tabs>
 
           <v-window v-model="playerTab">
@@ -469,9 +442,8 @@ onMounted(() => {
   width: 100%;
 }
 
-.settings-flex-row>.settings-left-col,
 .settings-flex-row>.players-card {
-  flex: 1 1 50%;
+  flex: 1 1 0;
   min-width: 0;
 }
 
@@ -485,8 +457,8 @@ onMounted(() => {
     flex-direction: column;
   }
 
-  .settings-flex-row>.settings-left-col,
-  .settings-flex-row>.players-card {
+  .settings-flex-row>.players-card,
+  .settings-flex-row> :deep(.jackpot-config-card) {
     flex: 1 1 auto;
     width: 100%;
   }
